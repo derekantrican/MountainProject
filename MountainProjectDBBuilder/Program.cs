@@ -73,7 +73,7 @@ namespace MountainProjectDBBuilder
             }
             finally
             {
-                SendReport(logPath, serializationPath);
+                SendReport(logPath);
             }
         }
 
@@ -247,9 +247,16 @@ namespace MountainProjectDBBuilder
 
         private static string ParseAdditionalRouteInfo(string inputString)
         {
-            inputString = Regex.Replace(inputString, "TR|SPORT|TRAD|BOULDER", "", RegexOptions.IgnoreCase);
+            inputString = Regex.Replace(inputString, "TRAD|TR|SPORT|BOULDER", "", RegexOptions.IgnoreCase);
             if (!string.IsNullOrEmpty(Regex.Replace(inputString, "[^a-zA-Z0-9]", "")))
-                return inputString.Trim().Trim(',').Trim();
+            {
+                inputString = Regex.Replace(inputString, @"\s+", " "); //Replace multiple spaces (more than one in a row) with a single space
+                inputString = Regex.Replace(inputString, @"\s+,", ","); //Remove any spaces before commas
+                inputString = Regex.Replace(inputString, "^,|,$|,{2,}", ""); //Remove any commas at the beginning/end of string (or multiple commas in a row)
+                inputString = inputString.Trim(); //Trim any extra whitespace from the beginning/end of string
+
+                return inputString;
+            }
 
             return "";
         }
@@ -263,7 +270,7 @@ namespace MountainProjectDBBuilder
             writer.Close();
         }
 
-        private static void SendReport(string logPath, string serializedAreasPath)
+        private static void SendReport(string logPath)
         {
             Log("[SendReport] Sending report");
             MailMessage mail = new MailMessage();
@@ -304,7 +311,6 @@ namespace MountainProjectDBBuilder
             SmtpServer.EnableSsl = true;
 
             SmtpServer.Send(mail);
-
         }
 
         private static void Log(string itemToLog)
