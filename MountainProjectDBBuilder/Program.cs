@@ -272,45 +272,52 @@ namespace MountainProjectDBBuilder
 
         private static void SendReport(string logPath)
         {
-            Log("[SendReport] Sending report");
-            MailMessage mail = new MailMessage();
-            SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
-            mail.From = new MailAddress("derekantrican@gmail.com");
-            mail.To.Add("derekantrican@gmail.com");
-
-            if (exception != null)
+            try
             {
-                mail.Subject = "MountainProjectDBBuilder FAILED to finish";
-                mail.Body = "MountainProjectDBBuilder failed to finish successfully. Here is the exception information:";
-                mail.Body += Environment.NewLine + Environment.NewLine;
-                mail.Body += "EXCEPTION MESSAGE: " + exception.Message + Environment.NewLine;
-                mail.Body += "INNER EXCEPTION: " + exception.InnerException + Environment.NewLine;
-                mail.Body += "STACK TRACE: " + exception.StackTrace + Environment.NewLine;
+                Log("[SendReport] Sending report");
+                MailMessage mail = new MailMessage();
+                SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
+                mail.From = new MailAddress("derekantrican@gmail.com");
+                mail.To.Add("derekantrican@gmail.com");
+
+                if (exception != null)
+                {
+                    mail.Subject = "MountainProjectDBBuilder FAILED to finish";
+                    mail.Body = "MountainProjectDBBuilder failed to finish successfully. Here is the exception information:";
+                    mail.Body += Environment.NewLine + Environment.NewLine;
+                    mail.Body += "EXCEPTION MESSAGE: " + exception.Message + Environment.NewLine;
+                    mail.Body += "INNER EXCEPTION: " + exception.InnerException + Environment.NewLine;
+                    mail.Body += "STACK TRACE: " + exception.StackTrace + Environment.NewLine;
+                }
+                else
+                {
+                    mail.Subject = "MountainProjectDBBuilder successfully finished";
+                    mail.Body = "See attached files for report";
+                }
+
+                if (!string.IsNullOrEmpty(logPath) && File.Exists(logPath))
+                {
+                    Attachment logAttachment = new Attachment(logPath);
+                    mail.Attachments.Add(logAttachment);
+                }
+
+                ////XML is too big to send so will just send the log for now
+                //if (!string.IsNullOrEmpty(serializedAreasPath) && File.Exists(serializedAreasPath))
+                //{
+                //    Attachment areasAttachment = new Attachment(serializedAreasPath);
+                //    mail.Attachments.Add(areasAttachment);
+                //}
+
+                SmtpServer.Port = 587;
+                SmtpServer.Credentials = new NetworkCredential("derekantrican@gmail.com", "ylbykoqjmbqtismk");
+                SmtpServer.EnableSsl = true;
+
+                SmtpServer.Send(mail);
             }
-            else
+            catch (Exception ex)
             {
-                mail.Subject = "MountainProjectDBBuilder successfully finished";
-                mail.Body = "See attached files for report";
+                Log("[SendReport] Could not send email: " + ex.Message);
             }
-
-            if (!string.IsNullOrEmpty(logPath) && File.Exists(logPath))
-            {
-                Attachment logAttachment = new Attachment(logPath);
-                mail.Attachments.Add(logAttachment);
-            }
-
-            ////XML is too big to send so will just send the log for now
-            //if (!string.IsNullOrEmpty(serializedAreasPath) && File.Exists(serializedAreasPath))
-            //{
-            //    Attachment areasAttachment = new Attachment(serializedAreasPath);
-            //    mail.Attachments.Add(areasAttachment);
-            //}
-
-            SmtpServer.Port = 587;
-            SmtpServer.Credentials = new NetworkCredential("derekantrican@gmail.com", "ylbykoqjmbqtismk");
-            SmtpServer.EnableSsl = true;
-
-            SmtpServer.Send(mail);
         }
 
         private static void Log(string itemToLog)
