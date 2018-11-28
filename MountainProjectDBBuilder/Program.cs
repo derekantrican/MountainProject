@@ -337,7 +337,7 @@ namespace MountainProjectDBBuilder
                 //}
 
                 SmtpServer.Port = 587;
-                SmtpServer.Credentials = new NetworkCredential("derekantrican@gmail.com", "ylbykoqjmbqtismk");
+                SmtpServer.Credentials = new NetworkCredential("derekantrican@gmail.com", ""/*This is where you would put the email password*/);
                 SmtpServer.EnableSsl = true;
 
                 SmtpServer.Send(mail);
