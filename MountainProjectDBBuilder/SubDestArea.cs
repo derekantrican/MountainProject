@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace MountainProjectDBBuilder
 {
@@ -41,7 +42,7 @@ namespace MountainProjectDBBuilder
 
         public SubDestArea(string name, string url)
         {
-            this.Name = name;
+            this.Name = WebUtility.HtmlDecode(name);
             this.URL = url;
             Routes = new List<Route>();
             SubSubAreas = new List<SubDestArea>();

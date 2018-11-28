@@ -37,9 +37,19 @@ namespace MountainProjectDBBuilder
                 HtmlDocument doc = web.Load(baseUrl);
 
                 List<DestArea> areas = new List<DestArea>();
+                List<HtmlNode> destAreas = doc.DocumentNode.Descendants("a").Where(x => x.Attributes["href"] != null &&
+                                                                                        MatchesStateUrlRegex(x.Attributes["href"].Value)).ToList();
+                //Filter out duplicates
+                destAreas = (from s in destAreas
+                            orderby s.InnerText
+                            group s by s.Attributes["href"].Value into g
+                            select g.First()).ToList();
 
-                List<HtmlNode> destAreas = doc.DocumentNode.Descendants("span").Where(x => x.Attributes["class"] != null && x.Attributes["class"].Value == "destArea").ToList();
-                destAreas.Remove(destAreas.Where(p => Regex.Match(p.InnerText, "in progress", RegexOptions.IgnoreCase).Success).FirstOrDefault());
+                //Move international to the end
+                HtmlNode internationalArea = destAreas.Find(p => p.InnerText == "International");
+                destAreas.Remove(internationalArea);
+                destAreas.Add(internationalArea);
+
                 areas = PopulateAreas(destAreas);
             
                 foreach (DestArea area in areas)
@@ -73,7 +83,7 @@ namespace MountainProjectDBBuilder
             }
             finally
             {
-                SendReport(logPath);
+                //SendReport(logPath);
             }
         }
 
@@ -82,8 +92,8 @@ namespace MountainProjectDBBuilder
             List<DestArea> result = new List<DestArea>();
             foreach (HtmlNode destArea in inputNodes)
             {
-                DestArea currentArea = new DestArea(destArea.Descendants("a").FirstOrDefault().InnerText,
-                                                    baseUrl + destArea.Descendants("a").FirstOrDefault().Attributes["href"].Value);
+                DestArea currentArea = new DestArea(destArea.InnerText,
+                                                    destArea.Attributes["href"].Value);
                 result.Add(currentArea);
             }
 
@@ -98,13 +108,13 @@ namespace MountainProjectDBBuilder
             HtmlWeb web = new HtmlWeb();
             HtmlDocument doc = web.Load(inputArea.URL);
 
-            HtmlNode leftColumnDiv = doc.DocumentNode.Descendants("div").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "viewerLeftNavColContent").FirstOrDefault();
+            HtmlNode leftColumnDiv = doc.DocumentNode.Descendants("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
             List<HtmlNode> htmlSubAreas = doc.DocumentNode.Descendants("a").Where(p => p.ParentNode.ParentNode.ParentNode == leftColumnDiv).ToList();
             htmlSubAreas.RemoveAll(p => p.ParentNode.ParentNode.Attributes["id"] != null && p.ParentNode.ParentNode.Attributes["id"].Value == "nearbyMTBRides");
 
             foreach (HtmlNode node in htmlSubAreas)
             {
-                SubDestArea subArea = new SubDestArea(node.InnerText, baseUrl + node.Attributes["href"].Value);
+                SubDestArea subArea = new SubDestArea(node.InnerText, node.Attributes["href"].Value);
 
                 if (subAreas.Where(p => p.URL == subArea.URL).FirstOrDefault() != null)
                     throw new Exception("Item already exists in subAreas list: " + subArea.URL);
@@ -123,13 +133,14 @@ namespace MountainProjectDBBuilder
             HtmlWeb web = new HtmlWeb();
             HtmlDocument doc = web.Load(inputSubArea.URL);
 
-            HtmlNode leftColumnDiv = doc.DocumentNode.Descendants("div").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "viewerLeftNavColContent").FirstOrDefault();
+            HtmlNode leftColumnDiv = doc.DocumentNode.Descendants("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
             List<HtmlNode> htmlSubAreas = doc.DocumentNode.Descendants("a").Where(p => p.ParentNode.ParentNode.ParentNode == leftColumnDiv).ToList();
-            htmlSubAreas.RemoveAll(p => p.ParentNode.ParentNode.Attributes["id"] != null && p.ParentNode.ParentNode.Attributes["id"].Value == "nearbyMTBRides");
+            htmlSubAreas.RemoveAll(p => (p.ParentNode.ParentNode.Attributes["id"] != null && p.ParentNode.ParentNode.Attributes["id"].Value == "nearbyMTBRides") ||
+                                        (p.Attributes["href"] != null && p.Attributes["href"].Value == "#"));
 
             foreach (HtmlNode node in htmlSubAreas)
             {
-                SubDestArea subArea = new SubDestArea(node.InnerText, baseUrl + node.Attributes["href"].Value);
+                SubDestArea subArea = new SubDestArea(node.InnerText, node.Attributes["href"].Value);
 
                 if (subAreas.Where(p => p.URL == subArea.URL).FirstOrDefault() != null)
                     throw new Exception("Item already exists in subAreas list: " + subArea.URL);
@@ -148,11 +159,11 @@ namespace MountainProjectDBBuilder
             HtmlWeb web = new HtmlWeb();
             HtmlDocument doc = web.Load(inputSubDestArea.URL);
 
-            HtmlNode routesTable = doc.DocumentNode.Descendants("table").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "leftNavRoutes").FirstOrDefault();
+            HtmlNode routesTable = doc.DocumentNode.Descendants("table").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table").FirstOrDefault();
 
             if (routesTable == null)
             {
-                HtmlNode leftColumnDiv = doc.DocumentNode.Descendants("div").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "viewerLeftNavColContent").FirstOrDefault();
+                HtmlNode leftColumnDiv = doc.DocumentNode.Descendants("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
                 List<HtmlNode> htmlWalls = doc.DocumentNode.Descendants("a").Where(p => p.ParentNode.ParentNode.ParentNode == leftColumnDiv).ToList();
                 htmlWalls.RemoveAll(p => p.ParentNode.ParentNode.Attributes["id"] != null && p.ParentNode.ParentNode.Attributes["id"].Value == "nearbyMTBRides");
 
@@ -177,7 +188,7 @@ namespace MountainProjectDBBuilder
                 foreach (HtmlNode node in htmlRoutes)
                 {
                     string routeName = node.InnerText;
-                    string routeURL = baseUrl + node.Attributes["href"].Value;
+                    string routeURL = node.Attributes["href"].Value;
 
                     HtmlWeb routeWeb = new HtmlWeb();
                     HtmlDocument routeDoc = routeWeb.Load(routeURL);
@@ -186,20 +197,14 @@ namespace MountainProjectDBBuilder
                                                 .Descendants("td").ToList()[1].InnerText).Trim();
                     Route.RouteType routeType = ParseRouteType(type);
 
-                    HtmlNode gradeElement;
-                    if (routeType == Route.RouteType.Boulder)
-                    {
-                        gradeElement = routeDoc.DocumentNode.Descendants("tr").Where(p => p.Descendants("td").FirstOrDefault().InnerText.Contains("Original")).FirstOrDefault()
-                                                    .Descendants("span").Where(x => x.Attributes["class"] != null && x.Attributes["class"].Value == "rateHueco").FirstOrDefault();
-                    }
-                    else
-                    {
-                        gradeElement = routeDoc.DocumentNode.Descendants("tr").Where(p => p.Descendants("td").FirstOrDefault().InnerText.Contains("Original")).FirstOrDefault()
-                                                    .Descendants("span").Where(x => x.Attributes["class"] != null && x.Attributes["class"].Value == "rateYDS").FirstOrDefault();
-                    }
+                    List<HtmlNode> gradesOnPage = routeDoc.DocumentNode.Descendants("span").Where(x => x.Attributes["class"] != null && 
+                                                                                                       (x.Attributes["class"].Value == "rateHueco" || x.Attributes["class"].Value == "rateYDS")).ToList();
+                    HtmlNode sidebar = routeDoc.DocumentNode.Descendants("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
+                    gradesOnPage.RemoveAll(p => sidebar.Descendants().Contains(p));
 
                     string routeGrade = "";
-                    if (gradeElement != null) //"gradeElement" will be null for Ice routes, etc
+                    HtmlNode gradeElement = gradesOnPage.FirstOrDefault();
+                    if (gradeElement != null)
                         routeGrade = HttpUtility.HtmlDecode(gradeElement.InnerText.Replace(gradeElement.Descendants("a").FirstOrDefault().InnerText, "")).Trim();
 
                     Route route = new Route(routeName, routeGrade, routeType, routeURL);
@@ -220,13 +225,36 @@ namespace MountainProjectDBBuilder
             HtmlWeb web = new HtmlWeb();
             HtmlDocument doc = web.Load(inputURL);
 
-            string boulder = Regex.Match(doc.DocumentNode.InnerHtml, @"data.addRows\(\[\['Rock',\d+\],\['Boulder',\d+\],\['Alpine',\d+\],\['Snow',\d+\],\['Mixed',\d+\],\['Ice',\d+\]]\);").Value;
-            string tradSportTR = Regex.Match(doc.DocumentNode.InnerHtml, @"data.addRows\(\[\['Trad',\d+\],\['Sport',\d+\],\['TR',\d+\]]\);").Value;
+            int boulderCount = 0, TRCount = 0, sportCount = 0, tradCount = 0;
 
-            int boulderCount = string.IsNullOrWhiteSpace(boulder) ? 0 : Convert.ToInt32(Regex.Match(Regex.Match(boulder, @"\['Boulder',\d+\]").Value, @"\d+").Value);
-            int TRCount = string.IsNullOrWhiteSpace(tradSportTR) ? 0 : Convert.ToInt32(Regex.Match(Regex.Match(tradSportTR, @"\['TR',\d+\]").Value, @"\d+").Value);
-            int sportCount = string.IsNullOrWhiteSpace(tradSportTR) ? 0 : Convert.ToInt32(Regex.Match(Regex.Match(tradSportTR, @"\['Sport',\d+\]").Value, @"\d+").Value);
-            int tradCount = string.IsNullOrWhiteSpace(tradSportTR) ? 0 : Convert.ToInt32(Regex.Match(Regex.Match(tradSportTR, @"\['Trad',\d+\]").Value, @"\d+").Value);
+            string boulderString = Regex.Match(doc.DocumentNode.InnerHtml, "\\[\\\"Boulder\\\",\\s*\\d*\\]").Value;
+            string TRString = Regex.Match(doc.DocumentNode.InnerHtml, "\\[\\\"Toprope\\\",\\s*\\d*\\]").Value;
+            string sportString = Regex.Match(doc.DocumentNode.InnerHtml, "\\[\\\"Sport\\\",\\s*\\d*\\]").Value;
+            string tradString = Regex.Match(doc.DocumentNode.InnerHtml, "\\[\\\"Trad\\\",\\s*\\d*\\]").Value;
+
+            if (!string.IsNullOrEmpty(boulderString))
+            {
+                boulderString = boulderString.Replace(" ", "").Replace("\n", "");
+                boulderCount = Convert.ToInt32(Regex.Match(boulderString, @"\d+").Value);
+            }
+
+            if (!string.IsNullOrEmpty(TRString))
+            {
+                TRString = TRString.Replace(" ", "").Replace("\n", "");
+                TRCount = Convert.ToInt32(Regex.Match(TRString, @"\d+").Value);
+            }
+
+            if (!string.IsNullOrEmpty(sportString))
+            {
+                sportString = sportString.Replace(" ", "").Replace("\n", "");
+                sportCount = Convert.ToInt32(Regex.Match(sportString, @"\d+").Value);
+            }
+
+            if (!string.IsNullOrEmpty(tradString))
+            {
+                tradString = tradString.Replace(" ", "").Replace("\n", "");
+                tradCount = Convert.ToInt32(Regex.Match(tradString, @"\d+").Value);
+            }
 
             return new AreaStats(boulderCount, TRCount, sportCount, tradCount);
         }
@@ -328,6 +356,78 @@ namespace MountainProjectDBBuilder
                 File.Create(logPath).Close();
 
             File.AppendAllText(logPath, itemToLog + Environment.NewLine);
+        }
+
+        private static bool MatchesStateUrlRegex(string urlToMatch)
+        {
+            List<string> states = new List<string>()
+            {
+                "Alabama",
+                "Alaska",
+                "Arizona",
+                "Arkansas",
+                "California",
+                "Colorado",
+                "Connecticut",
+                "Delaware",
+                "Florida",
+                "Georgia",
+                "Hawaii",
+                "Idaho",
+                "Illinois",
+                "Indiana",
+                "Iowa",
+                "Kansas",
+                "Kentucky",
+                "Louisiana",
+                "Maine",
+                "Maryland",
+                "Massachusetts",
+                "Michigan",
+                "Minnesota",
+                "Mississippi",
+                "Missouri",
+                "Montana",
+                "Nebraska",
+                "Nevada",
+                "New-Hampshire",
+                "New-Jersey",
+                "New-Mexico",
+                "New-York",
+                "North-Carolina",
+                "North-Dakota",
+                "Ohio",
+                "Oklahoma",
+                "Oregon",
+                "Pennsylvania",
+                "Rhode-Island",
+                "South-Carolina",
+                "South-Dakota",
+                "Tennessee",
+                "Texas",
+                "Utah",
+                "Vermont",
+                "Virginia",
+                "Washington",
+                "West-Virginia",
+                "Wisconsin",
+                "Wyoming",
+                "International"
+            };
+
+            foreach (string state in states)
+            {
+                Regex stateRegex = new Regex(RegexSanitize(baseUrl) + "\\/area\\/\\d*\\/" + state.ToLower() + "$");
+                if (stateRegex.IsMatch(urlToMatch))
+                    return true;
+            }
+
+            return false;
+        }
+
+        private static string RegexSanitize(string input)
+        {
+            return input.Replace("/", "\\/").Replace(".", "\\.");
         }
     }
 }

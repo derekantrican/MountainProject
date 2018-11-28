@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using System.Net;
 
 namespace MountainProjectDBBuilder
 {
@@ -49,7 +50,7 @@ namespace MountainProjectDBBuilder
 
         public Route(string name, string grade, RouteType type, string url)
         {
-            this.Name = name;
+            this.Name = WebUtility.HtmlDecode(name);
             this.Grade = grade;
             this.Type = type;
             this.URL = url;
