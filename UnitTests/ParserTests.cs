@@ -1,12 +1,78 @@
 ﻿using System;
+using System.Collections.Generic;
+using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MountainProjectDBBuilder;
 
 namespace UnitTests
 {
     [TestClass]
-    public class Tests
+    public class ParserTests
     {
+        [TestMethod]
+        public void TestGetDestAreas()
+        {
+            List<string> expectedDestAreas = new List<string>()
+            {
+                "Alabama",
+                "Alaska",
+                "Arizona",
+                "Arkansas",
+                "California",
+                "Colorado",
+                "Connecticut",
+                "Delaware",
+                "Florida",
+                "Georgia",
+                "Hawaii",
+                "Idaho",
+                "Illinois",
+                "Indiana",
+                "Iowa",
+                "Kansas",
+                "Kentucky",
+                "Louisiana",
+                "Maine",
+                "Maryland",
+                "Massachusetts",
+                "Michigan",
+                "Minnesota",
+                //"Mississippi", //Listed under "In Progress" on MountainProject
+                "Missouri",
+                "Montana",
+                //"Nebraska",    //Listed under "In Progress" on MountainProject
+                "Nevada",
+                "New Hampshire",
+                "New Jersey",
+                "New Mexico",
+                "New York",
+                "North Carolina",
+                "North Dakota",
+                "Ohio",
+                "Oklahoma",
+                "Oregon",
+                "Pennsylvania",
+                "Rhode Island",
+                "South Carolina",
+                "South Dakota",
+                "Tennessee",
+                "Texas",
+                "Utah",
+                "Vermont",
+                "Virginia",
+                "Washington",
+                "West Virginia",
+                "Wisconsin",
+                "Wyoming",
+                "International"
+            };
+
+            List<DestArea> destAreas = Parsers.GetDestAreas();
+            List<string> resultNames = destAreas.Select(p => p.Name).ToList();
+
+            CollectionAssert.AreEqual(expectedDestAreas, resultNames);
+        }
+
         [DataTestMethod]
         [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", 2, 0)]
         [DataRow("/area/108184422/deception-wall", 0, 17)]

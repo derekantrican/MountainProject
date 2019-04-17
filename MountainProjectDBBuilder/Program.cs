@@ -1,15 +1,8 @@
-﻿using HtmlAgilityPack;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
-using System.Web;
 using System.Diagnostics;
 using System.Xml.Serialization;
 using System.Net.Mail;
@@ -167,27 +160,10 @@ namespace MountainProjectDBBuilder
             try
             {
                 totalTimer.Start();
-                JObject resultJson = new JObject();
-                HtmlWeb web = new HtmlWeb();
-                HtmlDocument doc = web.Load(Common.BaseUrl);
 
-                List<DestArea> areas = new List<DestArea>();
-                List<HtmlNode> destAreas = doc.DocumentNode.Descendants("a").Where(x => x.Attributes["href"] != null &&
-                                                                                        Common.MatchesStateUrlRegex(x.Attributes["href"].Value)).ToList();
-                //Filter out duplicates
-                destAreas = (from s in destAreas
-                             orderby s.InnerText
-                             group s by s.Attributes["href"].Value into g
-                             select g.First()).ToList();
+                List<DestArea> destAreas = Parsers.GetDestAreas();
 
-                //Move international to the end
-                HtmlNode internationalArea = destAreas.Find(p => p.InnerText == "International");
-                destAreas.Remove(internationalArea);
-                destAreas.Add(internationalArea);
-
-                areas = Parsers.PopulateAreas(destAreas);
-
-                foreach (DestArea area in areas)
+                foreach (DestArea area in destAreas)
                 {
                     areaTimer.Restart();
                     Common.Log($"[MAIN] Current Area: {area.Name}");
@@ -207,7 +183,7 @@ namespace MountainProjectDBBuilder
                 }
 
                 Common.Log($"[MAIN] ---PROGRAM FINISHED--- ({totalTimer.Elapsed})");
-                SerializeResults(areas);
+                SerializeResults(destAreas);
             }
             catch (Exception ex)
             {

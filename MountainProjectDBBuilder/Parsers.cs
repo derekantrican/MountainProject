@@ -12,6 +12,30 @@ namespace MountainProjectDBBuilder
 {
     public static class Parsers
     {
+        public static List<DestArea> GetDestAreas()
+        {
+            HtmlWeb web = new HtmlWeb();
+            HtmlDocument doc = web.Load(Common.BaseUrl);
+
+            List<DestArea> destAreas = new List<DestArea>();
+            List<HtmlNode> destAreaNodes = doc.DocumentNode.Descendants("a").Where(x => x.Attributes["href"] != null &&
+                                                                                    Common.MatchesStateUrlRegex(x.Attributes["href"].Value)).ToList();
+            //Filter out duplicates
+            destAreaNodes = (from s in destAreaNodes
+                         orderby s.InnerText
+                         group s by s.Attributes["href"].Value into g
+                         select g.First()).ToList();
+
+            //Move international to the end
+            HtmlNode internationalArea = destAreaNodes.Find(p => p.InnerText == "International");
+            destAreaNodes.Remove(internationalArea);
+            destAreaNodes.Add(internationalArea);
+
+            destAreas = Parsers.PopulateAreas(destAreaNodes);
+
+            return destAreas;
+        }
+
         public static List<DestArea> PopulateAreas(List<HtmlNode> inputNodes)
         {
             List<DestArea> result = new List<DestArea>();
