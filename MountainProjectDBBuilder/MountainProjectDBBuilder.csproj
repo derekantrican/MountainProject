@@ -54,8 +54,10 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AreaStats.cs" />
+    <Compile Include="Common.cs" />
     <Compile Include="DestArea.cs" />
     <Compile Include="Enums.cs" />
+    <Compile Include="Parsers.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Route.cs" />

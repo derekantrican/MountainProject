@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.28729.10
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MountainProjectDBBuilder", "MountainProjectDBBuilder\MountainProjectDBBuilder.csproj", "{A69989D0-FD83-4B73-BA54-E6C0C53DE49D}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\UnitTests.csproj", "{F84E1E70-8487-4F7C-8F05-B44123A81CE2}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,8 +17,15 @@ Global
 		{A69989D0-FD83-4B73-BA54-E6C0C53DE49D}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A69989D0-FD83-4B73-BA54-E6C0C53DE49D}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A69989D0-FD83-4B73-BA54-E6C0C53DE49D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{F84E1E70-8487-4F7C-8F05-B44123A81CE2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F84E1E70-8487-4F7C-8F05-B44123A81CE2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F84E1E70-8487-4F7C-8F05-B44123A81CE2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F84E1E70-8487-4F7C-8F05-B44123A81CE2}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {EA486F6A-6CED-46FB-9810-C2E7714F55B9}
 	EndGlobalSection
 EndGlobal
