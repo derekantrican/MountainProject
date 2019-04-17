@@ -13,6 +13,7 @@ using System.Web;
 using System.Diagnostics;
 using System.Xml.Serialization;
 using System.Net.Mail;
+using static MountainProjectDBBuilder.Enums;
 
 namespace MountainProjectDBBuilder
 {
@@ -20,6 +21,8 @@ namespace MountainProjectDBBuilder
     {
         static string baseUrl = "https://www.mountainproject.com";
         static string logPath;
+        static string logString = "";
+        static bool showLogLines = true;
         static string serializationPath;
         static Stopwatch totalTimer = new Stopwatch();
         static Stopwatch areaTimer = new Stopwatch();
@@ -27,10 +30,201 @@ namespace MountainProjectDBBuilder
 
         static void Main(string[] args)
         {
+            logPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss") + " Log.txt");
+            serializationPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), "MountainProjectAreas.xml");
+
+            if (args.Contains("parse"))
+                ParseInputString();
+            else
+                BuildDB();
+        }
+
+        private static void ParseInputString()
+        {
+            List<DestArea> destAreas = DeserializeAreas(serializationPath);
+            if (destAreas.Count() == 0)
+            {
+                Console.WriteLine("The xml either doesn't exist or is empty");
+                Environment.Exit(0);
+            }
+
+            Console.WriteLine("File read.");
+
+            string keepSearching = "y";
+            while (keepSearching == "y")
+            {
+                Console.WriteLine("Please input the string you would like to parse: ");
+                string input = Console.ReadLine();
+
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                Tuple<string, string> result = DeepSearch(input, destAreas);
+                stopwatch.Stop();
+
+                if (string.IsNullOrEmpty(result.Item1))
+                    Console.WriteLine("Nothing found matching \"" + input + "\"");
+                else
+                {
+                    Console.WriteLine("The following was found: " + result.Item1 + " (Found in " + stopwatch.ElapsedMilliseconds + " ms)");
+                    Console.WriteLine("Open result? (y/n) ");
+                    if (Console.ReadLine() == "y")
+                        Process.Start(result.Item2);
+                }
+
+                Console.WriteLine("Search something else? (y/n) ");
+                keepSearching = Console.ReadLine();
+            }
+        }
+
+        private static Tuple<string, string> DeepSearch(string input, List<DestArea> destAreas)
+        {
+            Tuple<int, string, string> currentResult = new Tuple<int, string, string>(int.MaxValue, "", "");
+
+            foreach (DestArea destArea in destAreas)
+            {
+                if (input.ToLower().Contains(destArea.Name.ToLower()))
+                {
+                    //int destAreaSimilarilty = StringMatch(input, destArea.Name);
+                    //if (destAreaSimilarilty < currentResult.Item1)
+                    //{
+                    //    string resultStr = destArea.Name;
+                    //    resultStr += " [" + destArea.Statistics.ToString() + "]";
+                    //    currentResult = new Tuple<int, string, string>(destAreaSimilarilty, resultStr, destArea.URL);
+                    //}
+
+                    //If we're matching the name of a destArea (eg a State), we'll assume that the route/area is within that state
+                    currentResult = SearchSubAreasForMatch(input, destArea.SubAreas, new Tuple<int, string, string>(int.MaxValue, "", ""));
+                    return new Tuple<string, string>(currentResult.Item2, currentResult.Item3);
+                }
+
+                if (destArea.SubAreas != null &&
+                    destArea.SubAreas.Count() > 0)
+                    currentResult = SearchSubAreasForMatch(input, destArea.SubAreas, currentResult);
+            }
+
+            return new Tuple<string, string>(currentResult.Item2, currentResult.Item3);
+        }
+
+        private static Tuple<int, string, string> SearchSubAreasForMatch(string input, List<SubDestArea> subAreas, Tuple<int, string, string> currentResult)
+        {
+            foreach (SubDestArea subDestArea in subAreas)
+            {
+                if (input.ToLower().Contains(subDestArea.Name.ToLower()))
+                {
+                    int subDestSimilarilty = StringMatch(input, subDestArea.Name);
+                    if (subDestSimilarilty < currentResult.Item1)
+                    {
+                        string resultStr = subDestArea.Name;
+                        resultStr += " [" + subDestArea.Statistics.ToString() + "]";
+                        currentResult = new Tuple<int, string, string>(subDestSimilarilty, resultStr, subDestArea.URL);
+                    }
+                }
+
+                if (subDestArea.SubSubAreas != null &&
+                    subDestArea.SubSubAreas.Count() > 0)
+                    currentResult = SearchSubAreasForMatch(input, subDestArea.SubSubAreas, currentResult);
+
+                if (subDestArea.Routes != null &&
+                    subDestArea.Routes.Count() > 0)
+                    currentResult = SearchRoutes(input, subDestArea.Routes, currentResult);
+            }
+
+            return currentResult;
+        }
+
+        private static Tuple<int, string, string> SearchRoutes(string input, List<Route> routes, Tuple<int, string, string> currentResult)
+        {
+            List<Route> matches = routes.Where(p => input.ToLower().Contains(p.Name.ToLower())).ToList();
+
+            foreach (Route route in matches)
+            {
+                int similarity = StringMatch(input, route.Name);
+                if (similarity < currentResult.Item1)
+                {
+                    string resultStr = route.Name;
+                    resultStr += " [" + route.Type;
+                    resultStr += " " + route.Grade;
+
+                    if (!string.IsNullOrEmpty(route.AdditionalInfo))
+                        resultStr += " " + route.AdditionalInfo;
+
+                    resultStr += "]";
+
+                    currentResult = new Tuple<int, string, string>(similarity, resultStr, route.URL);
+                }
+            }
+
+            return currentResult;
+        }
+
+        ///!!!---THIS IS PROBABLY NOT THE BEST WAY TO DO THIS---!!!
+        ///(For instance: what if a title of a route is shorter than the area it's in
+        ///but both are in the search string? This will probably return a match for the area instead of the route)
+        private static int StringMatch(string string1, string string2, bool caseInvariant = true, bool removeWhitespace = true, bool removeNonAlphaNumeric = true)
+        {
+            if (caseInvariant)
+            {
+                string1 = string1.ToLower();
+                string2 = string2.ToLower();
+            }
+
+            if (removeWhitespace)
+            {
+                string1 = string1.Replace(" ", "");
+                string2 = string2.Replace(" ", "");
+            }
+
+            if (removeNonAlphaNumeric)
+            {
+                string1 = Regex.Replace(string1, @"[^a-z\d]", "");
+                string2 = Regex.Replace(string2, @"[^a-z\d]", "");
+            }
+
+            /// <summary>
+            /// Compute the Levenshtein distance between two strings https://www.dotnetperls.com/levenshtein
+            /// </summary>
+            int n = string1.Length;
+            int m = string2.Length;
+            int[,] d = new int[n + 1, m + 1];
+
+            if (n == 0)
+            {
+                return m;
+            }
+
+            if (m == 0)
+            {
+                return n;
+            }
+
+            for (int i = 0; i <= n; d[i, 0] = i++)
+            {
+            }
+
+            for (int j = 0; j <= m; d[0, j] = j++)
+            {
+            }
+
+            for (int i = 1; i <= n; i++)
+            {
+                for (int j = 1; j <= m; j++)
+                {
+                    int cost = (string2[j - 1] == string1[i - 1]) ? 0 : 1;
+
+                    d[i, j] = Math.Min(
+                        Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
+                        d[i - 1, j - 1] + cost);
+                }
+            }
+            // Step 7
+            return d[n, m];
+        }
+
+        private static void BuildDB(bool showLog = true)
+        {
+            showLogLines = showLog;
+
             try
             {
-                logPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss") + " Log.txt");
-                serializationPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), "MountainProjectAreas.xml");
                 totalTimer.Start();
                 JObject resultJson = new JObject();
                 HtmlWeb web = new HtmlWeb();
@@ -41,9 +235,9 @@ namespace MountainProjectDBBuilder
                                                                                         MatchesStateUrlRegex(x.Attributes["href"].Value)).ToList();
                 //Filter out duplicates
                 destAreas = (from s in destAreas
-                            orderby s.InnerText
-                            group s by s.Attributes["href"].Value into g
-                            select g.First()).ToList();
+                             orderby s.InnerText
+                             group s by s.Attributes["href"].Value into g
+                             select g.First()).ToList();
 
                 //Move international to the end
                 HtmlNode internationalArea = destAreas.Find(p => p.InnerText == "International");
@@ -51,25 +245,27 @@ namespace MountainProjectDBBuilder
                 destAreas.Add(internationalArea);
 
                 areas = PopulateAreas(destAreas);
-            
+
                 foreach (DestArea area in areas)
                 {
                     areaTimer.Restart();
-                    Log("[MAIN] Current Area: " + area.Name);
+                    Log($"[MAIN] Current Area: {area.Name}");
                     area.Statistics = PopulateStatistics(area.URL);
                     PopulateSubDestAreas(area);
                     foreach (SubDestArea subArea in area.SubAreas)
                     {
                         Log("[MAIN] Current SubArea: " + subArea.Name);
+                        Stopwatch subAreaStopwatch = Stopwatch.StartNew();
                         subArea.Statistics = PopulateStatistics(subArea.URL);
                         PopulateRoutes(subArea);
-                        Log("[MAIN] Done with subArea: " + subArea.Name);
+
+                        Log($"[MAIN] Done with subArea: {subArea.Name} ({subAreaStopwatch.Elapsed})");
                     }
 
-                    Log("[MAIN] Done with area: " + area.Name + " (" + areaTimer.ElapsedMilliseconds + " ms)");
+                    Log($"[MAIN] Done with area: {area.Name} ({areaTimer.Elapsed})");
                 }
 
-                Log("[MAIN] ---PROGRAM FINISHED--- (" + totalTimer.ElapsedMilliseconds + " ms)");
+                Log($"[MAIN] ---PROGRAM FINISHED--- ({totalTimer.Elapsed})");
                 SerializeResults(areas);
             }
             catch (Exception ex)
@@ -83,6 +279,7 @@ namespace MountainProjectDBBuilder
             }
             finally
             {
+                SaveLogToFile();
                 //SendReport(logPath);
             }
         }
@@ -127,7 +324,9 @@ namespace MountainProjectDBBuilder
 
         private static void PopulateSubSubDestAreas(SubDestArea inputSubArea)
         {
+            Stopwatch popSubSubDestAreasStopwatch = Stopwatch.StartNew();
             Log("[PopulateSubSubDestAreas] Populating subAreas for " + inputSubArea.Name);
+            List<TimeSpan> subsubareaParseTimes = new List<TimeSpan>();
             List<SubDestArea> subAreas = new List<SubDestArea>();
 
             HtmlWeb web = new HtmlWeb();
@@ -140,20 +339,28 @@ namespace MountainProjectDBBuilder
 
             foreach (HtmlNode node in htmlSubAreas)
             {
+                Stopwatch subsubareaStopwatch = Stopwatch.StartNew();
                 SubDestArea subArea = new SubDestArea(node.InnerText, node.Attributes["href"].Value);
 
                 if (subAreas.Where(p => p.URL == subArea.URL).FirstOrDefault() != null)
                     throw new Exception("Item already exists in subAreas list: " + subArea.URL);
 
                 subAreas.Add(subArea);
+                subsubareaParseTimes.Add(subsubareaStopwatch.Elapsed);
             }
 
+            Log($"[PopulateSubSubDestAreas] Done with subAreas for {inputSubArea.Name} " +
+                $"({popSubSubDestAreasStopwatch.Elapsed}. {subAreas.Count} subsubareas, avg {Average(subsubareaParseTimes)})");
+
             inputSubArea.SubSubAreas = subAreas;
+            return;
         }
 
         private static void PopulateRoutes(SubDestArea inputSubDestArea)
         {
+            Stopwatch popRoutesStopwatch = Stopwatch.StartNew();
             Log("[PopulateRoutes] Current subDestArea: " + inputSubDestArea.Name);
+            List<TimeSpan> routeParseTimes = new List<TimeSpan>();
             List<Route> routes = new List<Route>();
 
             HtmlWeb web = new HtmlWeb();
@@ -181,12 +388,15 @@ namespace MountainProjectDBBuilder
                     subArea.Statistics = PopulateStatistics(subArea.URL);
                     PopulateRoutes(subArea);
                 }
+
                 return;
             }
             else
             {
                 foreach (HtmlNode node in htmlRoutes)
                 {
+                    Stopwatch routeStopwatch = Stopwatch.StartNew();
+
                     string routeName = node.InnerText;
                     string routeURL = node.Attributes["href"].Value;
 
@@ -214,10 +424,15 @@ namespace MountainProjectDBBuilder
                         throw new Exception("Item already exists in routes list: " + route.URL);
 
                     routes.Add(route);
+                    routeParseTimes.Add(routeStopwatch.Elapsed);
                 }
             }
 
+            Log($"[PopulateRoutes] Done with subDestArea: {inputSubDestArea.Name} " +
+                $"({popRoutesStopwatch.Elapsed}. {routes.Count} routes, avg {Average(routeParseTimes)})");
+
             inputSubDestArea.Routes = routes;
+            return;
         }
 
         private static AreaStats PopulateStatistics(string inputURL)
@@ -298,6 +513,22 @@ namespace MountainProjectDBBuilder
             writer.Close();
         }
 
+        private static List<DestArea> DeserializeAreas(string xmlFilePath)
+        {
+            if (File.Exists(xmlFilePath))
+            {
+                Log("[DeserializeAreas] Deserializing areas from: " + xmlFilePath);
+                FileStream fileStream = new FileStream(xmlFilePath, FileMode.Open);
+                XmlSerializer xmlDeserializer = new XmlSerializer(typeof(List<DestArea>));
+                return (List<DestArea>)xmlDeserializer.Deserialize(fileStream);
+            }
+            else
+            {
+                Log("[DeserializeAreas] The file " + xmlFilePath + " does not exist");
+                return new List<DestArea>();
+            }
+        }
+
         private static void SendReport(string logPath)
         {
             try
@@ -350,12 +581,18 @@ namespace MountainProjectDBBuilder
 
         private static void Log(string itemToLog)
         {
-            Console.WriteLine(itemToLog);
+            logString += itemToLog + "\n";
 
+            if (showLogLines)
+                Console.WriteLine(itemToLog);
+        }
+
+        private static void SaveLogToFile()
+        {
             if (!File.Exists(logPath))
                 File.Create(logPath).Close();
 
-            File.AppendAllText(logPath, itemToLog + Environment.NewLine);
+            File.AppendAllText(logPath, logString);
         }
 
         private static bool MatchesStateUrlRegex(string urlToMatch)
@@ -428,6 +665,17 @@ namespace MountainProjectDBBuilder
         private static string RegexSanitize(string input)
         {
             return input.Replace("/", "\\/").Replace(".", "\\.");
+        }
+
+        private static TimeSpan Average(List<TimeSpan> timeSpanList)
+        {
+            if (timeSpanList.Count == 0)
+                return new TimeSpan();
+
+            double doubleAverageTicks = timeSpanList.Average(timeSpan => timeSpan.Ticks);
+            long longAverageTicks = Convert.ToInt64(doubleAverageTicks);
+
+            return new TimeSpan(longAverageTicks);
         }
     }
 }
