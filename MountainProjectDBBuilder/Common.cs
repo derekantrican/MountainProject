@@ -1,7 +1,11 @@
-﻿using System;
+﻿using AngleSharp.Html.Dom;
+using AngleSharp.Html.Parser;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -172,6 +176,19 @@ namespace MountainProjectDBBuilder
             }
             // Step 7
             return d[n, m];
+        }
+
+        public static IHtmlDocument GetHtmlDoc(string url)
+        {
+            HtmlParser parser = new HtmlParser();
+            string html = "";
+            using (WebClient client = new WebClient())
+            {
+                html = client.DownloadString(url);
+            }
+            IHtmlDocument doc = parser.ParseDocument(html);
+
+            return doc;
         }
     }
 }
