@@ -12,7 +12,7 @@ There are a few other people who have attempted to create APIs or scrapers of Mo
 - https://github.com/mastahyeti/mountain_project (Unofficial MountainProject API written in Ruby)
 - ~~https://github.com/dcohen21/8a.nu-Scraper (8a.nu scraper written in Python)~~ (Taken down by DMCA, but data is still accessible [here](https://www.kaggle.com/dcohen21/8anu-climbing-logbook)
 
-Most of these haven't been updated in a while. And I figured I'd learn something by creating my own. I'm familiar with C# so I decided to use that and [HttpAgility](https://html-agility-pack.net/) to do my own scraping.
+Most of these haven't been updated in a while. And I figured I'd learn something by creating my own. I'm familiar with C# so I decided to use that and [AngleSharp](https://anglesharp.github.io/) to do my own scraping.
 
 ------------
 
