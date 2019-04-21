@@ -1,9 +1,9 @@
-﻿using HtmlAgilityPack;
+﻿using AngleSharp.Dom;
+using AngleSharp.Html.Dom;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
@@ -14,39 +14,29 @@ namespace MountainProjectDBBuilder
     {
         public static List<DestArea> GetDestAreas()
         {
-            HtmlWeb web = new HtmlWeb();
-            HtmlDocument doc = web.Load(Common.BaseUrl);
-
             List<DestArea> destAreas = new List<DestArea>();
-            List<HtmlNode> destAreaNodes = doc.DocumentNode.Descendants("a").Where(x => x.Attributes["href"] != null &&
+
+            IHtmlDocument doc = Common.GetHtmlDoc(Common.BaseUrl);
+            List<IElement> destAreaNodes = doc.GetElementsByTagName("a").Where(x => x.Attributes["href"] != null &&
                                                                                     Common.MatchesStateUrlRegex(x.Attributes["href"].Value)).ToList();
-            //Filter out duplicates
             destAreaNodes = (from s in destAreaNodes
-                         orderby s.InnerText
-                         group s by s.Attributes["href"].Value into g
-                         select g.First()).ToList();
+                             orderby s.TextContent
+                             group s by s.Attributes["href"].Value into g
+                             select g.First()).ToList();
 
             //Move international to the end
-            HtmlNode internationalArea = destAreaNodes.Find(p => p.InnerText == "International");
+            IElement internationalArea = destAreaNodes.Find(p => p.TextContent == "International");
             destAreaNodes.Remove(internationalArea);
             destAreaNodes.Add(internationalArea);
 
-            destAreas = Parsers.PopulateAreas(destAreaNodes);
+            //Convert to DestArea objects
+            destAreaNodes.ForEach(p => 
+            {
+                DestArea currentArea = new DestArea(p.TextContent, p.Attributes["href"].Value);
+                destAreas.Add(currentArea);
+            });
 
             return destAreas;
-        }
-
-        public static List<DestArea> PopulateAreas(List<HtmlNode> inputNodes)
-        {
-            List<DestArea> result = new List<DestArea>();
-            foreach (HtmlNode destArea in inputNodes)
-            {
-                DestArea currentArea = new DestArea(destArea.InnerText,
-                                                    destArea.Attributes["href"].Value);
-                result.Add(currentArea);
-            }
-
-            return result;
         }
 
         public static void PopulateSubDestAreas(DestArea inputArea)
@@ -54,16 +44,14 @@ namespace MountainProjectDBBuilder
             Common.Log("[PopulateSubDestAreas] Populating subAreas for " + inputArea.Name);
             List<SubDestArea> subAreas = new List<SubDestArea>();
 
-            HtmlWeb web = new HtmlWeb();
-            HtmlDocument doc = web.Load(inputArea.URL);
+            IHtmlDocument doc = Common.GetHtmlDoc(inputArea.URL);
+            IElement leftColumnDiv = doc.GetElementsByTagName("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
+            List<IElement> htmlSubAreas = doc.GetElementsByTagName("a").Where(p => p.ParentElement.ParentElement.ParentElement == leftColumnDiv).ToList();
+            htmlSubAreas.RemoveAll(p => p.ParentElement.ParentElement.Attributes["id"] != null && p.ParentElement.ParentElement.Attributes["id"].Value == "nearbyMTBRides");
 
-            HtmlNode leftColumnDiv = doc.DocumentNode.Descendants("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
-            List<HtmlNode> htmlSubAreas = doc.DocumentNode.Descendants("a").Where(p => p.ParentNode.ParentNode.ParentNode == leftColumnDiv).ToList();
-            htmlSubAreas.RemoveAll(p => p.ParentNode.ParentNode.Attributes["id"] != null && p.ParentNode.ParentNode.Attributes["id"].Value == "nearbyMTBRides");
-
-            foreach (HtmlNode node in htmlSubAreas)
+            foreach (IElement node in htmlSubAreas)
             {
-                SubDestArea subArea = new SubDestArea(node.InnerText, node.Attributes["href"].Value);
+                SubDestArea subArea = new SubDestArea(node.TextContent, node.Attributes["href"].Value);
 
                 if (subAreas.Where(p => p.URL == subArea.URL).FirstOrDefault() != null)
                     throw new Exception("Item already exists in subAreas list: " + subArea.URL);
@@ -81,18 +69,16 @@ namespace MountainProjectDBBuilder
             List<TimeSpan> subsubareaParseTimes = new List<TimeSpan>();
             List<SubDestArea> subAreas = new List<SubDestArea>();
 
-            HtmlWeb web = new HtmlWeb();
-            HtmlDocument doc = web.Load(inputSubArea.URL);
-
-            HtmlNode leftColumnDiv = doc.DocumentNode.Descendants("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
-            List<HtmlNode> htmlSubAreas = doc.DocumentNode.Descendants("a").Where(p => p.ParentNode.ParentNode.ParentNode == leftColumnDiv).ToList();
-            htmlSubAreas.RemoveAll(p => (p.ParentNode.ParentNode.Attributes["id"] != null && p.ParentNode.ParentNode.Attributes["id"].Value == "nearbyMTBRides") ||
+            IHtmlDocument doc = Common.GetHtmlDoc(inputSubArea.URL);
+            IElement leftColumnDiv = doc.GetElementsByTagName("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
+            List<IElement> htmlSubAreas = doc.GetElementsByTagName("a").Where(p => p.ParentElement.ParentElement.ParentElement == leftColumnDiv).ToList();
+            htmlSubAreas.RemoveAll(p => p.ParentElement.ParentElement.Attributes["id"] != null && p.ParentElement.ParentElement.Attributes["id"].Value == "nearbyMTBRides" ||
                                         (p.Attributes["href"] != null && p.Attributes["href"].Value == "#"));
 
-            foreach (HtmlNode node in htmlSubAreas)
+            foreach (IElement node in htmlSubAreas)
             {
                 Stopwatch subsubareaStopwatch = Stopwatch.StartNew();
-                SubDestArea subArea = new SubDestArea(node.InnerText, node.Attributes["href"].Value);
+                SubDestArea subArea = new SubDestArea(node.TextContent, node.Attributes["href"].Value);
 
                 if (subAreas.Where(p => p.URL == subArea.URL).FirstOrDefault() != null)
                     throw new Exception("Item already exists in subAreas list: " + subArea.URL);
@@ -105,7 +91,6 @@ namespace MountainProjectDBBuilder
                 $"({popSubSubDestAreasStopwatch.Elapsed}. {subAreas.Count} subsubareas, avg {Common.Average(subsubareaParseTimes)})");
 
             inputSubArea.SubSubAreas = subAreas;
-            return;
         }
 
         public static void PopulateRoutes(SubDestArea inputSubDestArea)
@@ -115,22 +100,20 @@ namespace MountainProjectDBBuilder
             List<TimeSpan> routeParseTimes = new List<TimeSpan>();
             List<Route> routes = new List<Route>();
 
-            HtmlWeb web = new HtmlWeb();
-            HtmlDocument doc = web.Load(inputSubDestArea.URL);
-
-            HtmlNode routesTable = doc.DocumentNode.Descendants("table").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table").FirstOrDefault();
+            IHtmlDocument doc = Common.GetHtmlDoc(inputSubDestArea.URL);
+            IElement routesTable = doc.GetElementsByTagName("table").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table").FirstOrDefault();
 
             if (routesTable == null)
             {
-                HtmlNode leftColumnDiv = doc.DocumentNode.Descendants("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
-                List<HtmlNode> htmlWalls = doc.DocumentNode.Descendants("a").Where(p => p.ParentNode.ParentNode.ParentNode == leftColumnDiv).ToList();
-                htmlWalls.RemoveAll(p => p.ParentNode.ParentNode.Attributes["id"] != null && p.ParentNode.ParentNode.Attributes["id"].Value == "nearbyMTBRides");
+                IElement leftColumnDiv = doc.GetElementsByTagName("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
+                List<IElement> htmlSubAreas = doc.GetElementsByTagName("a").Where(p => p.ParentElement.ParentElement.ParentElement == leftColumnDiv).ToList();
+                htmlSubAreas.RemoveAll(p => p.ParentElement.ParentElement.Attributes["id"] != null && p.ParentElement.ParentElement.Attributes["id"].Value == "nearbyMTBRides");
 
-                if (htmlWalls.Count == 0)
+                if (htmlSubAreas.Count == 0)
                     return;
             }
 
-            List<HtmlNode> htmlRoutes = routesTable == null ? new List<HtmlNode>() : routesTable.Descendants("a").ToList();
+            List<IElement> htmlRoutes = routesTable == null ? new List<IElement>() : routesTable.GetElementsByTagName("a").ToList();
 
             if (htmlRoutes.Count == 0) //This is for "subsubareas"
             {
@@ -140,12 +123,10 @@ namespace MountainProjectDBBuilder
                     subArea.Statistics = PopulateStatistics(subArea.URL);
                     PopulateRoutes(subArea);
                 }
-
-                return;
             }
             else
             {
-                foreach (HtmlNode node in htmlRoutes)
+                foreach (IElement node in htmlRoutes)
                 {
                     Stopwatch routeStopwatch = Stopwatch.StartNew();
 
@@ -157,53 +138,50 @@ namespace MountainProjectDBBuilder
                     routes.Add(route);
                     routeParseTimes.Add(routeStopwatch.Elapsed);
                 }
+
+                Common.Log($"[PopulateRoutes] Done with subDestArea: {inputSubDestArea.Name} " +
+                    $"({popRoutesStopwatch.Elapsed}. {routes.Count} routes, avg {Common.Average(routeParseTimes)})");
+
+                inputSubDestArea.Routes = routes;
             }
-
-            Common.Log($"[PopulateRoutes] Done with subDestArea: {inputSubDestArea.Name} " +
-                $"({popRoutesStopwatch.Elapsed}. {routes.Count} routes, avg {Common.Average(routeParseTimes)})");
-
-            inputSubDestArea.Routes = routes;
-            return;
         }
 
         public static Route ParseRoute(string inputURL)
         {
-            HtmlWeb routeWeb = new HtmlWeb();
-            HtmlDocument routeDoc = routeWeb.Load(inputURL);
+            IHtmlDocument doc = Common.GetHtmlDoc(inputURL);
+            string routeName = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
 
-            string routeName = Regex.Replace(routeDoc.DocumentNode.Descendants("h1").FirstOrDefault().InnerText, @"<[^>]*>", "").Replace("\n", "").Trim();
-
-            string type = HttpUtility.HtmlDecode(routeDoc.DocumentNode.Descendants("tr").Where(p => p.Descendants("td").FirstOrDefault().InnerText.Contains("Type:")).FirstOrDefault()
-                                        .Descendants("td").ToList()[1].InnerText).Trim();
+            //Get Route type
+            string type = HttpUtility.HtmlDecode(doc.GetElementsByTagName("tr").Where(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Type:")).FirstOrDefault()
+                                        .GetElementsByTagName("td").ToList()[1].TextContent).Trim();
             Route.RouteType routeType = ParseRouteType(type);
 
-            List<HtmlNode> gradesOnPage = routeDoc.DocumentNode.Descendants("span").Where(x => x.Attributes["class"] != null &&
+            //Get Route grade
+            List<IElement> gradesOnPage = doc.GetElementsByTagName("span").Where(x => x.Attributes["class"] != null &&
                                                                                                (x.Attributes["class"].Value == "rateHueco" || x.Attributes["class"].Value == "rateYDS")).ToList();
-            HtmlNode sidebar = routeDoc.DocumentNode.Descendants("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
-            gradesOnPage.RemoveAll(p => sidebar.Descendants().Contains(p));
-
+            IElement sidebar = doc.GetElementsByTagName("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
+            gradesOnPage.RemoveAll(p => sidebar.Descendents().Contains(p));
             string routeGrade = "";
-            HtmlNode gradeElement = gradesOnPage.FirstOrDefault();
+            IElement gradeElement = gradesOnPage.FirstOrDefault();
             if (gradeElement != null)
-                routeGrade = HttpUtility.HtmlDecode(gradeElement.InnerText.Replace(gradeElement.Descendants("a").FirstOrDefault().InnerText, "")).Trim();
+                routeGrade = HttpUtility.HtmlDecode(gradeElement.TextContent.Replace(gradeElement.GetElementsByTagName("a").FirstOrDefault().TextContent, "")).Trim();
 
             Route route = new Route(routeName, routeGrade, routeType, inputURL);
-            route.AdditionalInfo = ParseAdditionalRouteInfo(type);
+            route.AdditionalInfo = ParseAdditionalRouteInfo(type); //Get Route additional info
 
             return route;
         }
 
         public static AreaStats PopulateStatistics(string inputURL)
         {
-            HtmlWeb web = new HtmlWeb();
-            HtmlDocument doc = web.Load(inputURL);
+            IHtmlDocument doc = Common.GetHtmlDoc(inputURL);
 
             int boulderCount = 0, TRCount = 0, sportCount = 0, tradCount = 0;
 
-            string boulderString = Regex.Match(doc.DocumentNode.InnerHtml, "\\[\\\"Boulder\\\",\\s*\\d*\\]").Value;
-            string TRString = Regex.Match(doc.DocumentNode.InnerHtml, "\\[\\\"Toprope\\\",\\s*\\d*\\]").Value;
-            string sportString = Regex.Match(doc.DocumentNode.InnerHtml, "\\[\\\"Sport\\\",\\s*\\d*\\]").Value;
-            string tradString = Regex.Match(doc.DocumentNode.InnerHtml, "\\[\\\"Trad\\\",\\s*\\d*\\]").Value;
+            string boulderString = Regex.Match(doc.DocumentElement.InnerHtml, "\\[\\\"Boulder\\\",\\s*\\d*\\]").Value;
+            string TRString = Regex.Match(doc.DocumentElement.InnerHtml, "\\[\\\"Toprope\\\",\\s*\\d*\\]").Value;
+            string sportString = Regex.Match(doc.DocumentElement.InnerHtml, "\\[\\\"Sport\\\",\\s*\\d*\\]").Value;
+            string tradString = Regex.Match(doc.DocumentElement.InnerHtml, "\\[\\\"Trad\\\",\\s*\\d*\\]").Value;
 
             if (!string.IsNullOrEmpty(boulderString))
             {
