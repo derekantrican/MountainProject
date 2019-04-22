@@ -49,7 +49,7 @@ namespace MountainProjectDBBuilder
             return destAreas;
         }
 
-        public static void ParseArea(Area inputArea, bool recursive = true)
+        public static async void ParseArea(Area inputArea, bool recursive = true)
         {
             Stopwatch areaStopwatch = Stopwatch.StartNew();
             IHtmlDocument doc = Common.GetHtmlDoc(inputArea.URL);
@@ -57,7 +57,7 @@ namespace MountainProjectDBBuilder
             if (string.IsNullOrEmpty(inputArea.Name))
                 inputArea.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
 
-            inputArea.Statistics = PopulateStatistics(inputArea.URL);
+            inputArea.Statistics = await PopulateStatistics(inputArea.URL);
 
             //Get Area's routes
             IElement routesTable = doc.GetElementsByTagName("table").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table").FirstOrDefault();
@@ -93,10 +93,10 @@ namespace MountainProjectDBBuilder
             Common.Log($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
         }
 
-        public static void ParseRoute(Route inputRoute)
+        public static async void ParseRoute(Route inputRoute)
         {
             Stopwatch routeStopwatch = Stopwatch.StartNew();
-            IHtmlDocument doc = Common.GetHtmlDoc(inputRoute.URL);
+            IHtmlDocument doc = await Task.Run(() => Common.GetHtmlDoc(inputRoute.URL));
 
             inputRoute.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
 
@@ -124,9 +124,9 @@ namespace MountainProjectDBBuilder
             doc.Dispose();
         }
 
-        public static AreaStats PopulateStatistics(string inputURL)
+        public static async Task<AreaStats> PopulateStatistics(string inputURL)
         {
-            IHtmlDocument doc = Common.GetHtmlDoc(inputURL);
+            IHtmlDocument doc = await Task.Run(() => Common.GetHtmlDoc(inputURL));
 
             int boulderCount = 0, TRCount = 0, sportCount = 0, tradCount = 0;
 

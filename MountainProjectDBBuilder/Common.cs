@@ -190,5 +190,25 @@ namespace MountainProjectDBBuilder
 
             return doc;
         }
+
+        public static async Task<IHtmlDocument> GetHtmlDocAsync(string url)
+        {
+            HtmlParser parser = new HtmlParser();
+            string html = "";
+            using (HttpClient client = new HttpClient())
+            {
+                using (HttpResponseMessage response = await client.GetAsync(url))
+                {
+                    using (HttpContent content = response.Content)
+                    {
+                        html = await content.ReadAsStringAsync();
+                    }
+                }
+            }
+
+            IHtmlDocument doc = await parser.ParseDocumentAsync(html);
+
+            return doc;
+        }
     }
 }
