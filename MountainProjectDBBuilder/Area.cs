@@ -1,14 +1,10 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Text.RegularExpressions;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace MountainProjectDBBuilder
 {
-    public class DestArea
+    public class Area
     {
         #region Public Properties
         private string name { get; set; }
@@ -31,19 +27,22 @@ namespace MountainProjectDBBuilder
         }
         public string URL { get; set; }
         public AreaStats Statistics { get; set; }
-        public List<SubDestArea> SubAreas { get; set; }
+        public List<Area> SubAreas { get; set; }
+        public List<Route> Routes { get; set; }
         #endregion Public Properties
 
-        public DestArea()
+        public Area()
         {
-            SubAreas = new List<SubDestArea>();
+            SubAreas = new List<Area>();
+            Routes = new List<Route>();
         }
 
-        public DestArea(string name, string url)
+        public Area(string name, string url)
         {
             this.Name = WebUtility.HtmlDecode(name);
             this.URL = url;
-            SubAreas = new List<SubDestArea>();
+            Routes = new List<Route>();
+            SubAreas = new List<Area>();
         }
 
         public override string ToString()

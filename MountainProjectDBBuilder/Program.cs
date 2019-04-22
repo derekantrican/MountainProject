@@ -30,7 +30,7 @@ namespace MountainProjectDBBuilder
 
         private static void ParseInputString()
         {
-            List<DestArea> destAreas = DeserializeAreas(serializationPath);
+            List<Area> destAreas = DeserializeAreas(serializationPath);
             if (destAreas.Count() == 0)
             {
                 Console.WriteLine("The xml either doesn't exist or is empty");
@@ -64,11 +64,11 @@ namespace MountainProjectDBBuilder
             }
         }
 
-        private static Tuple<string, string> DeepSearch(string input, List<DestArea> destAreas)
+        private static Tuple<string, string> DeepSearch(string input, List<Area> destAreas)
         {
             Tuple<int, string, string> currentResult = new Tuple<int, string, string>(int.MaxValue, "", "");
 
-            foreach (DestArea destArea in destAreas)
+            foreach (Area destArea in destAreas)
             {
                 if (input.ToLower().Contains(destArea.Name.ToLower()))
                 {
@@ -93,9 +93,9 @@ namespace MountainProjectDBBuilder
             return new Tuple<string, string>(currentResult.Item2, currentResult.Item3);
         }
 
-        private static Tuple<int, string, string> SearchSubAreasForMatch(string input, List<SubDestArea> subAreas, Tuple<int, string, string> currentResult)
+        private static Tuple<int, string, string> SearchSubAreasForMatch(string input, List<Area> subAreas, Tuple<int, string, string> currentResult)
         {
-            foreach (SubDestArea subDestArea in subAreas)
+            foreach (Area subDestArea in subAreas)
             {
                 if (input.ToLower().Contains(subDestArea.Name.ToLower()))
                 {
@@ -112,9 +112,9 @@ namespace MountainProjectDBBuilder
                     }
                 }
 
-                if (subDestArea.SubSubAreas != null &&
-                    subDestArea.SubSubAreas.Count() > 0)
-                    currentResult = SearchSubAreasForMatch(input, subDestArea.SubSubAreas, currentResult);
+                if (subDestArea.SubAreas != null &&
+                    subDestArea.SubAreas.Count() > 0)
+                    currentResult = SearchSubAreasForMatch(input, subDestArea.SubAreas, currentResult);
 
                 if (subDestArea.Routes != null &&
                     subDestArea.Routes.Count() > 0)
@@ -161,27 +161,7 @@ namespace MountainProjectDBBuilder
             {
                 totalTimer.Start();
 
-                List<DestArea> destAreas = Parsers.GetDestAreas();
-
-                foreach (DestArea area in destAreas)
-                {
-                    areaTimer.Restart();
-                    Common.Log($"[MAIN] Current Area: {area.Name}");
-                    area.Statistics = Parsers.PopulateStatistics(area.URL);
-                    Parsers.PopulateSubDestAreas(area);
-                    foreach (SubDestArea subArea in area.SubAreas)
-                    {
-                        Common.Log("[MAIN] Current SubArea: " + subArea.Name);
-                        Stopwatch subAreaStopwatch = Stopwatch.StartNew();
-                        subArea.Statistics = Parsers.PopulateStatistics(subArea.URL);
-                        Parsers.PopulateRoutes(subArea);
-
-                        Common.Log($"[MAIN] Done with subArea: {subArea.Name} ({subAreaStopwatch.Elapsed})");
-                    }
-
-                    Common.Log($"[MAIN] Done with area: {area.Name} ({areaTimer.Elapsed})");
-                }
-
+                List<Area> destAreas = Parsers.GetDestAreas();
                 Common.Log($"[MAIN] ---PROGRAM FINISHED--- ({totalTimer.Elapsed})");
                 SerializeResults(destAreas);
             }
@@ -201,28 +181,28 @@ namespace MountainProjectDBBuilder
             }
         }
 
-        private static void SerializeResults(List<DestArea> inputAreas)
+        private static void SerializeResults(List<Area> inputAreas)
         {
             Common.Log("[SerializeResults] Serializing areas to file");
             TextWriter writer = new StreamWriter(serializationPath);
-            XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<DestArea>));
+            XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<Area>));
             xmlSerializer.Serialize(writer, inputAreas);
             writer.Close();
         }
 
-        private static List<DestArea> DeserializeAreas(string xmlFilePath)
+        private static List<Area> DeserializeAreas(string xmlFilePath)
         {
             if (File.Exists(xmlFilePath))
             {
                 Common.Log("[DeserializeAreas] Deserializing areas from: " + xmlFilePath);
                 FileStream fileStream = new FileStream(xmlFilePath, FileMode.Open);
-                XmlSerializer xmlDeserializer = new XmlSerializer(typeof(List<DestArea>));
-                return (List<DestArea>)xmlDeserializer.Deserialize(fileStream);
+                XmlSerializer xmlDeserializer = new XmlSerializer(typeof(List<Area>));
+                return (List<Area>)xmlDeserializer.Deserialize(fileStream);
             }
             else
             {
                 Common.Log("[DeserializeAreas] The file " + xmlFilePath + " does not exist");
-                return new List<DestArea>();
+                return new List<Area>();
             }
         }
 
