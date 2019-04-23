@@ -75,7 +75,7 @@ namespace MountainProjectDBBuilder
             //Populate route details
             foreach (IElement routeElement in htmlRoutes)
             {
-                Route route = new Route() { URL = routeElement.Attributes["href"].Value };
+                Route route = new Route() { Name = routeElement.TextContent, URL = routeElement.Attributes["href"].Value };
                 inputArea.Routes.Add(route);
                 ParseRoute(route); //Parse route
             }
@@ -83,7 +83,7 @@ namespace MountainProjectDBBuilder
             //Populate sub area details
             foreach (IElement areaElement in htmlSubAreas)
             {
-                Area subArea = new Area() { URL = areaElement.Attributes["href"].Value };
+                Area subArea = new Area() { Name = areaElement.TextContent, URL = areaElement.Attributes["href"].Value };
                 inputArea.SubAreas.Add(subArea);
 
                 if (recursive)
@@ -98,7 +98,8 @@ namespace MountainProjectDBBuilder
             Stopwatch routeStopwatch = Stopwatch.StartNew();
             IHtmlDocument doc = Common.GetHtmlDoc(inputRoute.URL);
 
-            inputRoute.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
+            if (string.IsNullOrEmpty(inputRoute.Name))
+                inputRoute.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
 
             //Get Route type
             string type = HttpUtility.HtmlDecode(doc.GetElementsByTagName("tr").Where(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Type:")).FirstOrDefault()
@@ -119,9 +120,9 @@ namespace MountainProjectDBBuilder
 
             inputRoute.AdditionalInfo = ParseAdditionalRouteInfo(type); //Get Route additional info
 
-            Common.Log($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
-
             doc.Dispose();
+
+            Common.Log($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
         }
 
         public static AreaStats PopulateStatistics(string inputURL)
