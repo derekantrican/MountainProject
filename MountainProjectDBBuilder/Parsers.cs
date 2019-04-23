@@ -67,7 +67,7 @@ namespace MountainProjectDBBuilder
             IElement leftColumnDiv = doc.GetElementsByTagName("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
             List<IElement> htmlSubAreas = doc.GetElementsByTagName("a").Where(p => p.ParentElement.ParentElement.ParentElement == leftColumnDiv).ToList();
             htmlSubAreas.RemoveAll(p => p.ParentElement.ParentElement.Attributes["id"] != null && p.ParentElement.ParentElement.Attributes["id"].Value == "nearbyMTBRides");
-            htmlSubAreas.RemoveAll(p => !p.Attributes["href"].Value.Contains(Common.BaseUrl)); //Todo: figure out the reason why this happens and track that instead (eg like we did Attributes["id"].Value == "nearbyMTBRides" above)
+            htmlSubAreas.RemoveAll(p => !p.Attributes["href"].Value.Contains(Common.BaseUrl));
 
             //Dispose doc
             doc.Dispose();
