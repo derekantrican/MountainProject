@@ -163,7 +163,7 @@ namespace MountainProjectDBBuilder
 
                 List<Area> destAreas = Parsers.GetDestAreas();
                 foreach (Area destArea in destAreas)
-                    Parsers.ParseArea(destArea);
+                    Parsers.ParseArea(destArea, state: destArea.Name);
 
                 Common.Log($"[MAIN] ---PROGRAM FINISHED--- ({totalTimer.Elapsed})");
                 Console.Read();
