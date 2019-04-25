@@ -46,7 +46,7 @@ namespace MountainProjectDBBuilder
             return destAreas;
         }
 
-        public static async void ParseArea(Area inputArea, bool recursive = true, string state = "" /*temp*/)
+        public static async Task ParseAreaAsync(Area inputArea, bool recursive = true, string state = "" /*temp*/)
         {
             Stopwatch areaStopwatch = Stopwatch.StartNew();
             IHtmlDocument doc = await Common.GetHtmlDocAsync(inputArea.URL);
@@ -74,7 +74,7 @@ namespace MountainProjectDBBuilder
             {
                 Route route = new Route() { Name = routeElement.TextContent, URL = routeElement.Attributes["href"].Value };
                 inputArea.Routes.Add(route);
-                ParseRoute(route); //Parse route
+                ParseRouteAsync(route); //Parse route
             }
 
             //Populate sub area details
@@ -84,13 +84,13 @@ namespace MountainProjectDBBuilder
                 inputArea.SubAreas.Add(subArea);
 
                 if (recursive)
-                    ParseArea(subArea, state: state); //Parse sub area
+                    ParseAreaAsync(subArea, state: state); //Parse sub area
             }
 
             Common.Log($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas [located in {state}]");
         }
 
-        public static async void ParseRoute(Route inputRoute)
+        public static async Task ParseRouteAsync(Route inputRoute)
         {
             Stopwatch routeStopwatch = Stopwatch.StartNew();
             IHtmlDocument doc = await Common.GetHtmlDocAsync(inputRoute.URL);
