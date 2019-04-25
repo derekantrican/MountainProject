@@ -57,7 +57,7 @@ namespace MountainProjectDBBuilder
             if (string.IsNullOrEmpty(inputArea.Name))
                 inputArea.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
 
-            inputArea.Statistics = PopulateStatistics(inputArea.URL);
+            inputArea.Statistics = PopulateStatistics(doc);
 
             //Get Area's routes
             IElement routesTable = doc.GetElementsByTagName("table").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table").FirstOrDefault();
@@ -125,10 +125,8 @@ namespace MountainProjectDBBuilder
             Common.Log($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
         }
 
-        public static AreaStats PopulateStatistics(string inputURL)
+        public static AreaStats PopulateStatistics(IHtmlDocument doc)
         {
-            IHtmlDocument doc = Common.GetHtmlDoc(inputURL);
-
             int boulderCount = 0, TRCount = 0, sportCount = 0, tradCount = 0;
 
             string boulderString = Regex.Match(doc.DocumentElement.InnerHtml, "\\[\\\"Boulder\\\",\\s*\\d*\\]").Value;
