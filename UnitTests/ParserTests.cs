@@ -67,7 +67,7 @@ namespace UnitTests
                 "International"
             };
 
-            List<Area> destAreas = Parsers.GetDestAreas(false);
+            List<Area> destAreas = Parsers.GetDestAreas();
             List<string> resultNames = destAreas.Select(p => p.Name).ToList();
 
             CollectionAssert.AreEqual(expectedDestAreas, resultNames);

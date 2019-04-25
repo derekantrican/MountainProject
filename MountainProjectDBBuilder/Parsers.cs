@@ -12,7 +12,7 @@ namespace MountainProjectDBBuilder
 {
     public static class Parsers
     {
-        public static List<Area> GetDestAreas(bool recursive = true)
+        public static List<Area> GetDestAreas()
         {
             List<Area> destAreas = new List<Area>();
 
@@ -39,9 +39,6 @@ namespace MountainProjectDBBuilder
                 };
 
                 destAreas.Add(destArea);
-
-                if (recursive)
-                    ParseArea(destArea); //Parse dest area
             }
 
             doc.Dispose();
