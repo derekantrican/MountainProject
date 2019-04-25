@@ -57,7 +57,7 @@ namespace MountainProjectDBBuilder
             if (string.IsNullOrEmpty(inputArea.Name))
                 inputArea.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
 
-            inputArea.Statistics = await PopulateStatistics(inputArea.URL);
+            inputArea.Statistics = PopulateStatistics(doc);
 
             //Get Area's routes
             IElement routesTable = doc.GetElementsByTagName("table").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table").FirstOrDefault();
@@ -67,7 +67,7 @@ namespace MountainProjectDBBuilder
             IElement leftColumnDiv = doc.GetElementsByTagName("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
             List<IElement> htmlSubAreas = doc.GetElementsByTagName("a").Where(p => p.ParentElement.ParentElement.ParentElement == leftColumnDiv).ToList();
             htmlSubAreas.RemoveAll(p => p.ParentElement.ParentElement.Attributes["id"] != null && p.ParentElement.ParentElement.Attributes["id"].Value == "nearbyMTBRides");
-            htmlSubAreas.RemoveAll(p => !p.Attributes["href"].Value.Contains(Common.BaseUrl)); //Todo: figure out the reason why this happens and track that instead (eg like we did Attributes["id"].Value == "nearbyMTBRides" above)
+            htmlSubAreas.RemoveAll(p => !p.Attributes["href"].Value.Contains(Common.BaseUrl));
 
             //Dispose doc
             doc.Dispose();
@@ -75,7 +75,7 @@ namespace MountainProjectDBBuilder
             //Populate route details
             foreach (IElement routeElement in htmlRoutes)
             {
-                Route route = new Route() { URL = routeElement.Attributes["href"].Value };
+                Route route = new Route() { Name = routeElement.TextContent, URL = routeElement.Attributes["href"].Value };
                 inputArea.Routes.Add(route);
                 ParseRoute(route); //Parse route
             }
@@ -83,7 +83,7 @@ namespace MountainProjectDBBuilder
             //Populate sub area details
             foreach (IElement areaElement in htmlSubAreas)
             {
-                Area subArea = new Area() { URL = areaElement.Attributes["href"].Value };
+                Area subArea = new Area() { Name = areaElement.TextContent, URL = areaElement.Attributes["href"].Value };
                 inputArea.SubAreas.Add(subArea);
 
                 if (recursive)
@@ -98,7 +98,8 @@ namespace MountainProjectDBBuilder
             Stopwatch routeStopwatch = Stopwatch.StartNew();
             IHtmlDocument doc = await Task.Run(() => Common.GetHtmlDoc(inputRoute.URL));
 
-            inputRoute.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
+            if (string.IsNullOrEmpty(inputRoute.Name))
+                inputRoute.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
 
             //Get Route type
             string type = HttpUtility.HtmlDecode(doc.GetElementsByTagName("tr").Where(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Type:")).FirstOrDefault()
@@ -119,15 +120,13 @@ namespace MountainProjectDBBuilder
 
             inputRoute.AdditionalInfo = ParseAdditionalRouteInfo(type); //Get Route additional info
 
-            Common.Log($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
-
             doc.Dispose();
+
+            Common.Log($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
         }
 
-        public static async Task<AreaStats> PopulateStatistics(string inputURL)
+        public static async Task<AreaStats> PopulateStatistics(IHtmlDocument doc)
         {
-            IHtmlDocument doc = await Task.Run(() => Common.GetHtmlDoc(inputURL));
-
             int boulderCount = 0, TRCount = 0, sportCount = 0, tradCount = 0;
 
             string boulderString = Regex.Match(doc.DocumentElement.InnerHtml, "\\[\\\"Boulder\\\",\\s*\\d*\\]").Value;
