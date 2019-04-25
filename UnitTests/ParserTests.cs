@@ -116,7 +116,7 @@ namespace UnitTests
             if (!url.Contains(Common.BaseUrl))
                 url = Common.BaseUrl + url;
 
-            AreaStats testStats = Parsers.PopulateStatistics(Common.GetHtmlDoc(url)).Result;
+            AreaStats testStats = Parsers.PopulateStatistics(Common.GetHtmlDoc(url));
 
             Assert.AreEqual(expectedStatistics, testStats.ToString());
         }
