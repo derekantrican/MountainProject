@@ -186,6 +186,7 @@ namespace MountainProjectDBBuilder
             {
                 html = client.DownloadString(url);
             }
+
             IHtmlDocument doc = parser.ParseDocument(html);
 
             return doc;
@@ -195,18 +196,12 @@ namespace MountainProjectDBBuilder
         {
             HtmlParser parser = new HtmlParser();
             string html = "";
-            using (HttpClient client = new HttpClient())
+            using (WebClient client = new WebClient())
             {
-                using (HttpResponseMessage response = await client.GetAsync(url))
-                {
-                    using (HttpContent content = response.Content)
-                    {
-                        html = await content.ReadAsStringAsync();
-                    }
-                }
+                html = await client.DownloadStringTaskAsync(url);
             }
 
-            IHtmlDocument doc = await parser.ParseDocumentAsync(html);
+            IHtmlDocument doc = parser.ParseDocument(html);
 
             return doc;
         }

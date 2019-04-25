@@ -52,7 +52,7 @@ namespace MountainProjectDBBuilder
         public static async void ParseArea(Area inputArea, bool recursive = true)
         {
             Stopwatch areaStopwatch = Stopwatch.StartNew();
-            IHtmlDocument doc = Common.GetHtmlDoc(inputArea.URL);
+            IHtmlDocument doc = await Common.GetHtmlDocAsync(inputArea.URL);
 
             if (string.IsNullOrEmpty(inputArea.Name))
                 inputArea.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
@@ -96,7 +96,7 @@ namespace MountainProjectDBBuilder
         public static async void ParseRoute(Route inputRoute)
         {
             Stopwatch routeStopwatch = Stopwatch.StartNew();
-            IHtmlDocument doc = await Task.Run(() => Common.GetHtmlDoc(inputRoute.URL));
+            IHtmlDocument doc = await Common.GetHtmlDocAsync(inputRoute.URL);
 
             if (string.IsNullOrEmpty(inputRoute.Name))
                 inputRoute.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
