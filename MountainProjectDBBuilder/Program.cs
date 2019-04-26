@@ -170,9 +170,7 @@ namespace MountainProjectDBBuilder
                 Task.WaitAll(areaTasks.ToArray());
 
                 Common.Log($"[MAIN] ---PROGRAM FINISHED--- ({totalTimer.Elapsed})");
-                Console.Read();
                 SerializeResults(destAreas);
-                Console.Read();
             }
             catch (Exception ex)
             {
