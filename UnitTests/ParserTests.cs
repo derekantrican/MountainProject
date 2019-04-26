@@ -67,7 +67,7 @@ namespace UnitTests
                 "International"
             };
 
-            List<Area> destAreas = Parsers.GetDestAreas(false);
+            List<Area> destAreas = Parsers.GetDestAreas();
             List<string> resultNames = destAreas.Select(p => p.Name).ToList();
 
             CollectionAssert.AreEqual(expectedDestAreas, resultNames);
@@ -83,7 +83,7 @@ namespace UnitTests
 
             Area testSubDestArea = new Area() { URL = url };
 
-            Parsers.ParseArea(testSubDestArea, false);
+            Parsers.ParseAreaAsync(testSubDestArea, false).Wait();
 
             int subsubareasCount = testSubDestArea.SubAreas == null ? 0 : testSubDestArea.SubAreas.Count;
             Assert.AreEqual(expectedSubAreas, subsubareasCount);
@@ -100,7 +100,7 @@ namespace UnitTests
                 url = Common.BaseUrl + url;
 
             Route testRoute = new Route() { URL = url };
-            Parsers.ParseRoute(testRoute);
+            Parsers.ParseRouteAsync(testRoute).Wait();
 
             Assert.AreEqual(expectedName, testRoute.Name);
             Assert.AreEqual(expectedType, testRoute.Type);
@@ -129,7 +129,7 @@ namespace UnitTests
                 url = Common.BaseUrl + url;
 
             Route testRoute = new Route() { URL = url };
-            Parsers.ParseRoute(testRoute);
+            Parsers.ParseRouteAsync(testRoute).Wait();
 
             Assert.AreEqual(expectedAdditionalInfo, testRoute.AdditionalInfo);
         }

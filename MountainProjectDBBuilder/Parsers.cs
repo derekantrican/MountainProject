@@ -12,7 +12,7 @@ namespace MountainProjectDBBuilder
 {
     public static class Parsers
     {
-        public static List<Area> GetDestAreas(bool recursive = true)
+        public static List<Area> GetDestAreas()
         {
             List<Area> destAreas = new List<Area>();
 
@@ -39,9 +39,6 @@ namespace MountainProjectDBBuilder
                 };
 
                 destAreas.Add(destArea);
-
-                if (recursive)
-                    ParseArea(destArea); //Parse dest area
             }
 
             doc.Dispose();
@@ -49,10 +46,10 @@ namespace MountainProjectDBBuilder
             return destAreas;
         }
 
-        public static void ParseArea(Area inputArea, bool recursive = true)
+        public static async Task ParseAreaAsync(Area inputArea, bool recursive = true)
         {
             Stopwatch areaStopwatch = Stopwatch.StartNew();
-            IHtmlDocument doc = Common.GetHtmlDoc(inputArea.URL);
+            IHtmlDocument doc = await Common.GetHtmlDocAsync(inputArea.URL);
 
             if (string.IsNullOrEmpty(inputArea.Name))
                 inputArea.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
@@ -77,7 +74,7 @@ namespace MountainProjectDBBuilder
             {
                 Route route = new Route() { Name = routeElement.TextContent, URL = routeElement.Attributes["href"].Value };
                 inputArea.Routes.Add(route);
-                ParseRoute(route); //Parse route
+                await ParseRouteAsync(route); //Parse route
             }
 
             //Populate sub area details
@@ -87,16 +84,16 @@ namespace MountainProjectDBBuilder
                 inputArea.SubAreas.Add(subArea);
 
                 if (recursive)
-                    ParseArea(subArea); //Parse sub area
+                    await ParseAreaAsync(subArea); //Parse sub area
             }
 
-            Common.Log($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
+            Common.Log($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count}");
         }
 
-        public static void ParseRoute(Route inputRoute)
+        public static async Task ParseRouteAsync(Route inputRoute)
         {
             Stopwatch routeStopwatch = Stopwatch.StartNew();
-            IHtmlDocument doc = Common.GetHtmlDoc(inputRoute.URL);
+            IHtmlDocument doc = await Common.GetHtmlDocAsync(inputRoute.URL);
 
             if (string.IsNullOrEmpty(inputRoute.Name))
                 inputRoute.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
