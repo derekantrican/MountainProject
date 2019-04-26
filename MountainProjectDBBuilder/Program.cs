@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.Xml.Serialization;
 using System.Net.Mail;
 using static MountainProjectDBBuilder.Enums;
+using System.Threading.Tasks;
 
 namespace MountainProjectDBBuilder
 {
@@ -162,8 +163,11 @@ namespace MountainProjectDBBuilder
                 totalTimer.Start();
 
                 List<Area> destAreas = Parsers.GetDestAreas();
+                List<Task> areaTasks = new List<Task>();
                 foreach (Area destArea in destAreas)
-                    Parsers.ParseAreaAsync(destArea, state: destArea.Name);
+                    areaTasks.Add(Parsers.ParseAreaAsync(destArea, state: destArea.Name));
+
+                Task.WaitAll(areaTasks.ToArray());
 
                 Common.Log($"[MAIN] ---PROGRAM FINISHED--- ({totalTimer.Elapsed})");
                 Console.Read();

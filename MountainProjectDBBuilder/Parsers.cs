@@ -74,7 +74,7 @@ namespace MountainProjectDBBuilder
             {
                 Route route = new Route() { Name = routeElement.TextContent, URL = routeElement.Attributes["href"].Value };
                 inputArea.Routes.Add(route);
-                ParseRouteAsync(route); //Parse route
+                await ParseRouteAsync(route); //Parse route
             }
 
             //Populate sub area details
@@ -84,7 +84,7 @@ namespace MountainProjectDBBuilder
                 inputArea.SubAreas.Add(subArea);
 
                 if (recursive)
-                    ParseAreaAsync(subArea, state: state); //Parse sub area
+                    await ParseAreaAsync(subArea, state: state); //Parse sub area
             }
 
             Common.Log($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas [located in {state}]");
