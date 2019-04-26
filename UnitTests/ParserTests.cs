@@ -9,6 +9,12 @@ namespace UnitTests
     [TestClass]
     public class ParserTests
     {
+        /* ===========================================================================
+         *              NOTE ABOUT FAILED TESTS:
+         * - If a test fails (particularly the statistics test), first make sure it 
+         *   is not due to updates on the MountainProject website
+         * ===========================================================================
+         */
         [TestMethod]
         public void TestGetDestAreas()
         {
