@@ -165,7 +165,7 @@ namespace MountainProjectDBBuilder
                 List<Area> destAreas = Parsers.GetDestAreas();
                 List<Task> areaTasks = new List<Task>();
                 foreach (Area destArea in destAreas)
-                    areaTasks.Add(Parsers.ParseAreaAsync(destArea, state: destArea.Name));
+                    areaTasks.Add(Parsers.ParseAreaAsync(destArea));
 
                 Task.WaitAll(areaTasks.ToArray());
 
