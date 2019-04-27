@@ -87,7 +87,7 @@ namespace MountainProjectDBBuilder
                     await ParseAreaAsync(subArea); //Parse sub area
             }
 
-            Common.Log($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count}");
+            Common.Log($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
         }
 
         public static async Task ParseRouteAsync(Route inputRoute)
