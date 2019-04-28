@@ -14,5 +14,13 @@ namespace MountainProjectDBBuilder
             SubDestArea,
             Route
         }
+
+        public enum Mode
+        {
+            None,
+            Parse,
+            ParseDirect,
+            BuildDB
+        }
     }
 }

@@ -8,6 +8,7 @@ using System.Xml.Serialization;
 using System.Net.Mail;
 using static MountainProjectDBBuilder.Enums;
 using System.Threading.Tasks;
+using Mono.Options;
 
 namespace MountainProjectDBBuilder
 {
@@ -17,16 +18,123 @@ namespace MountainProjectDBBuilder
         static Stopwatch totalTimer = new Stopwatch();
         static Stopwatch areaTimer = new Stopwatch();
         static Exception exception = null;
+        static Mode ProgramMode = Mode.None;
+        static string CmdLineInput = "";
 
         static void Main(string[] args)
         {
             Common.LogPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss") + " Log.txt");
             serializationPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), "MountainProjectAreas.xml");
 
-            if (args.Contains("parse"))
-                ParseInputString();
-            else
-                BuildDB();
+            ParseStartupArguments(args);
+
+            switch (ProgramMode)
+            {
+                case Mode.BuildDB:
+                    BuildDB();
+                    break;
+                case Mode.Parse:
+                    ParseInputString();
+                    break;
+                case Mode.ParseDirect:
+                    ParseCmdLine();
+                    break;
+            }
+        }
+
+        private static void ParseStartupArguments(string[] args)
+        {
+            if (args.Length > 0)
+            {
+                bool help = false;
+
+                var p = new OptionSet()
+                {
+                    {
+                        "h|help|?",
+                        "Show help",
+                        v => help = v != null
+                    },
+                    {
+                        "build",
+                        "Build xml from MountainProject",
+                        (arg) => { ProgramMode = Mode.BuildDB; }
+                    },
+                    {
+                        "parse",
+                        "Parse an input string",
+                        (arg) => { ProgramMode = Mode.Parse; }
+                    },
+                    {
+                        "parsedirect=",
+                        "Parse a string directly (usage: parsedirect \"Red River Gorge]\"",
+                        (arg) => { ProgramMode = Mode.ParseDirect; CmdLineInput = arg; }
+                    }
+                };
+
+                p.Parse(args);
+                if (help)
+                {
+                    p.WriteOptionDescriptions(Console.Out);
+                    Environment.Exit(0);
+                }
+            }
+        }
+
+        private static void ParseCmdLine()
+        {
+            //Todo: move this command to the bot code
+            //Todo: instead of getting a string back from DeepSearch, get back an Area/Route
+
+            Common.ShowLogLines = false;
+
+            List<Area> destAreas = DeserializeAreas(serializationPath);
+            if (destAreas.Count() == 0)
+                Environment.Exit(2); //File not found
+
+            Thing result = DeepSearch(CmdLineInput, destAreas);
+            if (string.IsNullOrEmpty(result.URL))
+                Environment.Exit(13); //The data is invalid
+
+            Console.WriteLine(GetFormattedStringForBot(result)); //Todo: print out a formatted string
+        }
+
+        private static string GetFormattedStringForBot(Thing inputThing)
+        {
+            string result = "I found the following info:\n\n";
+
+            if (inputThing is Area)
+            {
+                Area inputArea = inputThing as Area;
+                result += $"{inputArea.Name} [{inputArea.Statistics}]\n" +
+                         inputArea.URL;
+
+                //Todo: additional info to add
+                // - located in {destArea}
+                // - popular routes
+            }
+            else if (inputThing is Route)
+            {
+                Route inputRoute = inputThing as Route;
+                result += $"{inputRoute.Name} [{inputRoute.Type} {inputRoute.Grade}";
+
+                if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
+                    result += " " + inputRoute.AdditionalInfo;
+
+                result += "]\n";
+                result += inputRoute.URL;
+
+                //Todo: additional info to add
+                // - located in {destArea}
+                // - # of bolts (if sport)
+            }
+
+            return result;
+        }
+
+        private static string CreateMDLink(string linkText, string linkUrl)
+        {
+            return $"[{linkText}]({linkUrl})";
         }
 
         private static void ParseInputString()
@@ -47,17 +155,31 @@ namespace MountainProjectDBBuilder
                 string input = Console.ReadLine();
 
                 Stopwatch stopwatch = Stopwatch.StartNew();
-                Tuple<string, string> result = DeepSearch(input, destAreas);
+                Thing result = DeepSearch(input, destAreas);
                 stopwatch.Stop();
 
-                if (string.IsNullOrEmpty(result.Item1))
+                if (string.IsNullOrEmpty(result.URL))
                     Console.WriteLine("Nothing found matching \"" + input + "\"");
                 else
                 {
-                    Console.WriteLine("The following was found: " + result.Item1 + " (Found in " + stopwatch.ElapsedMilliseconds + " ms)");
+                    string resultStr = "";
+                    if (result is Area)
+                        resultStr = $"{result.Name} [{(result as Area).Statistics.ToString()}]";
+                    else if (result is Route)
+                    {
+                        Route resultRoute = result as Route;
+                        resultStr = $"{resultRoute.Name} [{resultRoute.Type} {resultRoute.Grade}";
+
+                        if (!string.IsNullOrEmpty(resultRoute.AdditionalInfo))
+                            resultStr += " " + resultRoute.AdditionalInfo;
+
+                        resultStr += "]";
+                    }
+
+                    Console.WriteLine("The following was found: " + resultStr + " (Found in " + stopwatch.ElapsedMilliseconds + " ms)");
                     Console.WriteLine("Open result? (y/n) ");
                     if (Console.ReadLine() == "y")
-                        Process.Start(result.Item2);
+                        Process.Start(result.URL);
                 }
 
                 Console.WriteLine("Search something else? (y/n) ");
@@ -65,25 +187,17 @@ namespace MountainProjectDBBuilder
             }
         }
 
-        private static Tuple<string, string> DeepSearch(string input, List<Area> destAreas)
+        private static Thing DeepSearch(string input, List<Area> destAreas)
         {
-            Tuple<int, string, string> currentResult = new Tuple<int, string, string>(int.MaxValue, "", "");
+            Tuple<Thing, int> currentResult = new Tuple<Thing, int>(new Thing(), int.MaxValue);
 
             foreach (Area destArea in destAreas)
             {
                 if (input.ToLower().Contains(destArea.Name.ToLower()))
                 {
-                    //int destAreaSimilarilty = StringMatch(input, destArea.Name);
-                    //if (destAreaSimilarilty < currentResult.Item1)
-                    //{
-                    //    string resultStr = destArea.Name;
-                    //    resultStr += " [" + destArea.Statistics.ToString() + "]";
-                    //    currentResult = new Tuple<int, string, string>(destAreaSimilarilty, resultStr, destArea.URL);
-                    //}
-
                     //If we're matching the name of a destArea (eg a State), we'll assume that the route/area is within that state
-                    currentResult = SearchSubAreasForMatch(input, destArea.SubAreas, new Tuple<int, string, string>(int.MaxValue, "", ""));
-                    return new Tuple<string, string>(currentResult.Item2, currentResult.Item3);
+                    currentResult = SearchSubAreasForMatch(input, destArea.SubAreas, new Tuple<Thing, int>(new Thing(), int.MaxValue));
+                    return currentResult.Item1;
                 }
 
                 if (destArea.SubAreas != null &&
@@ -91,10 +205,10 @@ namespace MountainProjectDBBuilder
                     currentResult = SearchSubAreasForMatch(input, destArea.SubAreas, currentResult);
             }
 
-            return new Tuple<string, string>(currentResult.Item2, currentResult.Item3);
+            return currentResult.Item1;
         }
 
-        private static Tuple<int, string, string> SearchSubAreasForMatch(string input, List<Area> subAreas, Tuple<int, string, string> currentResult)
+        private static Tuple<Thing, int> SearchSubAreasForMatch(string input, List<Area> subAreas, Tuple<Thing, int> currentResult)
         {
             foreach (Area subDestArea in subAreas)
             {
@@ -105,12 +219,8 @@ namespace MountainProjectDBBuilder
                     ///but both are in the search string? This will probably return a match for the area instead of the route)
                     int subDestSimilarilty = Common.StringMatch(input, subDestArea.Name);
 
-                    if (subDestSimilarilty < currentResult.Item1)
-                    {
-                        string resultStr = subDestArea.Name;
-                        resultStr += " [" + subDestArea.Statistics.ToString() + "]";
-                        currentResult = new Tuple<int, string, string>(subDestSimilarilty, resultStr, subDestArea.URL);
-                    }
+                    if (subDestSimilarilty < currentResult.Item2)
+                        currentResult = new Tuple<Thing, int>(subDestArea, subDestSimilarilty);
                 }
 
                 if (subDestArea.SubAreas != null &&
@@ -125,7 +235,7 @@ namespace MountainProjectDBBuilder
             return currentResult;
         }
 
-        private static Tuple<int, string, string> SearchRoutes(string input, List<Route> routes, Tuple<int, string, string> currentResult)
+        private static Tuple<Thing, int> SearchRoutes(string input, List<Route> routes, Tuple<Thing, int> currentResult)
         {
             List<Route> matches = routes.Where(p => input.ToLower().Contains(p.Name.ToLower())).ToList();
 
@@ -136,19 +246,8 @@ namespace MountainProjectDBBuilder
                 ///but both are in the search string? This will probably return a match for the area instead of the route)
                 int similarity = Common.StringMatch(input, route.Name);
 
-                if (similarity < currentResult.Item1)
-                {
-                    string resultStr = route.Name;
-                    resultStr += " [" + route.Type;
-                    resultStr += " " + route.Grade;
-
-                    if (!string.IsNullOrEmpty(route.AdditionalInfo))
-                        resultStr += " " + route.AdditionalInfo;
-
-                    resultStr += "]";
-
-                    currentResult = new Tuple<int, string, string>(similarity, resultStr, route.URL);
-                }
+                if (similarity < currentResult.Item2)
+                    currentResult = new Tuple<Thing, int>(route, similarity);
             }
 
             return currentResult;
@@ -161,6 +260,7 @@ namespace MountainProjectDBBuilder
             try
             {
                 totalTimer.Start();
+                Common.Log("Starting DB Build...");
 
                 List<Area> destAreas = Parsers.GetDestAreas();
                 List<Task> areaTasks = new List<Task>();
