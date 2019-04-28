@@ -8,8 +8,19 @@ using System.Net;
 
 namespace MountainProjectDBBuilder
 {
-    public class Route
+    public class Route : Thing
     {
+        public Route(string name, string grade, RouteType type, string url) : base(name, url)
+        {
+            this.Grade = grade;
+            this.Type = type;
+        }
+
+        public Route()
+        {
+
+        }
+
         public enum RouteType
         {
             Boulder,
@@ -18,43 +29,9 @@ namespace MountainProjectDBBuilder
             Trad
         }
 
-        #region Public Properties
-        private string name { get; set; }
-        public string Name
-        {
-            get
-            {
-                return name;
-            }
-            set
-            {
-                if (Regex.Match(value, ", The", RegexOptions.IgnoreCase).Success)
-                {
-                    value = Regex.Replace(value, ", The", "", RegexOptions.IgnoreCase);
-                    value = "The " + value;
-                }
-
-                name = value.Trim();
-            }
-        }
         public string Grade { get; set; }
         public RouteType Type { get; set; }
-        public string URL { get; set; }
         public string AdditionalInfo { get; set; }
-        #endregion Public Properties
-
-        public Route()
-        {
-
-        }
-
-        public Route(string name, string grade, RouteType type, string url)
-        {
-            this.Name = WebUtility.HtmlDecode(name);
-            this.Grade = grade;
-            this.Type = type;
-            this.URL = url;
-        }
 
         public override string ToString()
         {

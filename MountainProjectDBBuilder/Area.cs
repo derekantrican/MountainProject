@@ -4,32 +4,13 @@ using System.Text.RegularExpressions;
 
 namespace MountainProjectDBBuilder
 {
-    public class Area
+    public class Area : Thing
     {
-        #region Public Properties
-        private string name { get; set; }
-        public string Name
+        public Area(string name, string url) : base(name, url)
         {
-            get
-            {
-                return name;
-            }
-            set
-            {
-                if (Regex.Match(value, ", The", RegexOptions.IgnoreCase).Success)
-                {
-                    value = Regex.Replace(value, ", The", "", RegexOptions.IgnoreCase);
-                    value = "The " + value;
-                }
-
-                name = value.Trim();
-            }
+            Routes = new List<Route>();
+            SubAreas = new List<Area>();
         }
-        public string URL { get; set; }
-        public AreaStats Statistics { get; set; }
-        public List<Area> SubAreas { get; set; }
-        public List<Route> Routes { get; set; }
-        #endregion Public Properties
 
         public Area()
         {
@@ -37,17 +18,10 @@ namespace MountainProjectDBBuilder
             Routes = new List<Route>();
         }
 
-        public Area(string name, string url)
-        {
-            this.Name = WebUtility.HtmlDecode(name);
-            this.URL = url;
-            Routes = new List<Route>();
-            SubAreas = new List<Area>();
-        }
-
-        public override string ToString()
-        {
-            return Name;
-        }
+        #region Public Properties
+        public AreaStats Statistics { get; set; }
+        public List<Area> SubAreas { get; set; }
+        public List<Route> Routes { get; set; }
+        #endregion Public Properties
     }
 }
