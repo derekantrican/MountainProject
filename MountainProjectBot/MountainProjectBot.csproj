@@ -152,5 +152,11 @@
     <None Include="App.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MountainProjectModels\MountainProjectModels.csproj">
+      <Project>{ba6405d4-00b4-4945-bc5d-5fbc214b91e1}</Project>
+      <Name>MountainProjectModels</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

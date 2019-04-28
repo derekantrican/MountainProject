@@ -6,17 +6,17 @@ using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace MountainProjectDBBuilder
+namespace MountainProjectModels
 {
-    public class Thing
+    public class MPObject
     {
-        public Thing(string name, string url)
+        public MPObject(string name, string url)
         {
             this.Name = WebUtility.HtmlDecode(name);
             this.URL = url;
         }
 
-        public Thing()
+        public MPObject()
         {
 
         }

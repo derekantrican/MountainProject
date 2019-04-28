@@ -66,6 +66,10 @@
       <Project>{a69989d0-fd83-4b73-ba54-e6c0c53de49d}</Project>
       <Name>MountainProjectDBBuilder</Name>
     </ProjectReference>
+    <ProjectReference Include="..\MountainProjectModels\MountainProjectModels.csproj">
+      <Project>{BA6405D4-00B4-4945-BC5D-5FBC214B91E1}</Project>
+      <Name>MountainProjectModels</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

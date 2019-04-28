@@ -1,4 +1,5 @@
-﻿using RedditSharp;
+﻿using MountainProjectModels;
+using RedditSharp;
 using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
@@ -8,28 +9,29 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace MountainProjectBot
 {
     class Program
     {
-        static string xmlPath = @"C:\Users\derek.antrican\source\repos\MountainProjectDBBuilder\MountainProjectDBBuilder\bin\Debug\MountainProjectAreas.xml";
-        static string dbEXE = @"C:\Users\derek.antrican\source\repos\MountainProjectDBBuilder\MountainProjectDBBuilder\bin\Debug\MountainProjectDBBuilder.exe";
-        static string repliedToComments = "RepliedTo.txt";
+        static string xmlPath = @"..\..\MountainProjectDBBuilder\bin\MountainProjectAreas.xml";
+        static string credentialsPath = @"..\Credentials.txt";
+        static string repliedToCommentsPath = "RepliedTo.txt";
         static Reddit redditService;
         static Subreddit subReddit;
         static string botKeyword = "!MountainProject";
 
         static void Main(string[] args)
         {
-            //CheckRequiredPaths();
+            CheckRequiredFiles();
             AuthReddit().Wait();
             DoBotLoop().Wait();
         }
 
-        private static void CheckRequiredPaths()
+        private static void CheckRequiredFiles()
         {
-            Console.WriteLine("Checking required paths...");
+            Console.WriteLine("Checking required files...");
 
             if (!File.Exists(xmlPath))
             {
@@ -37,25 +39,37 @@ namespace MountainProjectBot
                 ExitAfterKeyPress();
             }
 
-            if (!File.Exists(dbEXE))
+            if (!File.Exists(credentialsPath))
             {
-                Console.WriteLine("The db reader does not exist");
+                Console.WriteLine("The credentials file does not exist");
                 ExitAfterKeyPress();
             }
 
-            Console.WriteLine("All required paths present");
+            Console.WriteLine("All required files present");
         }
 
         private static async Task AuthReddit()
         {
             Console.WriteLine("Authorizing Reddit...");
 
-            //These things should not be here if I'm going to publish it to github. Read from an xml file instead
-            WebAgent webAgent = new BotWebAgent("MountainProjectBot", "Helenelove9", "WvZ1ULvIBGunVw", "i884CTdWsnUn9dcrWL3CCmFhho8", "http://example.com");
+            WebAgent webAgent = GetWebAgentCredentialsFromFile();
             redditService = new Reddit(webAgent, true);
             subReddit = await redditService.GetSubredditAsync("/r/DerekAntProjectTest");
 
             Console.WriteLine("Reddit authed successfully");
+        }
+
+        private static WebAgent GetWebAgentCredentialsFromFile()
+        {
+            List<string> fileLines = File.ReadAllLines(credentialsPath).ToList();
+
+            string username = fileLines.FirstOrDefault(p => p.Contains("username")).Split(':')[1];
+            string password = fileLines.FirstOrDefault(p => p.Contains("password")).Split(':')[1];
+            string clientId = fileLines.FirstOrDefault(p => p.Contains("clientId")).Split(':')[1];
+            string clientSecret = fileLines.FirstOrDefault(p => p.Contains("clientSecret")).Split(':')[1];
+            string redirectUri = fileLines.FirstOrDefault(p => p.Contains("redirectUri")).Split(':')[1];
+
+            return new BotWebAgent(username, password, clientId, clientSecret, redirectUri);
         }
 
         private static async Task DoBotLoop()
@@ -107,40 +121,122 @@ namespace MountainProjectBot
             //reported, we can quickly find the source comment
 
             replyText += "\n\n";
-            replyText += CreateLink("Feedback", "mailto://derekantrican@gmail.com&subject=Mountain%20Project%20Bot%20Feedback") + " | "; //Todo: make this a Google Form later (and somehow include comment id)
-            replyText += CreateLink("Donate", "https://www.paypal.me/derekantrican") + " | ";
-            replyText += CreateLink("GitHub", "https://github.com/derekantrican/MountainProjectScraper") + " | "; //Todo: direct this to the proper GitHub later
+            replyText += CreateMDLink("Feedback", "mailto://derekantrican@gmail.com&subject=Mountain%20Project%20Bot%20Feedback") + " | "; //Todo: make this a Google Form later (and somehow include comment id)
+            replyText += CreateMDLink("Donate", "https://www.paypal.me/derekantrican") + " | ";
+            replyText += CreateMDLink("GitHub", "https://github.com/derekantrican/MountainProjectScraper") + " | ";
 
             return replyText;
+        }
+
+        private static string GetFormattedString(MPObject inputMountainProjectObject)
+        {
+            string result = "I found the following info:\n\n";
+
+            if (inputMountainProjectObject is Area)
+            {
+                Area inputArea = inputMountainProjectObject as Area;
+                result += $"{inputArea.Name} [{inputArea.Statistics}]\n" +
+                         inputArea.URL;
+
+                //Todo: additional info to add
+                // - located in {destArea}
+                // - popular routes
+            }
+            else if (inputMountainProjectObject is Route)
+            {
+                Route inputRoute = inputMountainProjectObject as Route;
+                result += $"{inputRoute.Name} [{inputRoute.Type} {inputRoute.Grade}";
+
+                if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
+                    result += " " + inputRoute.AdditionalInfo;
+
+                result += "]\n";
+                result += inputRoute.URL;
+
+                //Todo: additional info to add
+                // - located in {destArea}
+                // - # of bolts (if sport)
+            }
+
+            return result;
         }
 
         private static string SearchMountainProject(string searchText)
         {
             Console.WriteLine("Getting info from MountainProject");
 
-            Process p = new Process();
-            p.StartInfo = new ProcessStartInfo()
+            List<Area> destAreas = DeserializeAreas();
+            if (destAreas.Count == 0)
+                return null;
+
+            MPObject result = DeepSearch(searchText, destAreas);
+            if (string.IsNullOrEmpty(result.URL))
+                return null;
+
+            return GetFormattedString(result);
+        }
+
+        private static MPObject DeepSearch(string input, List<Area> destAreas)
+        {
+            foreach (Area destArea in destAreas)
             {
-                FileName = dbEXE,
-                Arguments = $"-parsedirect \"{searchText}\"",
-                UseShellExecute = false,
-                RedirectStandardOutput = true
-            };
+                if (input.ToLower().Contains(destArea.Name.ToLower()))
+                {
+                    //If we're matching the name of a destArea (eg a State), we'll assume that the route/area is within that state
+                    return SearchSubAreasForMatch(input, destArea.SubAreas);
+                }
 
-            p.Start();
+                if (destArea.SubAreas != null &&
+                    destArea.SubAreas.Count() > 0)
+                    return SearchSubAreasForMatch(input, destArea.SubAreas);
+            }
 
-            string output = p.StandardOutput.ReadToEnd();
-            p.WaitForExit();
+            return new MPObject(); //default
+        }
 
-            return output;
+        private static MPObject SearchSubAreasForMatch(string input, List<Area> subAreas)
+        {
+            foreach (Area subDestArea in subAreas)
+            {
+                if (input.Equals(subDestArea.Name, StringComparison.InvariantCultureIgnoreCase))
+                    return subDestArea;
+
+                if (subDestArea.SubAreas != null &&
+                    subDestArea.SubAreas.Count() > 0)
+                    return SearchSubAreasForMatch(input, subDestArea.SubAreas);
+
+                if (subDestArea.Routes != null &&
+                    subDestArea.Routes.Count() > 0)
+                    return SearchRoutes(input, subDestArea.Routes);
+            }
+
+            return new MPObject(); //default
+        }
+
+        private static MPObject SearchRoutes(string input, List<Route> routes)
+        {
+            foreach (Route route in routes)
+            {
+                if (input.Equals(route.Name, StringComparison.InvariantCultureIgnoreCase))
+                    return route;
+            }
+
+            return new MPObject(); //default
+        }
+
+        private static List<Area> DeserializeAreas()
+        {
+            FileStream fileStream = new FileStream(xmlPath, FileMode.Open);
+            XmlSerializer xmlDeserializer = new XmlSerializer(typeof(List<Area>));
+            return (List<Area>)xmlDeserializer.Deserialize(fileStream);
         }
 
         private static List<Comment> RemoveAlreadyRepliedTo(List<Comment> comments)
         {
-            if (!File.Exists(repliedToComments))
-                File.Create(repliedToComments).Close();
+            if (!File.Exists(repliedToCommentsPath))
+                File.Create(repliedToCommentsPath).Close();
 
-            string text = File.ReadAllText(repliedToComments);
+            string text = File.ReadAllText(repliedToCommentsPath);
             comments.RemoveAll(c => text.Contains(c.Id));
 
             return comments;
@@ -148,13 +244,13 @@ namespace MountainProjectBot
 
         private static void LogCommentBeenRepliedTo(Comment comment)
         {
-            if (!File.Exists(repliedToComments))
-                File.Create(repliedToComments).Close();
+            if (!File.Exists(repliedToCommentsPath))
+                File.Create(repliedToCommentsPath).Close();
 
-            File.AppendAllText(repliedToComments, comment.Id);
+            File.AppendAllText(repliedToCommentsPath, comment.Id);
         }
 
-        private static string CreateLink(string linkText, string linkUrl)
+        private static string CreateMDLink(string linkText, string linkUrl)
         {
             return $"[{linkText}]({linkUrl})";
         }

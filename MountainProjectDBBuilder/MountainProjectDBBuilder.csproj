@@ -56,20 +56,22 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Area.cs" />
-    <Compile Include="AreaStats.cs" />
     <Compile Include="Common.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="Options.cs" />
     <Compile Include="Parsers.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="Route.cs" />
-    <Compile Include="Thing.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
     <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\MountainProjectModels\MountainProjectModels.csproj">
+      <Project>{ba6405d4-00b4-4945-bc5d-5fbc214b91e1}</Project>
+      <Name>MountainProjectModels</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

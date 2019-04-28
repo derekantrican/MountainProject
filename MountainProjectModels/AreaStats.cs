@@ -4,22 +4,10 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MountainProjectDBBuilder
+namespace MountainProjectModels
 {
     public class AreaStats
     {
-        #region Public Properties
-        public int BouderRoutes { get; set; }
-        public int TopRopeRoutes { get; set; }
-        public int SportRoutes { get; set; }
-        public int TradRoutes { get; set; }
-        #endregion Public Properties
-
-        public AreaStats()
-        {
-
-        }
-
         public AreaStats(int numBoulder, int numTR, int numSport, int numTrad)
         {
             this.BouderRoutes = numBoulder;
@@ -27,6 +15,16 @@ namespace MountainProjectDBBuilder
             this.SportRoutes = numSport;
             this.TradRoutes = numTrad;
         }
+
+        public AreaStats()
+        {
+
+        }
+
+        public int BouderRoutes { get; set; }
+        public int TopRopeRoutes { get; set; }
+        public int SportRoutes { get; set; }
+        public int TradRoutes { get; set; }
 
         public override string ToString()
         {
