@@ -12,7 +12,6 @@ namespace MountainProjectDBBuilder
         {
             None,
             Parse,
-            ParseDirect,
             BuildDB
         }
     }

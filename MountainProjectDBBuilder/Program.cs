@@ -20,7 +20,6 @@ namespace MountainProjectDBBuilder
         static Stopwatch areaTimer = new Stopwatch();
         static Exception exception = null;
         static Mode ProgramMode = Mode.None;
-        static string CmdLineInput = "";
 
         static void Main(string[] args)
         {
@@ -36,9 +35,6 @@ namespace MountainProjectDBBuilder
                     break;
                 case Mode.Parse:
                     ParseInputString();
-                    break;
-                case Mode.ParseDirect:
-                    ParseCmdLine();
                     break;
             }
         }
@@ -65,11 +61,6 @@ namespace MountainProjectDBBuilder
                         "parse",
                         "Parse an input string",
                         (arg) => { ProgramMode = Mode.Parse; }
-                    },
-                    {
-                        "parsedirect=",
-                        "Parse a string directly (usage: parsedirect \"Red River Gorge]\"",
-                        (arg) => { ProgramMode = Mode.ParseDirect; CmdLineInput = arg; }
                     }
                 };
 
@@ -80,57 +71,6 @@ namespace MountainProjectDBBuilder
                     Environment.Exit(0);
                 }
             }
-        }
-
-        private static void ParseCmdLine()
-        {
-            //Todo: move this command to the bot code
-            //Todo: instead of getting a string back from DeepSearch, get back an Area/Route
-
-            Common.ShowLogLines = false;
-
-            List<Area> destAreas = DeserializeAreas(serializationPath);
-            if (destAreas.Count() == 0)
-                Environment.Exit(2); //File not found
-
-            MPObject result = DeepSearch(CmdLineInput, destAreas);
-            if (string.IsNullOrEmpty(result.URL))
-                Environment.Exit(13); //The data is invalid
-
-            Console.WriteLine(GetFormattedStringForBot(result)); //Todo: print out a formatted string
-        }
-
-        private static string GetFormattedStringForBot(MPObject inputThing)
-        {
-            string result = "I found the following info:\n\n";
-
-            if (inputThing is Area)
-            {
-                Area inputArea = inputThing as Area;
-                result += $"{inputArea.Name} [{inputArea.Statistics}]\n" +
-                         inputArea.URL;
-
-                //Todo: additional info to add
-                // - located in {destArea}
-                // - popular routes
-            }
-            else if (inputThing is Route)
-            {
-                Route inputRoute = inputThing as Route;
-                result += $"{inputRoute.Name} [{inputRoute.Type} {inputRoute.Grade}";
-
-                if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
-                    result += " " + inputRoute.AdditionalInfo;
-
-                result += "]\n";
-                result += inputRoute.URL;
-
-                //Todo: additional info to add
-                // - located in {destArea}
-                // - # of bolts (if sport)
-            }
-
-            return result;
         }
 
         private static void ParseInputString()
