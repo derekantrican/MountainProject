@@ -2,7 +2,7 @@
 
 This is a reddit bot for connecting [MountainProject.com](https://mountainproject.com) and the [/r/climbing](https://reddit.com/r/climbing) subreddit.
 
-## Currently this bot is "in progress" and not active
+### Currently this bot is "in progress" and not active
 
 ### Roadmap
 
