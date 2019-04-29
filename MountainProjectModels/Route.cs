@@ -2,13 +2,11 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using System.Net;
 
-namespace MountainProjectDBBuilder
+namespace MountainProjectModels
 {
-    public class Route : Thing
+    public class Route : MPObject
     {
         public Route(string name, string grade, RouteType type, string url) : base(name, url)
         {

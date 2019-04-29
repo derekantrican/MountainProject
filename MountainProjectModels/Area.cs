@@ -1,10 +1,12 @@
-﻿using System.Collections.Generic;
-using System.Net;
-using System.Text.RegularExpressions;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
-namespace MountainProjectDBBuilder
+namespace MountainProjectModels
 {
-    public class Area : Thing
+    public class Area : MPObject
     {
         public Area(string name, string url) : base(name, url)
         {
@@ -18,10 +20,8 @@ namespace MountainProjectDBBuilder
             Routes = new List<Route>();
         }
 
-        #region Public Properties
         public AreaStats Statistics { get; set; }
         public List<Area> SubAreas { get; set; }
         public List<Route> Routes { get; set; }
-        #endregion Public Properties
     }
 }

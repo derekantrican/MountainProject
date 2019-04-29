@@ -8,18 +8,10 @@ namespace MountainProjectDBBuilder
 {
     public class Enums
     {
-        public enum Thing
-        {
-            DestArea,
-            SubDestArea,
-            Route
-        }
-
         public enum Mode
         {
             None,
             Parse,
-            ParseDirect,
             BuildDB
         }
     }
