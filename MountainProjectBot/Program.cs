@@ -21,10 +21,12 @@ namespace MountainProjectBot
         static Reddit redditService;
         static Subreddit subReddit;
         static string botKeyword = "!MountainProject";
+        static List<Area> MountainProjectDestAreas = new List<Area>();
 
         static void Main(string[] args)
         {
             CheckRequiredFiles();
+            InitMountainProjectData();
             AuthReddit().Wait();
             DoBotLoop().Wait();
         }
@@ -59,6 +61,23 @@ namespace MountainProjectBot
             Console.WriteLine("Reddit authed successfully");
         }
 
+        private static void InitMountainProjectData()
+        {
+            Console.WriteLine("Deserializing info from MountainProject");
+
+            FileStream fileStream = new FileStream(xmlPath, FileMode.Open);
+            XmlSerializer xmlDeserializer = new XmlSerializer(typeof(List<Area>));
+            MountainProjectDestAreas = (List<Area>)xmlDeserializer.Deserialize(fileStream);
+
+            if (MountainProjectDestAreas.Count == 0)
+            {
+                Console.WriteLine("Problem deserializing MountainProject info");
+                Environment.Exit(13); //Invalid data
+            }
+
+            Console.WriteLine("MountainProject Info deserialized successfully");
+        }
+
         private static WebAgent GetWebAgentCredentialsFromFile()
         {
             List<string> fileLines = File.ReadAllLines(credentialsPath).ToList();
@@ -67,7 +86,7 @@ namespace MountainProjectBot
             string password = fileLines.FirstOrDefault(p => p.Contains("password")).Split(':')[1];
             string clientId = fileLines.FirstOrDefault(p => p.Contains("clientId")).Split(':')[1];
             string clientSecret = fileLines.FirstOrDefault(p => p.Contains("clientSecret")).Split(':')[1];
-            string redirectUri = fileLines.FirstOrDefault(p => p.Contains("redirectUri")).Split(':')[1];
+            string redirectUri = fileLines.FirstOrDefault(p => p.Contains("redirectUri")).Split(new[] { ':' }, 2)[1]; //Split on first occurence only because redirectUri also contains ':'
 
             return new BotWebAgent(username, password, clientId, clientSecret, redirectUri);
         }
@@ -93,7 +112,7 @@ namespace MountainProjectBot
                             Console.WriteLine($"Replied to comment {comment.Id}");
                             LogCommentBeenRepliedTo(comment);
                         }
-                        catch (RateLimitException ex)
+                        catch (RateLimitException)
                         {
                             Console.WriteLine("Rate limit hit. Postponing reply until next iteration");
                         }
@@ -116,12 +135,8 @@ namespace MountainProjectBot
 
             string replyText = routeInfo;
 
-            //Todo: here we could also add text like the auto tldr bot has (eg "feedback", "github", "donate" links).
-            //On top of that, we can add the "replyTo" comment id into those links so if there is a bug
-            //reported, we can quickly find the source comment
-
-            replyText += "\n\n";
-            replyText += CreateMDLink("Feedback", "mailto://derekantrican@gmail.com&subject=Mountain%20Project%20Bot%20Feedback") + " | "; //Todo: make this a Google Form later (and somehow include comment id)
+            replyText += "\n\nBot Links: ";
+            replyText += CreateMDLink("Feedback", "mailto://derekantrican@gmail.com&subject=Mountain%20Project%20Bot%20Feedback%20id%3A%20[" + replyTo.Id + "]") + " | "; //Todo: make this a Google Form later (and somehow include comment id)
             replyText += CreateMDLink("Donate", "https://www.paypal.me/derekantrican") + " | ";
             replyText += CreateMDLink("GitHub", "https://github.com/derekantrican/MountainProjectScraper") + " | ";
 
@@ -145,7 +160,7 @@ namespace MountainProjectBot
             else if (inputMountainProjectObject is Route)
             {
                 Route inputRoute = inputMountainProjectObject as Route;
-                result += $"{inputRoute.Name} [{inputRoute.Type} {inputRoute.Grade}";
+                result += $"{inputRoute.Name} [{inputRoute.Type} {inputRoute.Grade},";
 
                 if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
                     result += " " + inputRoute.AdditionalInfo;
@@ -164,38 +179,48 @@ namespace MountainProjectBot
         private static string SearchMountainProject(string searchText)
         {
             Console.WriteLine("Getting info from MountainProject");
+            Stopwatch searchStopwatch = Stopwatch.StartNew();
 
-            List<Area> destAreas = DeserializeAreas();
-            if (destAreas.Count == 0)
+            MPObject result = DeepSearch(searchText, MountainProjectDestAreas);
+            if (result == null)
                 return null;
 
-            MPObject result = DeepSearch(searchText, destAreas);
-            if (string.IsNullOrEmpty(result.URL))
-                return null;
+            Console.WriteLine($"Info retrieved from MountainProject (found in {searchStopwatch.ElapsedMilliseconds} ms)");
 
             return GetFormattedString(result);
         }
 
         private static MPObject DeepSearch(string input, List<Area> destAreas)
         {
+            MPObject matchedObject = null;
             foreach (Area destArea in destAreas)
             {
                 if (input.ToLower().Contains(destArea.Name.ToLower()))
                 {
                     //If we're matching the name of a destArea (eg a State), we'll assume that the route/area is within that state
-                    return SearchSubAreasForMatch(input, destArea.SubAreas);
+                    //(eg routes named "Sweet Home Alabama"). So instead of returning the destArea, we'll return a search on the
+                    //state's subareas
+                    matchedObject = SearchSubAreasForMatch(input, destArea.SubAreas);
+                    if (matchedObject != null)
+                        return matchedObject;
                 }
 
                 if (destArea.SubAreas != null &&
                     destArea.SubAreas.Count() > 0)
-                    return SearchSubAreasForMatch(input, destArea.SubAreas);
+                {
+                    matchedObject = SearchSubAreasForMatch(input, destArea.SubAreas);
+                    if (matchedObject != null)
+                        return matchedObject;
+                }
             }
 
-            return new MPObject(); //default
+            return matchedObject;
         }
 
         private static MPObject SearchSubAreasForMatch(string input, List<Area> subAreas)
         {
+            MPObject matchedObject = null;
+
             foreach (Area subDestArea in subAreas)
             {
                 if (input.Equals(subDestArea.Name, StringComparison.InvariantCultureIgnoreCase))
@@ -203,32 +228,35 @@ namespace MountainProjectBot
 
                 if (subDestArea.SubAreas != null &&
                     subDestArea.SubAreas.Count() > 0)
-                    return SearchSubAreasForMatch(input, subDestArea.SubAreas);
+                {
+                    matchedObject = SearchSubAreasForMatch(input, subDestArea.SubAreas);
+                    if (matchedObject != null)
+                        return matchedObject;
+                }
 
                 if (subDestArea.Routes != null &&
                     subDestArea.Routes.Count() > 0)
-                    return SearchRoutes(input, subDestArea.Routes);
+                {
+                    matchedObject = SearchRoutes(input, subDestArea.Routes);
+                    if (matchedObject != null)
+                        return matchedObject;
+                }
             }
 
-            return new MPObject(); //default
+            return matchedObject;
         }
 
         private static MPObject SearchRoutes(string input, List<Route> routes)
         {
+            MPObject matchedObject = null;
+
             foreach (Route route in routes)
             {
                 if (input.Equals(route.Name, StringComparison.InvariantCultureIgnoreCase))
                     return route;
             }
 
-            return new MPObject(); //default
-        }
-
-        private static List<Area> DeserializeAreas()
-        {
-            FileStream fileStream = new FileStream(xmlPath, FileMode.Open);
-            XmlSerializer xmlDeserializer = new XmlSerializer(typeof(List<Area>));
-            return (List<Area>)xmlDeserializer.Deserialize(fileStream);
+            return matchedObject;
         }
 
         private static List<Comment> RemoveAlreadyRepliedTo(List<Comment> comments)
