@@ -105,19 +105,16 @@ namespace MountainProjectBot
 
                 foreach (Comment comment in comments)
                 {
-                    string reply = GetReplyForComment(comment);
-                    if (!string.IsNullOrEmpty(reply))
+                    try
                     {
-                        try
-                        {
-                            await comment.ReplyAsync(reply);
-                            Console.WriteLine($"Replied to comment {comment.Id}");
-                            LogCommentBeenRepliedTo(comment);
-                        }
-                        catch (RateLimitException)
-                        {
-                            Console.WriteLine("Rate limit hit. Postponing reply until next iteration");
-                        }
+                        string reply = GetReplyForComment(comment);
+                        await comment.ReplyAsync(reply);
+                        Console.WriteLine($"Replied to comment {comment.Id}");
+                        LogCommentBeenRepliedTo(comment);
+                    }
+                    catch (RateLimitException)
+                    {
+                        Console.WriteLine("Rate limit hit. Postponing reply until next iteration");
                     }
                 }
 
@@ -131,11 +128,9 @@ namespace MountainProjectBot
             Console.WriteLine("Getting reply for comment");
 
             string queryText = replyTo.Body.Replace(BOTKEYWORD, "").Trim();
-            string routeInfo = SearchMountainProject(queryText);
-            if (string.IsNullOrEmpty(routeInfo))
-                return null;
-
-            string replyText = routeInfo;
+            string replyText = SearchMountainProject(queryText);
+            if (string.IsNullOrEmpty(replyText))
+                replyText = $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
 
             replyText += "\n\nBot Links: ";
             replyText += CreateMDLink("Feedback", "mailto://derekantrican@gmail.com&subject=Mountain%20Project%20Bot%20Feedback%20id%3A%20[" + replyTo.Id + "]") + " | "; //Todo: make this a Google Form later (and somehow include comment id)
