@@ -110,7 +110,8 @@ namespace MountainProjectBot
             Console.WriteLine("Getting reply for comment");
 
             string queryText = replyTo.Body.Replace(BOTKEYWORD, "").Trim();
-            string replyText = MountainProjectDataSearch.SearchMountainProject(queryText);
+            MPObject searchResult = MountainProjectDataSearch.SearchMountainProject(queryText);
+            string replyText = GetFormattedString(searchResult);
             if (string.IsNullOrEmpty(replyText))
                 replyText = $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
 
@@ -120,6 +121,42 @@ namespace MountainProjectBot
             replyText += CreateMDLink("GitHub", "https://github.com/derekantrican/MountainProjectScraper") + " | ";
 
             return replyText;
+        }
+
+        private static string GetFormattedString(MPObject inputMountainProjectObject)
+        {
+            if (inputMountainProjectObject == null)
+                return null;
+
+            string result = "I found the following info:\n\n";
+
+            if (inputMountainProjectObject is Area)
+            {
+                Area inputArea = inputMountainProjectObject as Area;
+                result += $"{inputArea.Name} [{inputArea.Statistics}]\n" +
+                         inputArea.URL;
+
+                //Todo: additional info to add
+                // - located in {destArea}
+                // - popular routes
+            }
+            else if (inputMountainProjectObject is Route)
+            {
+                Route inputRoute = inputMountainProjectObject as Route;
+                result += $"{inputRoute.Name} [{inputRoute.Type} {inputRoute.Grade},";
+
+                if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
+                    result += " " + inputRoute.AdditionalInfo;
+
+                result += "]\n";
+                result += inputRoute.URL;
+
+                //Todo: additional info to add
+                // - located in {destArea}
+                // - # of bolts (if sport)
+            }
+
+            return result;
         }
 
         private static List<Comment> RemoveAlreadyRepliedTo(List<Comment> comments)

@@ -18,9 +18,11 @@ namespace MountainProjectBot
         {
             Console.WriteLine("Deserializing info from MountainProject");
 
-            FileStream fileStream = new FileStream(xmlPath, FileMode.Open);
-            XmlSerializer xmlDeserializer = new XmlSerializer(typeof(List<Area>));
-            DestAreas = (List<Area>)xmlDeserializer.Deserialize(fileStream);
+            using (FileStream fileStream = new FileStream(xmlPath, FileMode.Open))
+            {
+                XmlSerializer xmlDeserializer = new XmlSerializer(typeof(List<Area>));
+                DestAreas = (List<Area>)xmlDeserializer.Deserialize(fileStream);
+            }
 
             if (DestAreas.Count == 0)
             {
@@ -31,49 +33,14 @@ namespace MountainProjectBot
             Console.WriteLine("MountainProject Info deserialized successfully");
         }
 
-        public static string SearchMountainProject(string searchText)
+        public static MPObject SearchMountainProject(string searchText)
         {
             Console.WriteLine("Getting info from MountainProject");
             Stopwatch searchStopwatch = Stopwatch.StartNew();
 
             MPObject result = DeepSearch(searchText, DestAreas);
-            if (result == null)
-                return null;
 
             Console.WriteLine($"Info retrieved from MountainProject (found in {searchStopwatch.ElapsedMilliseconds} ms)");
-
-            return GetFormattedString(result);
-        }
-
-        private static string GetFormattedString(MPObject inputMountainProjectObject)
-        {
-            string result = "I found the following info:\n\n";
-
-            if (inputMountainProjectObject is Area)
-            {
-                Area inputArea = inputMountainProjectObject as Area;
-                result += $"{inputArea.Name} [{inputArea.Statistics}]\n" +
-                         inputArea.URL;
-
-                //Todo: additional info to add
-                // - located in {destArea}
-                // - popular routes
-            }
-            else if (inputMountainProjectObject is Route)
-            {
-                Route inputRoute = inputMountainProjectObject as Route;
-                result += $"{inputRoute.Name} [{inputRoute.Type} {inputRoute.Grade},";
-
-                if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
-                    result += " " + inputRoute.AdditionalInfo;
-
-                result += "]\n";
-                result += inputRoute.URL;
-
-                //Todo: additional info to add
-                // - located in {destArea}
-                // - # of bolts (if sport)
-            }
 
             return result;
         }
