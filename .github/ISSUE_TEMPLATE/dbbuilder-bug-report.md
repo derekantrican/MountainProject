@@ -1,5 +1,5 @@
 ---
-name: Parser Bug report
+name: DBBuilder Bug report
 about: Report an issue with the MountainProjectDBBuilder
 title: "[DBBuilder] Bug"
 labels: bug
