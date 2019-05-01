@@ -116,7 +116,7 @@ namespace MountainProjectBot
                 replyText = $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
 
             replyText += "\n\nBot Links: ";
-            replyText += CreateMDLink("Feedback", "mailto://derekantrican@gmail.com&subject=Mountain%20Project%20Bot%20Feedback%20id%3A%20[" + replyTo.Id + "]") + " | "; //Todo: make this a Google Form later (and somehow include comment id)
+            replyText += CreateMDLink("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + replyTo.Id) + " | ";
             replyText += CreateMDLink("Donate", "https://www.paypal.me/derekantrican") + " | ";
             replyText += CreateMDLink("GitHub", "https://github.com/derekantrican/MountainProjectScraper") + " | ";
 
@@ -133,7 +133,7 @@ namespace MountainProjectBot
             if (inputMountainProjectObject is Area)
             {
                 Area inputArea = inputMountainProjectObject as Area;
-                result += $"{inputArea.Name} [{inputArea.Statistics}]\n" +
+                result += $"{inputArea.Name} [{inputArea.Statistics}]\n\n" +
                          inputArea.URL;
 
                 //Todo: additional info to add
@@ -148,7 +148,7 @@ namespace MountainProjectBot
                 if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
                     result += " " + inputRoute.AdditionalInfo;
 
-                result += "]\n";
+                result += "]\n\n";
                 result += inputRoute.URL;
 
                 //Todo: additional info to add
