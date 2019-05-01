@@ -50,7 +50,7 @@ namespace MountainProjectBot
             MPObject matchedObject = null;
             foreach (Area destArea in destAreas)
             {
-                if (input.ToLower().Contains(destArea.Name.ToLower()))
+                if (StringMatch(input, destArea.Name))
                 {
                     //If we're matching the name of a destArea (eg a State), we'll assume that the route/area is within that state
                     //(eg routes named "Sweet Home Alabama"). So instead of returning the destArea, we'll return a search on the
@@ -78,7 +78,7 @@ namespace MountainProjectBot
 
             foreach (Area subDestArea in subAreas)
             {
-                if (input.Equals(subDestArea.Name, StringComparison.InvariantCultureIgnoreCase))
+                if (StringMatch(input, subDestArea.Name))
                     return subDestArea;
 
                 if (subDestArea.SubAreas != null &&
@@ -107,11 +107,20 @@ namespace MountainProjectBot
 
             foreach (Route route in routes)
             {
-                if (input.Equals(route.Name, StringComparison.InvariantCultureIgnoreCase))
+                if (StringMatch(input, route.Name))
                     return route;
             }
 
             return matchedObject;
+        }
+
+        private static bool StringMatch(string inputString, string targetString)
+        {
+            //Match regardless of # of spaces
+            string string1 = inputString.Replace(" ", "");
+            string string2 = targetString.Replace(" ", "");
+
+            return string1.Equals(string2, StringComparison.InvariantCultureIgnoreCase);
         }
     }
 }
