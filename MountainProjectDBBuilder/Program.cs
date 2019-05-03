@@ -17,8 +17,6 @@ namespace MountainProjectDBBuilder
     {
         static string serializationPath;
         static Stopwatch totalTimer = new Stopwatch();
-        static Stopwatch areaTimer = new Stopwatch();
-        static Exception exception = null;
         static Mode ProgramMode = Mode.None;
 
         static void Main(string[] args)
@@ -31,6 +29,7 @@ namespace MountainProjectDBBuilder
             switch (ProgramMode)
             {
                 case Mode.BuildDB:
+                case Mode.None:
                     BuildDB();
                     break;
                 case Mode.Parse:
@@ -207,22 +206,25 @@ namespace MountainProjectDBBuilder
 
                 Task.WaitAll(areaTasks.ToArray());
 
+                totalTimer.Stop();
                 Common.Log($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
                 SerializeResults(destAreas);
+                SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed}", "");
             }
             catch (Exception ex)
             {
-                exception = ex;
+
                 Common.Log(Environment.NewLine + Environment.NewLine);
                 Common.Log("!!!-------------EXCEPTION ENCOUNTERED-------------!!!");
-                Common.Log("EXCEPTION MESSAGE: " + ex?.Message + Environment.NewLine);
-                Common.Log("INNER EXCEPTION: " + ex?.InnerException + Environment.NewLine);
-                Common.Log("STACK TRACE: " + ex?.StackTrace + Environment.NewLine);
+                Common.Log($"EXCEPTION MESSAGE: {ex?.Message}\n");
+                Common.Log($"INNER EXCEPTION: {ex?.InnerException}\n");
+                Common.Log($"STACK TRACE: {ex?.StackTrace}\n");
+                SendReport($"MountainProjectDBBuilder completed WITH ERRORS in {totalTimer.Elapsed}",
+                    $"{ex?.Message}\n{ex.InnerException}\n{ex?.StackTrace}");
             }
             finally
             {
                 Common.SaveLogToFile();
-                //SendReport(logPath);
             }
         }
 
@@ -251,49 +253,23 @@ namespace MountainProjectDBBuilder
             }
         }
 
-        private static void SendReport(string logPath)
+        private static void SendReport(string subject, string message)
         {
             try
             {
                 Common.Log("[SendReport] Sending report");
-                MailMessage mail = new MailMessage();
-                SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
-                mail.From = new MailAddress("derekantrican@gmail.com");
-                mail.To.Add("derekantrican@gmail.com");
+                string url = @"https://script.google.com/macros/s/AKfycbzSbnYebCUPam1CkMgkD65LzTF_EQIbxFAGBeSZpqS4Shg36m8/exec?";
+                url += $"subjectonly={Uri.EscapeDataString(subject)}&messageonly={Uri.EscapeDataString(message)}";
 
-                if (exception != null)
+                HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(url);
+                httpRequest.AutomaticDecompression = DecompressionMethods.GZip;
+
+                using (HttpWebResponse webResponse = (HttpWebResponse)httpRequest.GetResponse())
+                using (Stream stream = webResponse.GetResponseStream())
+                using (StreamReader reader = new StreamReader(stream))
                 {
-                    mail.Subject = "MountainProjectDBBuilder FAILED to finish";
-                    mail.Body = "MountainProjectDBBuilder failed to finish successfully. Here is the exception information:";
-                    mail.Body += Environment.NewLine + Environment.NewLine;
-                    mail.Body += "EXCEPTION MESSAGE: " + exception.Message + Environment.NewLine;
-                    mail.Body += "INNER EXCEPTION: " + exception.InnerException + Environment.NewLine;
-                    mail.Body += "STACK TRACE: " + exception.StackTrace + Environment.NewLine;
+                    string response = reader.ReadToEnd();
                 }
-                else
-                {
-                    mail.Subject = "MountainProjectDBBuilder successfully finished";
-                    mail.Body = "See attached files for report";
-                }
-
-                if (!string.IsNullOrEmpty(logPath) && File.Exists(logPath))
-                {
-                    Attachment logAttachment = new Attachment(logPath);
-                    mail.Attachments.Add(logAttachment);
-                }
-
-                ////XML is too big to send so will just send the log for now
-                //if (!string.IsNullOrEmpty(serializedAreasPath) && File.Exists(serializedAreasPath))
-                //{
-                //    Attachment areasAttachment = new Attachment(serializedAreasPath);
-                //    mail.Attachments.Add(areasAttachment);
-                //}
-
-                SmtpServer.Port = 587;
-                SmtpServer.Credentials = new NetworkCredential("derekantrican@gmail.com", ""/*This is where you would put the email password*/);
-                SmtpServer.EnableSsl = true;
-
-                SmtpServer.Send(mail);
             }
             catch (Exception ex)
             {

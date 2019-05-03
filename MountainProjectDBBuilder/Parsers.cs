@@ -49,6 +49,8 @@ namespace MountainProjectDBBuilder
 
         public static async Task ParseAreaAsync(Area inputArea, bool recursive = true)
         {
+            Common.Log($"Current Area: {inputArea.Name}");
+
             Stopwatch areaStopwatch = Stopwatch.StartNew();
             IHtmlDocument doc = await Common.GetHtmlDocAsync(inputArea.URL);
 
@@ -93,6 +95,8 @@ namespace MountainProjectDBBuilder
 
         public static async Task ParseRouteAsync(Route inputRoute)
         {
+            Common.Log($"Current Route: {inputRoute.Name}");
+
             Stopwatch routeStopwatch = Stopwatch.StartNew();
             IHtmlDocument doc = await Common.GetHtmlDocAsync(inputRoute.URL);
 
