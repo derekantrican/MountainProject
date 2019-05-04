@@ -40,6 +40,7 @@ namespace MountainProjectModels
             }
         }
         public string URL { get; set; }
+        public int Popularity { get; set; }
 
         public override string ToString()
         {

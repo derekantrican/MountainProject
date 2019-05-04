@@ -59,12 +59,18 @@ namespace MountainProjectDBBuilder
 
             inputArea.Statistics = PopulateStatistics(doc);
 
+            //Get Area "popularity" (page views)
+            IElement pageViewsElement = doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Page Views:"))
+                                            .GetElementsByTagName("td").ToList()[1];
+            string pageViewsStr = Regex.Match(pageViewsElement.TextContent.Replace(",", ""), @"(\d+)\s*total").Groups[1].Value;
+            inputArea.Popularity = Convert.ToInt32(pageViewsStr);
+
             //Get Area's routes
             IElement routesTable = doc.GetElementsByTagName("table").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table").FirstOrDefault();
             List<IElement> htmlRoutes = routesTable == null ? new List<IElement>() : routesTable.GetElementsByTagName("a").ToList();
 
             //Get Area's areas
-            IElement leftColumnDiv = doc.GetElementsByTagName("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
+            IElement leftColumnDiv = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar");
             List<IElement> htmlSubAreas = doc.GetElementsByTagName("a").Where(p => p.ParentElement.ParentElement.ParentElement == leftColumnDiv).ToList();
             htmlSubAreas.RemoveAll(p => p.ParentElement.ParentElement.Attributes["id"] != null && p.ParentElement.ParentElement.Attributes["id"].Value == "nearbyMTBRides");
             htmlSubAreas.RemoveAll(p => !p.Attributes["href"].Value.Contains(Common.BaseUrl));
@@ -104,14 +110,20 @@ namespace MountainProjectDBBuilder
                 inputRoute.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
 
             //Get Route type
-            string type = HttpUtility.HtmlDecode(doc.GetElementsByTagName("tr").Where(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Type:")).FirstOrDefault()
+            string type = HttpUtility.HtmlDecode(doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Type:"))
                                         .GetElementsByTagName("td").ToList()[1].TextContent).Trim();
             inputRoute.Type = ParseRouteType(type);
+
+            //Get Route "popularity" (page views)
+            IElement pageViewsElement = doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Page Views:"))
+                                            .GetElementsByTagName("td").ToList()[1];
+            string pageViewsStr = Regex.Match(pageViewsElement.TextContent.Replace(",", ""), @"(\d+)\s*total").Groups[1].Value;
+            inputRoute.Popularity = Convert.ToInt32(pageViewsStr);
 
             //Get Route grade
             List<IElement> gradesOnPage = doc.GetElementsByTagName("span").Where(x => x.Attributes["class"] != null &&
                                                                                                (x.Attributes["class"].Value == "rateHueco" || x.Attributes["class"].Value == "rateYDS")).ToList();
-            IElement sidebar = doc.GetElementsByTagName("div").Where(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar").FirstOrDefault();
+            IElement sidebar = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar");
             gradesOnPage.RemoveAll(p => sidebar.Descendents().Contains(p));
             string routeGrade = "";
             IElement gradeElement = gradesOnPage.FirstOrDefault();
