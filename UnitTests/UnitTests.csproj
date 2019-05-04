@@ -60,9 +60,14 @@
     <Compile Include="SearchTests.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{E62FB652-BB9E-433B-AE16-662A7B7CA286}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MountainProjectBot\MountainProjectBot.csproj">
       <Project>{242F7F6C-3608-443B-9890-122311F7F2B1}</Project>
       <Name>MountainProjectBot</Name>

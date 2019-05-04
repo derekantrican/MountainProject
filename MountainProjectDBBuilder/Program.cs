@@ -10,6 +10,7 @@ using static MountainProjectDBBuilder.Enums;
 using System.Threading.Tasks;
 using Mono.Options;
 using MountainProjectModels;
+using Common;
 
 namespace MountainProjectDBBuilder
 {
@@ -21,7 +22,7 @@ namespace MountainProjectDBBuilder
 
         static void Main(string[] args)
         {
-            Common.LogPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss") + " Log.txt");
+            Utilities.LogPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss") + " Log.txt");
             serializationPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), "MountainProjectAreas.xml");
 
             ParseStartupArguments(args);
@@ -152,7 +153,7 @@ namespace MountainProjectDBBuilder
                     ///!!!---THIS IS PROBABLY NOT THE BEST WAY TO DO THIS---!!!
                     ///(For instance: what if a title of a route is shorter than the area it's in
                     ///but both are in the search string? This will probably return a match for the area instead of the route)
-                    int subDestSimilarilty = Common.StringMatch(input, subDestArea.Name);
+                    int subDestSimilarilty = Utilities.StringMatch(input, subDestArea.Name);
 
                     if (subDestSimilarilty < currentResult.Item2)
                         currentResult = new Tuple<MPObject, int>(subDestArea, subDestSimilarilty);
@@ -179,7 +180,7 @@ namespace MountainProjectDBBuilder
                 ///!!!---THIS IS PROBABLY NOT THE BEST WAY TO DO THIS---!!!
                 ///(For instance: what if a title of a route is shorter than the area it's in
                 ///but both are in the search string? This will probably return a match for the area instead of the route)
-                int similarity = Common.StringMatch(input, route.Name);
+                int similarity = Utilities.StringMatch(input, route.Name);
 
                 if (similarity < currentResult.Item2)
                     currentResult = new Tuple<MPObject, int>(route, similarity);
@@ -190,12 +191,12 @@ namespace MountainProjectDBBuilder
 
         private static void BuildDB(bool showLogLines = true)
         {
-            Common.ShowLogLines = showLogLines;
+            Utilities.ShowLogLines = showLogLines;
 
             try
             {
                 totalTimer.Start();
-                Common.Log("Starting DB Build...");
+                Utilities.Log("Starting DB Build...");
 
                 List<Area> destAreas = Parsers.GetDestAreas();
                 List<Task> areaTasks = new List<Task>();
@@ -207,30 +208,30 @@ namespace MountainProjectDBBuilder
                 Task.WaitAll(areaTasks.ToArray());
 
                 totalTimer.Stop();
-                Common.Log($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
+                Utilities.Log($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
                 SerializeResults(destAreas);
                 SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed}", "");
             }
             catch (Exception ex)
             {
 
-                Common.Log(Environment.NewLine + Environment.NewLine);
-                Common.Log("!!!-------------EXCEPTION ENCOUNTERED-------------!!!");
-                Common.Log($"EXCEPTION MESSAGE: {ex?.Message}\n");
-                Common.Log($"INNER EXCEPTION: {ex?.InnerException}\n");
-                Common.Log($"STACK TRACE: {ex?.StackTrace}\n");
+                Utilities.Log(Environment.NewLine + Environment.NewLine);
+                Utilities.Log("!!!-------------EXCEPTION ENCOUNTERED-------------!!!");
+                Utilities.Log($"EXCEPTION MESSAGE: {ex?.Message}\n");
+                Utilities.Log($"INNER EXCEPTION: {ex?.InnerException}\n");
+                Utilities.Log($"STACK TRACE: {ex?.StackTrace}\n");
                 SendReport($"MountainProjectDBBuilder completed WITH ERRORS in {totalTimer.Elapsed}",
                     $"{ex?.Message}\n{ex.InnerException}\n{ex?.StackTrace}");
             }
             finally
             {
-                Common.SaveLogToFile();
+                Utilities.SaveLogToFile();
             }
         }
 
         private static void SerializeResults(List<Area> inputAreas)
         {
-            Common.Log("[SerializeResults] Serializing areas to file");
+            Utilities.Log("[SerializeResults] Serializing areas to file");
             TextWriter writer = new StreamWriter(serializationPath);
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<Area>));
             xmlSerializer.Serialize(writer, inputAreas);
@@ -241,14 +242,14 @@ namespace MountainProjectDBBuilder
         {
             if (File.Exists(xmlFilePath))
             {
-                Common.Log("[DeserializeAreas] Deserializing areas from: " + xmlFilePath);
+                Utilities.Log("[DeserializeAreas] Deserializing areas from: " + xmlFilePath);
                 FileStream fileStream = new FileStream(xmlFilePath, FileMode.Open);
                 XmlSerializer xmlDeserializer = new XmlSerializer(typeof(List<Area>));
                 return (List<Area>)xmlDeserializer.Deserialize(fileStream);
             }
             else
             {
-                Common.Log("[DeserializeAreas] The file " + xmlFilePath + " does not exist");
+                Utilities.Log("[DeserializeAreas] The file " + xmlFilePath + " does not exist");
                 return new List<Area>();
             }
         }
@@ -257,7 +258,7 @@ namespace MountainProjectDBBuilder
         {
             try
             {
-                Common.Log("[SendReport] Sending report");
+                Utilities.Log("[SendReport] Sending report");
                 string url = @"https://script.google.com/macros/s/AKfycbzSbnYebCUPam1CkMgkD65LzTF_EQIbxFAGBeSZpqS4Shg36m8/exec?";
                 url += $"subjectonly={Uri.EscapeDataString(subject)}&messageonly={Uri.EscapeDataString(message)}";
 
@@ -273,7 +274,7 @@ namespace MountainProjectDBBuilder
             }
             catch (Exception ex)
             {
-                Common.Log("[SendReport] Could not send email: " + ex.Message);
+                Utilities.Log("[SendReport] Could not send email: " + ex.Message);
             }
         }
     }

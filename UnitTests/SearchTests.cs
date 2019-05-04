@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Common;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MountainProjectBot;
 using MountainProjectModels;
 using System;

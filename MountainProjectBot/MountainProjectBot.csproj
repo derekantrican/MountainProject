@@ -145,7 +145,6 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="MountainProjectDataSearch.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
@@ -154,6 +153,10 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\Common\Common.csproj">
+      <Project>{E62FB652-BB9E-433B-AE16-662A7B7CA286}</Project>
+      <Name>Common</Name>
+    </ProjectReference>
     <ProjectReference Include="..\MountainProjectModels\MountainProjectModels.csproj">
       <Project>{ba6405d4-00b4-4945-bc5d-5fbc214b91e1}</Project>
       <Name>MountainProjectModels</Name>

@@ -11,6 +11,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MountainProjectBot", "Mount
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MountainProjectModels", "MountainProjectModels\MountainProjectModels.csproj", "{BA6405D4-00B4-4945-BC5D-5FBC214B91E1}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "Common\Common.csproj", "{E62FB652-BB9E-433B-AE16-662A7B7CA286}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -33,6 +35,10 @@ Global
 		{BA6405D4-00B4-4945-BC5D-5FBC214B91E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{BA6405D4-00B4-4945-BC5D-5FBC214B91E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{BA6405D4-00B4-4945-BC5D-5FBC214B91E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{E62FB652-BB9E-433B-AE16-662A7B7CA286}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E62FB652-BB9E-433B-AE16-662A7B7CA286}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E62FB652-BB9E-433B-AE16-662A7B7CA286}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E62FB652-BB9E-433B-AE16-662A7B7CA286}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

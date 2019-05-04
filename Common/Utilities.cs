@@ -5,14 +5,13 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
-using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace MountainProjectDBBuilder
+namespace Common
 {
-    public static class Common
+    public static class Utilities
     {
         public static string BaseUrl = "https://www.mountainproject.com";
         public static string LogPath;

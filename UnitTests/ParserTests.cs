@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using Common;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MountainProjectDBBuilder;
 using MountainProjectModels;
@@ -85,8 +86,8 @@ namespace UnitTests
         [DataRow("/area/108184422/deception-wall", 0, 17)]
         public void TestSubAreaParse(string url, int expectedSubAreas, int expectedRoutes)
         {
-            if (!url.Contains(Common.BaseUrl))
-                url = Common.BaseUrl + url;
+            if (!url.Contains(Utilities.BaseUrl))
+                url = Utilities.BaseUrl + url;
 
             Area testSubDestArea = new Area() { URL = url };
 
@@ -103,8 +104,8 @@ namespace UnitTests
         [DataRow("/route/111859673/side-dish", "Side Dish", Route.RouteType.Sport, "5.10c")]
         public void TestRouteParse(string url, string expectedName, Route.RouteType expectedType, string expectedGrade)
         {
-            if (!url.Contains(Common.BaseUrl))
-                url = Common.BaseUrl + url;
+            if (!url.Contains(Utilities.BaseUrl))
+                url = Utilities.BaseUrl + url;
 
             Route testRoute = new Route() { URL = url };
             Parsers.ParseRouteAsync(testRoute).Wait();
@@ -120,10 +121,10 @@ namespace UnitTests
         [DataRow("/route/111859673/side-dish", "")] //Statistics aren't generated for routes
         public void TestStatisticsParse(string url, string expectedStatistics)
         {
-            if (!url.Contains(Common.BaseUrl))
-                url = Common.BaseUrl + url;
+            if (!url.Contains(Utilities.BaseUrl))
+                url = Utilities.BaseUrl + url;
 
-            AreaStats testStats = Parsers.PopulateStatistics(Common.GetHtmlDoc(url));
+            AreaStats testStats = Parsers.PopulateStatistics(Utilities.GetHtmlDoc(url));
 
             Assert.AreEqual(expectedStatistics, testStats.ToString());
         }
@@ -132,8 +133,8 @@ namespace UnitTests
         [DataRow("/route/111859673/side-dish", "50 ft")]
         public void TestAdditionalInfoParse(string url, string expectedAdditionalInfo)
         {
-            if (!url.Contains(Common.BaseUrl))
-                url = Common.BaseUrl + url;
+            if (!url.Contains(Utilities.BaseUrl))
+                url = Utilities.BaseUrl + url;
 
             Route testRoute = new Route() { URL = url };
             Parsers.ParseRouteAsync(testRoute).Wait();

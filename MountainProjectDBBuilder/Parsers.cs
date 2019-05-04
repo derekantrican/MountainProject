@@ -1,5 +1,6 @@
 ﻿using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
+using Common;
 using MountainProjectModels;
 using System;
 using System.Collections.Generic;
@@ -17,9 +18,9 @@ namespace MountainProjectDBBuilder
         {
             List<Area> destAreas = new List<Area>();
 
-            IHtmlDocument doc = Common.GetHtmlDoc(Common.BaseUrl);
+            IHtmlDocument doc = Utilities.GetHtmlDoc(Utilities.BaseUrl);
             List<IElement> destAreaNodes = doc.GetElementsByTagName("a").Where(x => x.Attributes["href"] != null &&
-                                                                                    Common.MatchesStateUrlRegex(x.Attributes["href"].Value)).ToList();
+                                                                                    Utilities.MatchesStateUrlRegex(x.Attributes["href"].Value)).ToList();
             destAreaNodes = (from s in destAreaNodes
                              orderby s.TextContent
                              group s by s.Attributes["href"].Value into g
@@ -49,10 +50,10 @@ namespace MountainProjectDBBuilder
 
         public static async Task ParseAreaAsync(Area inputArea, bool recursive = true)
         {
-            Common.Log($"Current Area: {inputArea.Name}");
+            Utilities.Log($"Current Area: {inputArea.Name}");
 
             Stopwatch areaStopwatch = Stopwatch.StartNew();
-            IHtmlDocument doc = await Common.GetHtmlDocAsync(inputArea.URL);
+            IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL);
 
             if (string.IsNullOrEmpty(inputArea.Name))
                 inputArea.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
@@ -73,7 +74,7 @@ namespace MountainProjectDBBuilder
             IElement leftColumnDiv = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar");
             List<IElement> htmlSubAreas = doc.GetElementsByTagName("a").Where(p => p.ParentElement.ParentElement.ParentElement == leftColumnDiv).ToList();
             htmlSubAreas.RemoveAll(p => p.ParentElement.ParentElement.Attributes["id"] != null && p.ParentElement.ParentElement.Attributes["id"].Value == "nearbyMTBRides");
-            htmlSubAreas.RemoveAll(p => !p.Attributes["href"].Value.Contains(Common.BaseUrl));
+            htmlSubAreas.RemoveAll(p => !p.Attributes["href"].Value.Contains(Utilities.BaseUrl));
 
             //Dispose doc
             doc.Dispose();
@@ -96,15 +97,15 @@ namespace MountainProjectDBBuilder
                     await ParseAreaAsync(subArea); //Parse sub area
             }
 
-            Common.Log($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
+            Utilities.Log($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
         }
 
         public static async Task ParseRouteAsync(Route inputRoute)
         {
-            Common.Log($"Current Route: {inputRoute.Name}");
+            Utilities.Log($"Current Route: {inputRoute.Name}");
 
             Stopwatch routeStopwatch = Stopwatch.StartNew();
-            IHtmlDocument doc = await Common.GetHtmlDocAsync(inputRoute.URL);
+            IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL);
 
             if (string.IsNullOrEmpty(inputRoute.Name))
                 inputRoute.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
@@ -136,7 +137,7 @@ namespace MountainProjectDBBuilder
 
             doc.Dispose();
 
-            Common.Log($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
+            Utilities.Log($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
         }
 
         public static AreaStats PopulateStatistics(IHtmlDocument doc)
