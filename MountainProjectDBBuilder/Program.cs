@@ -75,8 +75,8 @@ namespace MountainProjectDBBuilder
 
         private static void ParseInputString()
         {
-            List<Area> destAreas = DeserializeAreas(serializationPath);
-            if (destAreas.Count() == 0)
+            MountainProjectDataSearch.InitMountainProjectData(serializationPath);
+            if (MountainProjectDataSearch.DestAreas.Count() == 0)
             {
                 Console.WriteLine("The xml either doesn't exist or is empty");
                 Environment.Exit(0);
@@ -91,7 +91,7 @@ namespace MountainProjectDBBuilder
                 string input = Console.ReadLine();
 
                 Stopwatch stopwatch = Stopwatch.StartNew();
-                MPObject result = DeepSearch(input, destAreas);
+                MPObject result = MountainProjectDataSearch.SearchMountainProject(input);
                 stopwatch.Stop();
 
                 if (string.IsNullOrEmpty(result.URL))
@@ -121,72 +121,6 @@ namespace MountainProjectDBBuilder
                 Console.WriteLine("Search something else? (y/n) ");
                 keepSearching = Console.ReadLine();
             }
-        }
-
-        private static MPObject DeepSearch(string input, List<Area> destAreas)
-        {
-            Tuple<MPObject, int> currentResult = new Tuple<MPObject, int>(new MPObject(), int.MaxValue);
-
-            foreach (Area destArea in destAreas)
-            {
-                if (input.ToLower().Contains(destArea.Name.ToLower()))
-                {
-                    //If we're matching the name of a destArea (eg a State), we'll assume that the route/area is within that state
-                    currentResult = SearchSubAreasForMatch(input, destArea.SubAreas, new Tuple<MPObject, int>(new MPObject(), int.MaxValue));
-                    return currentResult.Item1;
-                }
-
-                if (destArea.SubAreas != null &&
-                    destArea.SubAreas.Count() > 0)
-                    currentResult = SearchSubAreasForMatch(input, destArea.SubAreas, currentResult);
-            }
-
-            return currentResult.Item1;
-        }
-
-        private static Tuple<MPObject, int> SearchSubAreasForMatch(string input, List<Area> subAreas, Tuple<MPObject, int> currentResult)
-        {
-            foreach (Area subDestArea in subAreas)
-            {
-                if (input.ToLower().Contains(subDestArea.Name.ToLower()))
-                {
-                    ///!!!---THIS IS PROBABLY NOT THE BEST WAY TO DO THIS---!!!
-                    ///(For instance: what if a title of a route is shorter than the area it's in
-                    ///but both are in the search string? This will probably return a match for the area instead of the route)
-                    int subDestSimilarilty = Utilities.StringMatch(input, subDestArea.Name);
-
-                    if (subDestSimilarilty < currentResult.Item2)
-                        currentResult = new Tuple<MPObject, int>(subDestArea, subDestSimilarilty);
-                }
-
-                if (subDestArea.SubAreas != null &&
-                    subDestArea.SubAreas.Count() > 0)
-                    currentResult = SearchSubAreasForMatch(input, subDestArea.SubAreas, currentResult);
-
-                if (subDestArea.Routes != null &&
-                    subDestArea.Routes.Count() > 0)
-                    currentResult = SearchRoutes(input, subDestArea.Routes, currentResult);
-            }
-
-            return currentResult;
-        }
-
-        private static Tuple<MPObject, int> SearchRoutes(string input, List<Route> routes, Tuple<MPObject, int> currentResult)
-        {
-            List<Route> matches = routes.Where(p => input.ToLower().Contains(p.Name.ToLower())).ToList();
-
-            foreach (Route route in matches)
-            {
-                ///!!!---THIS IS PROBABLY NOT THE BEST WAY TO DO THIS---!!!
-                ///(For instance: what if a title of a route is shorter than the area it's in
-                ///but both are in the search string? This will probably return a match for the area instead of the route)
-                int similarity = Utilities.StringMatch(input, route.Name);
-
-                if (similarity < currentResult.Item2)
-                    currentResult = new Tuple<MPObject, int>(route, similarity);
-            }
-
-            return currentResult;
         }
 
         private static void BuildDB(bool showLogLines = true)
@@ -236,22 +170,6 @@ namespace MountainProjectDBBuilder
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<Area>));
             xmlSerializer.Serialize(writer, inputAreas);
             writer.Close();
-        }
-
-        private static List<Area> DeserializeAreas(string xmlFilePath)
-        {
-            if (File.Exists(xmlFilePath))
-            {
-                Utilities.Log("[DeserializeAreas] Deserializing areas from: " + xmlFilePath);
-                FileStream fileStream = new FileStream(xmlFilePath, FileMode.Open);
-                XmlSerializer xmlDeserializer = new XmlSerializer(typeof(List<Area>));
-                return (List<Area>)xmlDeserializer.Deserialize(fileStream);
-            }
-            else
-            {
-                Utilities.Log("[DeserializeAreas] The file " + xmlFilePath + " does not exist");
-                return new List<Area>();
-            }
         }
 
         private static void SendReport(string subject, string message)

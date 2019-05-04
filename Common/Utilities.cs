@@ -106,6 +106,15 @@ namespace Common
             return input.Replace("/", "\\/").Replace(".", "\\.");
         }
 
+        public static bool StringMatch(string inputString, string targetString)
+        {
+            //Match regardless of # of spaces
+            string string1 = inputString.Replace(" ", "");
+            string string2 = targetString.Replace(" ", "");
+
+            return string1.Equals(string2, StringComparison.InvariantCultureIgnoreCase);
+        }
+
         public static TimeSpan Average(List<TimeSpan> timeSpanList)
         {
             if (timeSpanList.Count == 0)
@@ -115,66 +124,6 @@ namespace Common
             long longAverageTicks = Convert.ToInt64(doubleAverageTicks);
 
             return new TimeSpan(longAverageTicks);
-        }
-
-        public static int StringMatch(string string1, string string2, bool caseInvariant = true, bool removeWhitespace = true, bool removeNonAlphaNumeric = true)
-        {
-            if (caseInvariant)
-            {
-                string1 = string1.ToLower();
-                string2 = string2.ToLower();
-            }
-
-            if (removeWhitespace)
-            {
-                string1 = string1.Replace(" ", "");
-                string2 = string2.Replace(" ", "");
-            }
-
-            if (removeNonAlphaNumeric)
-            {
-                string1 = Regex.Replace(string1, @"[^a-z\d]", "");
-                string2 = Regex.Replace(string2, @"[^a-z\d]", "");
-            }
-
-            /// <summary>
-            /// Compute the Levenshtein distance between two strings https://www.dotnetperls.com/levenshtein
-            /// </summary>
-            int n = string1.Length;
-            int m = string2.Length;
-            int[,] d = new int[n + 1, m + 1];
-
-            if (n == 0)
-            {
-                return m;
-            }
-
-            if (m == 0)
-            {
-                return n;
-            }
-
-            for (int i = 0; i <= n; d[i, 0] = i++)
-            {
-            }
-
-            for (int j = 0; j <= m; d[0, j] = j++)
-            {
-            }
-
-            for (int i = 1; i <= n; i++)
-            {
-                for (int j = 1; j <= m; j++)
-                {
-                    int cost = (string2[j - 1] == string1[i - 1]) ? 0 : 1;
-
-                    d[i, j] = Math.Min(
-                        Math.Min(d[i - 1, j] + 1, d[i, j - 1] + 1),
-                        d[i - 1, j - 1] + cost);
-                }
-            }
-            // Step 7
-            return d[n, m];
         }
 
         public static IHtmlDocument GetHtmlDoc(string url)
