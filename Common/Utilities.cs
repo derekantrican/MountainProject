@@ -28,9 +28,6 @@ namespace Common
 
         public static void SaveLogToFile()
         {
-            if (!File.Exists(LogPath))
-                File.Create(LogPath).Close();
-
             File.AppendAllText(LogPath, LogString);
         }
 
