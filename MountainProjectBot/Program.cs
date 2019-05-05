@@ -121,7 +121,7 @@ namespace MountainProjectBot
             string commentLink = WebUtility.HtmlEncode("https://reddit.com" + replyTo.Permalink);
             replyText += CreateMDLink("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink) + " | ";
             replyText += CreateMDLink("Donate", "https://www.paypal.me/derekantrican") + " | ";
-            replyText += CreateMDLink("GitHub", "https://github.com/derekantrican/MountainProjectScraper") + " | ";
+            replyText += CreateMDLink("GitHub", "https://github.com/derekantrican/MountainProject") + " | ";
 
             return replyText;
         }
