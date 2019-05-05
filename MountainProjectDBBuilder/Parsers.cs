@@ -18,7 +18,7 @@ namespace MountainProjectDBBuilder
         {
             List<Area> destAreas = new List<Area>();
 
-            IHtmlDocument doc = Utilities.GetHtmlDoc(Utilities.BaseUrl);
+            IHtmlDocument doc = Utilities.GetHtmlDoc(Utilities.MPBASEURL);
             List<IElement> destAreaNodes = doc.GetElementsByTagName("a").Where(x => x.Attributes["href"] != null &&
                                                                                     Utilities.MatchesStateUrlRegex(x.Attributes["href"].Value)).ToList();
             destAreaNodes = (from s in destAreaNodes
@@ -74,7 +74,7 @@ namespace MountainProjectDBBuilder
             IElement leftColumnDiv = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar");
             List<IElement> htmlSubAreas = doc.GetElementsByTagName("a").Where(p => p.ParentElement.ParentElement.ParentElement == leftColumnDiv).ToList();
             htmlSubAreas.RemoveAll(p => p.ParentElement.ParentElement.Attributes["id"] != null && p.ParentElement.ParentElement.Attributes["id"].Value == "nearbyMTBRides");
-            htmlSubAreas.RemoveAll(p => !p.Attributes["href"].Value.Contains(Utilities.BaseUrl));
+            htmlSubAreas.RemoveAll(p => !p.Attributes["href"].Value.Contains(Utilities.MPBASEURL));
 
             //Dispose doc
             doc.Dispose();

@@ -86,8 +86,8 @@ namespace UnitTests
         [DataRow("/area/108184422/deception-wall", 0, 17)]
         public void TestSubAreaParse(string url, int expectedSubAreas, int expectedRoutes)
         {
-            if (!url.Contains(Utilities.BaseUrl))
-                url = Utilities.BaseUrl + url;
+            if (!url.Contains(Utilities.MPBASEURL))
+                url = Utilities.MPBASEURL + url;
 
             Area testSubDestArea = new Area() { URL = url };
 
@@ -105,8 +105,8 @@ namespace UnitTests
         [DataRow("/route/109063052/geflugelfrikadelle", "Geflügelfrikadelle", Route.RouteType.Trad, "5.12b/c")]
         public void TestRouteParse(string url, string expectedName, Route.RouteType expectedType, string expectedGrade)
         {
-            if (!url.Contains(Utilities.BaseUrl))
-                url = Utilities.BaseUrl + url;
+            if (!url.Contains(Utilities.MPBASEURL))
+                url = Utilities.MPBASEURL + url;
 
             Route testRoute = new Route() { URL = url };
             Parsers.ParseRouteAsync(testRoute).Wait();
@@ -122,8 +122,8 @@ namespace UnitTests
         [DataRow("/route/111859673/side-dish", "")] //Statistics aren't generated for routes
         public void TestStatisticsParse(string url, string expectedStatistics)
         {
-            if (!url.Contains(Utilities.BaseUrl))
-                url = Utilities.BaseUrl + url;
+            if (!url.Contains(Utilities.MPBASEURL))
+                url = Utilities.MPBASEURL + url;
 
             AreaStats testStats = Parsers.PopulateStatistics(Utilities.GetHtmlDoc(url));
 
@@ -134,8 +134,8 @@ namespace UnitTests
         [DataRow("/route/111859673/side-dish", "50 ft")]
         public void TestAdditionalInfoParse(string url, string expectedAdditionalInfo)
         {
-            if (!url.Contains(Utilities.BaseUrl))
-                url = Utilities.BaseUrl + url;
+            if (!url.Contains(Utilities.MPBASEURL))
+                url = Utilities.MPBASEURL + url;
 
             Route testRoute = new Route() { URL = url };
             Parsers.ParseRouteAsync(testRoute).Wait();

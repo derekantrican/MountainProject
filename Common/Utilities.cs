@@ -13,7 +13,7 @@ namespace Common
 {
     public static class Utilities
     {
-        public static string BaseUrl = "https://www.mountainproject.com";
+        public const string MPBASEURL = "https://www.mountainproject.com";
         public static string LogPath;
         public static string LogString = "";
         public static bool ShowLogLines = true;
@@ -90,7 +90,7 @@ namespace Common
 
             foreach (string state in states)
             {
-                Regex stateRegex = new Regex(RegexSanitize(BaseUrl) + "\\/area\\/\\d*\\/" + state.ToLower() + "$");
+                Regex stateRegex = new Regex(RegexSanitize(MPBASEURL) + "\\/area\\/\\d*\\/" + state.ToLower() + "$");
                 if (stateRegex.IsMatch(urlToMatch))
                     return true;
             }
