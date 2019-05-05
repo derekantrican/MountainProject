@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Net;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -117,7 +118,8 @@ namespace MountainProjectBot
                 replyText = $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
 
             replyText += "\n\nBot Links: ";
-            replyText += CreateMDLink("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + replyTo.Id) + " | ";
+            string commentLink = WebUtility.HtmlEncode("https://reddit.com" + replyTo.Permalink);
+            replyText += CreateMDLink("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink) + " | ";
             replyText += CreateMDLink("Donate", "https://www.paypal.me/derekantrican") + " | ";
             replyText += CreateMDLink("GitHub", "https://github.com/derekantrican/MountainProjectScraper") + " | ";
 
