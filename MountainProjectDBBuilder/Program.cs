@@ -94,7 +94,7 @@ namespace MountainProjectDBBuilder
                 MPObject result = MountainProjectDataSearch.SearchMountainProject(input);
                 stopwatch.Stop();
 
-                if (string.IsNullOrEmpty(result.URL))
+                if (result == null)
                     Console.WriteLine("Nothing found matching \"" + input + "\"");
                 else
                 {

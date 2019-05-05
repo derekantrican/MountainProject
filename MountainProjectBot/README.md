@@ -6,11 +6,11 @@ This is a reddit bot for connecting [MountainProject.com](https://mountainprojec
 
 ### Roadmap
 
-**Stage 1:** Implement the bot on [/r/climbing](https://reddit.com/r/climbing) with *exact matching* only (eg must match the route/area exactly, case-insensitive allowed)
+**Stage 1:** Implement the bot on [/r/climbing](https://reddit.com/r/climbing) with "popularity" filtering and partial matching (case-insensitive). *Popularity filtering:* if multiple routes/areas match a search term, we will attempt to return the intended one by using the "page views" value published on MountainProject. *Partial matching:* eg "Deception Crags" will match "Exit 38: Deception Crags"
 
-**Stage 2:** Upgrade the bot to use "popularity" filtering and attempt to return routes/areas by popularity (ie this means that if multiple routes/areas match a search term, we will attempt to return the intended one by using the "page views" value published on MountainProject)
+**Stage 2:** Upgrade the bot to allow matching based on multiple input criteria (eg "Batman" matches 52 routes & areas, but if we allow something like "Batman Colorado" then we could probably filter down some of those results)
 
-**Stage 3:** (theoretical) Upgrade the bot to use "fuzzy string matching" to account for mispellings or missed/extra words. This way a spelling like "Red River Gourge" could hypothecially still return the information for "Red River Gorge".
+**Stage 3:** (theoretical) Upgrade the bot to use "fuzzy string matching" to account for mispellings or missed/extra words. This way a spelling like "Red River Gourge" could hypothecially still return the information for "Red River Gorge"
 
 **Stage 4:** The eventual, end goal. Automatically parse [/r/climbing](https://reddit.com/r/climbing) submission titles for route/area names and automatically comment on the post with the route/area information. This would elimate the situation that currently happens: people commenting "where is this?", "what difficulty?", etc
 

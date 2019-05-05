@@ -103,13 +103,19 @@ namespace Common
             return input.Replace("/", "\\/").Replace(".", "\\.");
         }
 
-        public static bool StringMatch(string inputString, string targetString)
+        public static bool StringMatch(string inputString, string targetString, bool caseInsensitive = true)
         {
             //Match regardless of # of spaces
-            string string1 = inputString.Replace(" ", "");
-            string string2 = targetString.Replace(" ", "");
+            string input = inputString.Replace(" ", "");
+            string target = targetString.Replace(" ", "");
 
-            return string1.Equals(string2, StringComparison.InvariantCultureIgnoreCase);
+            if (caseInsensitive)
+            {
+                input = input.ToLower();
+                target = target.ToLower();
+            }
+
+            return target.Contains(input);
         }
 
         public static TimeSpan Average(List<TimeSpan> timeSpanList)

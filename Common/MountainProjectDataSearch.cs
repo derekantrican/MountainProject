@@ -38,80 +38,85 @@ namespace Common
             Console.WriteLine("Getting info from MountainProject");
             Stopwatch searchStopwatch = Stopwatch.StartNew();
 
-            MPObject result = DeepSearch(searchText, DestAreas);
+            List<MPObject> results = DeepSearch(searchText, DestAreas);
+            List<string> resultNames = results.Select(p => p.Name).ToList();
 
-            Console.WriteLine($"Info retrieved from MountainProject (found in {searchStopwatch.ElapsedMilliseconds} ms)");
+            Console.WriteLine($"Found {results.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms. Filtering by priority...");
 
-            return result;
+            return FilterByPopularity(results);
         }
 
-        private static MPObject DeepSearch(string input, List<Area> destAreas)
+        public static MPObject FilterByPopularity(List<MPObject> listToFilter)
         {
-            MPObject matchedObject = null;
+            if (listToFilter.Count > 0)
+            {
+                List<MPObject> matchedObjectsByPopularity = listToFilter.OrderByDescending(p => p.Popularity).ToList();
+
+                int pop1 = matchedObjectsByPopularity[0].Popularity;
+                int pop2 = matchedObjectsByPopularity[1].Popularity;
+                double popularityPercentDiff = Math.Round((double)(pop1 - pop2) / pop2 * 100, 2);
+
+                Console.WriteLine($"Filtering based on priority (result has priority {popularityPercentDiff}% higher than next closest)");
+
+                return matchedObjectsByPopularity.First(); //Return the most popular matched object (this may prioritize areas over routes. May want to check that later)
+            }
+            else
+                return null;
+        }
+
+        private static List<MPObject> DeepSearch(string input, List<Area> destAreas)
+        {
+            List<MPObject> matchedObjects = new List<MPObject>();
             foreach (Area destArea in destAreas)
             {
-                if (Utilities.StringMatch(input, destArea.Name))
-                {
-                    //If we're matching the name of a destArea (eg a State), we'll assume that the route/area is within that state
-                    //(eg routes named "Sweet Home Alabama"). So instead of returning the destArea, we'll return a search on the
-                    //state's subareas
-                    matchedObject = SearchSubAreasForMatch(input, destArea.SubAreas);
-                    if (matchedObject != null)
-                        return matchedObject;
-                }
+                //If we're matching the name of a destArea (eg a State), we'll assume that the route/area is within that state
+                //(eg routes named "Sweet Home Alabama") instead of considering a match on the destArea eg: Utilities.StringMatch(input, destArea.Name)
 
-                if (destArea.SubAreas != null &&
-                    destArea.SubAreas.Count() > 0)
-                {
-                    matchedObject = SearchSubAreasForMatch(input, destArea.SubAreas);
-                    if (matchedObject != null)
-                        return matchedObject;
-                }
+                List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, destArea.SubAreas);
+                matchedObjects.AddRange(matchedSubAreas);
             }
 
-            return matchedObject;
+            return matchedObjects;
         }
 
-        private static MPObject SearchSubAreasForMatch(string input, List<Area> subAreas)
+        private static List<MPObject> SearchSubAreasForMatch(string input, List<Area> subAreas)
         {
-            MPObject matchedObject = null;
+            List<MPObject> matchedObjects = new List<MPObject>();
 
             foreach (Area subDestArea in subAreas)
             {
                 if (Utilities.StringMatch(input, subDestArea.Name))
-                    return subDestArea;
+                    matchedObjects.Add(subDestArea);
 
                 if (subDestArea.SubAreas != null &&
                     subDestArea.SubAreas.Count() > 0)
                 {
-                    matchedObject = SearchSubAreasForMatch(input, subDestArea.SubAreas);
-                    if (matchedObject != null)
-                        return matchedObject;
+                    List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, subDestArea.SubAreas);
+                    matchedObjects.AddRange(matchedSubAreas);
                 }
 
                 if (subDestArea.Routes != null &&
                     subDestArea.Routes.Count() > 0)
                 {
-                    matchedObject = SearchRoutes(input, subDestArea.Routes);
-                    if (matchedObject != null)
-                        return matchedObject;
+                    List<MPObject> matchedRoutes = SearchRoutes(input, subDestArea.Routes);
+                    matchedObjects.AddRange(matchedRoutes);
                 }
             }
 
-            return matchedObject;
+            return matchedObjects;
         }
 
-        private static MPObject SearchRoutes(string input, List<Route> routes)
+        private static List<MPObject> SearchRoutes(string input, List<Route> routes)
         {
-            MPObject matchedObject = null;
+            List<MPObject> matchedObjects = new List<MPObject>();
 
             foreach (Route route in routes)
             {
                 if (Utilities.StringMatch(input, route.Name))
-                    return route;
+                    matchedObjects.Add(route);
             }
 
-            return matchedObject;
+            return matchedObjects;
         }
     }
 }
