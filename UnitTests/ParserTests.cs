@@ -102,6 +102,7 @@ namespace UnitTests
 
         [DataTestMethod]
         [DataRow("/route/111859673/side-dish", "Side Dish", Route.RouteType.Sport, "5.10c")]
+        [DataRow("/route/109063052/geflugelfrikadelle", "Geflügelfrikadelle", Route.RouteType.Trad, "5.12b/c")]
         public void TestRouteParse(string url, string expectedName, Route.RouteType expectedType, string expectedGrade)
         {
             if (!url.Contains(Utilities.BaseUrl))

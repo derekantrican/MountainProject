@@ -133,7 +133,7 @@ namespace Common
         {
             HtmlParser parser = new HtmlParser();
             string html = "";
-            using (WebClient client = new WebClient())
+            using (WebClient client = new WebClient() { Encoding = Encoding.UTF8 })
             {
                 html = client.DownloadString(url);
             }
@@ -147,7 +147,7 @@ namespace Common
         {
             HtmlParser parser = new HtmlParser();
             string html = "";
-            using (WebClient client = new WebClient())
+            using (WebClient client = new WebClient() { Encoding = Encoding.UTF8 })
             {
                 html = await client.DownloadStringTaskAsync(url);
             }
