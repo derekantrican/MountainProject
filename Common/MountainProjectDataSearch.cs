@@ -48,7 +48,9 @@ namespace Common
 
         public static MPObject FilterByPopularity(List<MPObject> listToFilter)
         {
-            if (listToFilter.Count > 0)
+            if (listToFilter.Count == 1)
+                return listToFilter.First();
+            if (listToFilter.Count >= 2)
             {
                 List<MPObject> matchedObjectsByPopularity = listToFilter.OrderByDescending(p => p.Popularity).ToList();
 

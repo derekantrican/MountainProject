@@ -17,6 +17,7 @@ namespace UnitTests
         [DataRow("Red River Gorge", "https://www.mountainproject.com/area/105841134/red-river-gorge")]
         [DataRow("Prime Rib of Goat", "https://www.mountainproject.com/route/107730934/prime-rib-of-goat")]
         [DataRow("Exit 38: Deception Crags", "https://www.mountainproject.com/area/105791955/exit-38-deception-crags")]
+        [DataRow("Deception Crags", "https://www.mountainproject.com/area/105791955/exit-38-deception-crags")]
         public void TestSearch(string query, string expectedUrl)
         {
             MountainProjectDataSearch.InitMountainProjectData(@"..\..\MountainProjectDBBuilder\bin\MountainProjectAreas.xml");
