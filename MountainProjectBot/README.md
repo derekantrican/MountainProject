@@ -10,9 +10,9 @@ This is a reddit bot for connecting [MountainProject.com](https://mountainprojec
 
 **Stage 2:** Upgrade the bot to allow matching based on [multiple input criteria](https://github.com/derekantrican/MountainProject/issues/8)
 
-**Stage 3:** (theoretical) Upgrade the bot to use ["fuzzy string matching"](https://github.com/derekantrican/MountainProject/issues/7) to account for mispellings or missed/extra words
+**Stage 3:** *(theoretical)* Upgrade the bot to use ["fuzzy string matching"](https://github.com/derekantrican/MountainProject/issues/7) to account for mispellings or missed/extra words
 
-**Stage 4:** The eventual, end goal. Automatically parse [/r/climbing](https://reddit.com/r/climbing) submission titles for route/area names and automatically comment on the post with the route/area information. This would elimate the situation that currently happens: people commenting "where is this?", "what difficulty?", etc
+**Stage 4:** *(theoretical)* The eventual, end goal. Automatically parse [/r/climbing](https://reddit.com/r/climbing) submission titles for route/area names and automatically comment on the post with the route/area information. This would elimate the situation that currently happens: people commenting "where is this?", "what difficulty?", etc
 
 ### Reporting issues & contributing:
 
