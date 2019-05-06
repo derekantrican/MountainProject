@@ -2,6 +2,10 @@
 
 This is a reddit bot for connecting [MountainProject.com](https://mountainproject.com) and the [/r/climbing](https://reddit.com/r/climbing) subreddit.
 
+**Feedback:** https://forms.gle/RKiU2Bzy9gXg4VBw8
+
+**Donate to this project:** https://www.paypal.me/derekantrican
+
 ### ----Currently this bot is "in progress" and not active----
 
 ### Roadmap
