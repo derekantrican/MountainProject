@@ -2,17 +2,21 @@
 
 This is a reddit bot for connecting [MountainProject.com](https://mountainproject.com) and the [/r/climbing](https://reddit.com/r/climbing) subreddit.
 
+**Feedback:** https://forms.gle/RKiU2Bzy9gXg4VBw8
+
+**Donate to this project:** https://www.paypal.me/derekantrican
+
 ### ----Currently this bot is "in progress" and not active----
 
 ### Roadmap
 
 **Stage 1:** Implement the bot on [/r/climbing](https://reddit.com/r/climbing) with "popularity" filtering and partial matching (case-insensitive). *Popularity filtering:* if multiple routes/areas match a search term, we will attempt to return the intended one by using the "page views" value published on MountainProject. *Partial matching:* eg "Deception Crags" will match "Exit 38: Deception Crags"
 
-**Stage 2:** Upgrade the bot to allow matching based on multiple input criteria (eg "Batman" matches 52 routes & areas, but if we allow something like "Batman Colorado" then we could probably filter down some of those results)
+**Stage 2:** Upgrade the bot to allow matching based on [multiple input criteria](https://github.com/derekantrican/MountainProject/issues/8)
 
-**Stage 3:** (theoretical) Upgrade the bot to use "fuzzy string matching" to account for mispellings or missed/extra words. This way a spelling like "Red River Gourge" could hypothecially still return the information for "Red River Gorge"
+**Stage 3:** *(theoretical)* Upgrade the bot to use ["fuzzy string matching"](https://github.com/derekantrican/MountainProject/issues/7) to account for mispellings or missed/extra words
 
-**Stage 4:** The eventual, end goal. Automatically parse [/r/climbing](https://reddit.com/r/climbing) submission titles for route/area names and automatically comment on the post with the route/area information. This would elimate the situation that currently happens: people commenting "where is this?", "what difficulty?", etc
+**Stage 4:** *(theoretical)* The eventual, end goal. Automatically parse [/r/climbing](https://reddit.com/r/climbing) submission titles for route/area names and automatically comment on the post with the route/area information. This would elimate the situation that currently happens: people commenting "where is this?", "what difficulty?", etc
 
 ### Reporting issues & contributing:
 

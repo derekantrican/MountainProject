@@ -29,3 +29,5 @@ Most of these haven't been updated in a while. And I figured I'd learn something
 **Reporting issues:** Please report issues via the issues page: https://github.com/derekantrican/MountainProjectScraper/issues
 
 **Contributing:** Feel free to fork this repository, make some changes, and make a pull request! If you have a helpful change, I'll add you to the repository so you can contribute directly to it
+
+**Donate to this project:** https://www.paypal.me/derekantrican
