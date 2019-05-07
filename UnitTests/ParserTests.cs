@@ -101,10 +101,11 @@ namespace UnitTests
         }
 
         [DataTestMethod]
-        [DataRow("/route/111859673/side-dish", "Side Dish", new[] { Route.RouteType.Sport }, "5.10c")]
-        [DataRow("/route/109063052/geflugelfrikadelle", "Geflügelfrikadelle", new[] { Route.RouteType.Trad, Route.RouteType.Aid }, "5.12b/c")]
-        [DataRow("/route/116181996/13-above-the-night", "13 Above the Night", new[] { Route.RouteType.Trad, Route.RouteType.Mixed, Route.RouteType.Ice, Route.RouteType.Alpine }, "WI4 M5")]
-        public void TestRouteParse(string url, string expectedName, Route.RouteType[] expectedTypes, string expectedGrade)
+        [DataRow("/route/111859673/side-dish", "Side Dish", new[] { Route.RouteType.Sport }, "5.10c", "50 ft")]
+        [DataRow("/route/109063052/geflugelfrikadelle", "Geflügelfrikadelle", new[] { Route.RouteType.Trad, Route.RouteType.Aid }, "5.12b/c", "40 ft")]
+        [DataRow("/route/116181996/13-above-the-night", "13 Above the Night", new[] { Route.RouteType.Trad, Route.RouteType.Mixed, Route.RouteType.Ice, Route.RouteType.Alpine }, "WI4 M5", "1000 ft, 5 pitches, Grade IV")]
+        [DataRow("/route/110425910/birds-of-a-feather", "Birds of a Feather", new[] { Route.RouteType.Sport, Route.RouteType.TopRope }, "5.8", "50 ft")]
+        public void TestRouteParse(string url, string expectedName, Route.RouteType[] expectedTypes, string expectedGrade, string expectedAddInfo)
         {
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
@@ -113,8 +114,9 @@ namespace UnitTests
             Parsers.ParseRouteAsync(testRoute).Wait();
 
             Assert.AreEqual(expectedName, testRoute.Name);
-            CollectionAssert.AreEqual(expectedTypes, testRoute.Types);
+            CollectionAssert.AreEquivalent(expectedTypes, testRoute.Types);
             Assert.AreEqual(expectedGrade, testRoute.Grade);
+            Assert.AreEqual(expectedAddInfo, testRoute.AdditionalInfo);
         }
 
         [DataTestMethod]
@@ -129,19 +131,6 @@ namespace UnitTests
             AreaStats testStats = Parsers.PopulateStatistics(Utilities.GetHtmlDoc(url));
 
             Assert.AreEqual(expectedStatistics, testStats.ToString());
-        }
-
-        [DataTestMethod]
-        [DataRow("/route/111859673/side-dish", "50 ft")]
-        public void TestAdditionalInfoParse(string url, string expectedAdditionalInfo)
-        {
-            if (!url.Contains(Utilities.MPBASEURL))
-                url = Utilities.MPBASEURL + url;
-
-            Route testRoute = new Route() { URL = url };
-            Parsers.ParseRouteAsync(testRoute).Wait();
-
-            Assert.AreEqual(expectedAdditionalInfo, testRoute.AdditionalInfo);
         }
     }
 }

@@ -249,7 +249,7 @@ namespace MountainProjectDBBuilder
             {
                 inputString = Regex.Replace(inputString, @"\s+", " "); //Replace multiple spaces (more than one in a row) with a single space
                 inputString = Regex.Replace(inputString, @"\s+,", ","); //Remove any spaces before commas
-                inputString = Regex.Replace(inputString, "^,|,$|,{2,}", ""); //Remove any commas at the beginning/end of string (or multiple commas in a row)
+                inputString = Regex.Replace(inputString, "^,+|,+$|,{2,}", ""); //Remove any commas at the beginning/end of string (or multiple commas in a row)
                 inputString = inputString.Trim(); //Trim any extra whitespace from the beginning/end of string
 
                 return inputString;
