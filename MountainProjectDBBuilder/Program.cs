@@ -104,7 +104,7 @@ namespace MountainProjectDBBuilder
                     else if (result is Route)
                     {
                         Route resultRoute = result as Route;
-                        resultStr = $"{resultRoute.Name} [{resultRoute.Type} {resultRoute.Grade}";
+                        resultStr = $"{resultRoute.Name} [{resultRoute.TypeString} {resultRoute.Grade}";
 
                         if (!string.IsNullOrEmpty(resultRoute.AdditionalInfo))
                             resultStr += " " + resultRoute.AdditionalInfo;

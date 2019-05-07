@@ -101,9 +101,10 @@ namespace UnitTests
         }
 
         [DataTestMethod]
-        [DataRow("/route/111859673/side-dish", "Side Dish", Route.RouteType.Sport, "5.10c")]
-        [DataRow("/route/109063052/geflugelfrikadelle", "Geflügelfrikadelle", Route.RouteType.Trad, "5.12b/c")]
-        public void TestRouteParse(string url, string expectedName, Route.RouteType expectedType, string expectedGrade)
+        [DataRow("/route/111859673/side-dish", "Side Dish", new[] { Route.RouteType.Sport }, "5.10c")]
+        [DataRow("/route/109063052/geflugelfrikadelle", "Geflügelfrikadelle", new[] { Route.RouteType.Trad, Route.RouteType.Aid }, "5.12b/c")]
+        [DataRow("/route/116181996/13-above-the-night", "13 Above the Night", new[] { Route.RouteType.Trad, Route.RouteType.Mixed, Route.RouteType.Ice, Route.RouteType.Alpine }, "WI4 M5")]
+        public void TestRouteParse(string url, string expectedName, Route.RouteType[] expectedTypes, string expectedGrade)
         {
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
@@ -112,7 +113,7 @@ namespace UnitTests
             Parsers.ParseRouteAsync(testRoute).Wait();
 
             Assert.AreEqual(expectedName, testRoute.Name);
-            Assert.AreEqual(expectedType, testRoute.Type);
+            CollectionAssert.AreEqual(expectedTypes, testRoute.Types);
             Assert.AreEqual(expectedGrade, testRoute.Grade);
         }
 

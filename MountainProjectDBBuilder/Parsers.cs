@@ -62,7 +62,7 @@ namespace MountainProjectDBBuilder
 
             //Get Area "popularity" (page views)
             IElement pageViewsElement = doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Page Views:"))
-                                            .GetElementsByTagName("td").ToList()[1];
+                                            .GetElementsByTagName("td")[1];
             string pageViewsStr = Regex.Match(pageViewsElement.TextContent.Replace(",", ""), @"(\d+)\s*total").Groups[1].Value;
             inputArea.Popularity = Convert.ToInt32(pageViewsStr);
 
@@ -111,13 +111,13 @@ namespace MountainProjectDBBuilder
                 inputRoute.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
 
             //Get Route type
-            string type = HttpUtility.HtmlDecode(doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Type:"))
-                                        .GetElementsByTagName("td").ToList()[1].TextContent).Trim();
-            inputRoute.Type = ParseRouteType(type);
+            string typeString = HttpUtility.HtmlDecode(doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Type:"))
+                                        .GetElementsByTagName("td")[1].TextContent).Trim();
+            inputRoute.Types = ParseRouteTypes(typeString);
 
             //Get Route "popularity" (page views)
             IElement pageViewsElement = doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Page Views:"))
-                                            .GetElementsByTagName("td").ToList()[1];
+                                            .GetElementsByTagName("td")[1];
             string pageViewsStr = Regex.Match(pageViewsElement.TextContent.Replace(",", ""), @"(\d+)\s*total").Groups[1].Value;
             inputRoute.Popularity = Convert.ToInt32(pageViewsStr);
 
@@ -130,10 +130,15 @@ namespace MountainProjectDBBuilder
             IElement gradeElement = gradesOnPage.FirstOrDefault();
             if (gradeElement != null)
                 routeGrade = HttpUtility.HtmlDecode(gradeElement.TextContent.Replace(gradeElement.GetElementsByTagName("a").FirstOrDefault().TextContent, "")).Trim();
+            else
+            {
+                IElement gradesSection = doc.GetElementsByTagName("h2").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "inline-block mr-2");
+                routeGrade = HttpUtility.HtmlDecode(gradesSection.TextContent);
+            }
 
             inputRoute.Grade = routeGrade;
 
-            inputRoute.AdditionalInfo = ParseAdditionalRouteInfo(type); //Get Route additional info
+            inputRoute.AdditionalInfo = ParseAdditionalRouteInfo(typeString); //Get Route additional info
 
             doc.Dispose();
 
@@ -176,23 +181,70 @@ namespace MountainProjectDBBuilder
             return new AreaStats(boulderCount, TRCount, sportCount, tradCount);
         }
 
-        public static Route.RouteType ParseRouteType(string inputString)
+        public static List<Route.RouteType> ParseRouteTypes(string inputString)
         {
-            if (Regex.Match(inputString, "BOULDER", RegexOptions.IgnoreCase).Success)
-                return Route.RouteType.Boulder;
-            else if (Regex.Match(inputString, "TRAD", RegexOptions.IgnoreCase).Success) //This has to go before an attempt to match "TR" so that we don't accidentally match "TR" instead of "TRAD"
-                return Route.RouteType.Trad;
-            else if (Regex.Match(inputString, "TR|TOP ROPE", RegexOptions.IgnoreCase).Success)
-                return Route.RouteType.TopRope;
-            else if (Regex.Match(inputString, "SPORT", RegexOptions.IgnoreCase).Success)
-                return Route.RouteType.Sport;
+            List<Route.RouteType> result = new List<Route.RouteType>();
 
-            return Route.RouteType.TopRope;
+            if (Regex.IsMatch(inputString, "BOULDER", RegexOptions.IgnoreCase))
+            {
+                inputString = Regex.Replace(inputString, "BOULDER", "", RegexOptions.IgnoreCase);
+                result.Add(Route.RouteType.Boulder);
+            }
+
+            if (Regex.IsMatch(inputString, "TRAD", RegexOptions.IgnoreCase)) //This has to go before an attempt to match "TR" so that we don't accidentally match "TR" instead of "TRAD"
+            {
+                inputString = Regex.Replace(inputString, "TRAD", "", RegexOptions.IgnoreCase);
+                result.Add(Route.RouteType.Trad);
+            }
+
+            if (Regex.IsMatch(inputString, "TR|TOP ROPE", RegexOptions.IgnoreCase))
+            {
+                inputString = Regex.Replace(inputString, "TR|TOP ROPE", "", RegexOptions.IgnoreCase);
+                result.Add(Route.RouteType.TopRope);
+            }
+
+            if (Regex.IsMatch(inputString, "AID", RegexOptions.IgnoreCase))
+            {
+                inputString = Regex.Replace(inputString, "AID", "", RegexOptions.IgnoreCase);
+                result.Add(Route.RouteType.Aid);
+            }
+
+            if (Regex.IsMatch(inputString, "SPORT", RegexOptions.IgnoreCase))
+            {
+                inputString = Regex.Replace(inputString, "SPORT", "", RegexOptions.IgnoreCase);
+                result.Add(Route.RouteType.Sport);
+            }
+
+            if (Regex.IsMatch(inputString, "MIXED", RegexOptions.IgnoreCase))
+            {
+                inputString = Regex.Replace(inputString, "MIXED", "", RegexOptions.IgnoreCase);
+                result.Add(Route.RouteType.Mixed);
+            }
+
+            if (Regex.IsMatch(inputString, "ICE", RegexOptions.IgnoreCase))
+            {
+                inputString = Regex.Replace(inputString, "ICE", "", RegexOptions.IgnoreCase);
+                result.Add(Route.RouteType.Ice);
+            }
+
+            if (Regex.IsMatch(inputString, "ALPINE", RegexOptions.IgnoreCase))
+            {
+                inputString = Regex.Replace(inputString, "ALPINE", "", RegexOptions.IgnoreCase);
+                result.Add(Route.RouteType.Alpine);
+            }
+
+            if (Regex.IsMatch(inputString, "SNOW", RegexOptions.IgnoreCase))
+            {
+                inputString = Regex.Replace(inputString, "SNOW", "", RegexOptions.IgnoreCase);
+                result.Add(Route.RouteType.Snow);
+            }
+
+            return result;
         }
 
         public static string ParseAdditionalRouteInfo(string inputString)
         {
-            inputString = Regex.Replace(inputString, "TRAD|TR|SPORT|BOULDER", "", RegexOptions.IgnoreCase);
+            inputString = Regex.Replace(inputString, "TRAD|TR|SPORT|BOULDER|MIXED|ICE|ALPINE|AID|SNOW", "", RegexOptions.IgnoreCase);
             if (!string.IsNullOrEmpty(Regex.Replace(inputString, "[^a-zA-Z0-9]", "")))
             {
                 inputString = Regex.Replace(inputString, @"\s+", " "); //Replace multiple spaces (more than one in a row) with a single space

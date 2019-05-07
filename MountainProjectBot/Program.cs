@@ -136,27 +136,29 @@ namespace MountainProjectBot
             if (inputMountainProjectObject is Area)
             {
                 Area inputArea = inputMountainProjectObject as Area;
-                result += $"{inputArea.Name} [{inputArea.Statistics}]\n\n" +
-                         inputArea.URL;
+                result += $"{inputArea.Name} [{inputArea.Statistics}]\n\n";
 
                 //Todo: additional info to add
                 // - located in {destArea}
                 // - popular routes
+
+                result += inputArea.URL;
             }
             else if (inputMountainProjectObject is Route)
             {
                 Route inputRoute = inputMountainProjectObject as Route;
-                result += $"{inputRoute.Name} [{inputRoute.Type} {inputRoute.Grade},";
+                result += $"{inputRoute.Name} [{inputRoute.TypeString} {inputRoute.Grade},";
 
                 if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
                     result += " " + inputRoute.AdditionalInfo;
 
                 result += "]\n\n";
-                result += inputRoute.URL;
 
                 //Todo: additional info to add
                 // - located in {destArea}
                 // - # of bolts (if sport)
+
+                result += inputRoute.URL;
             }
 
             return result;

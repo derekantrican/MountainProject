@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Xml.Serialization;
 
 namespace MountainProjectModels
 {
@@ -11,12 +12,12 @@ namespace MountainProjectModels
         public Route(string name, string grade, RouteType type, string url) : base(name, url)
         {
             this.Grade = grade;
-            this.Type = type;
+            this.Types = new List<RouteType>();
         }
 
         public Route()
         {
-
+            this.Types = new List<RouteType>();
         }
 
         public enum RouteType
@@ -24,16 +25,23 @@ namespace MountainProjectModels
             Boulder,
             TopRope,
             Sport,
-            Trad
+            Trad,
+            Aid,
+            Ice,
+            Mixed,
+            Alpine,
+            Snow
         }
 
         public string Grade { get; set; }
-        public RouteType Type { get; set; }
+        public List<RouteType> Types { get; set; }
+        //[XmlIgnore]
+        public string TypeString { get { return string.Join(", ", Types); } }
         public string AdditionalInfo { get; set; }
 
         public override string ToString()
         {
-            return Name + " (" + Type.ToString() + ", " + Grade + ")";
+            return Name + " (" + TypeString + ", " + Grade + ")";
         }
     }
 }
