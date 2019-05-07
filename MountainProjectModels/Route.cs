@@ -35,7 +35,6 @@ namespace MountainProjectModels
 
         public string Grade { get; set; }
         public List<RouteType> Types { get; set; }
-        //[XmlIgnore]
         public string TypeString { get { return string.Join(", ", Types); } }
         public string AdditionalInfo { get; set; }
 
