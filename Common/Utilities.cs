@@ -118,17 +118,6 @@ namespace Common
             return target.Contains(input);
         }
 
-        public static TimeSpan Average(List<TimeSpan> timeSpanList)
-        {
-            if (timeSpanList.Count == 0)
-                return new TimeSpan();
-
-            double doubleAverageTicks = timeSpanList.Average(timeSpan => timeSpan.Ticks);
-            long longAverageTicks = Convert.ToInt64(doubleAverageTicks);
-
-            return new TimeSpan(longAverageTicks);
-        }
-
         public static IHtmlDocument GetHtmlDoc(string url)
         {
             HtmlParser parser = new HtmlParser();
