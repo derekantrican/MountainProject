@@ -84,10 +84,10 @@ namespace MountainProjectDBBuilder
 
             Console.WriteLine("File read.");
 
-            string keepSearching = "y";
-            while (keepSearching == "y")
+            bool keepSearching = true;
+            while (keepSearching)
             {
-                Console.WriteLine("Please input the string you would like to parse: ");
+                Console.WriteLine("\n\nPlease input the string you would like to parse: ");
                 string input = Console.ReadLine();
 
                 Stopwatch stopwatch = Stopwatch.StartNew();
@@ -113,13 +113,14 @@ namespace MountainProjectDBBuilder
                     }
 
                     Console.WriteLine("The following was found: " + resultStr + " (Found in " + stopwatch.ElapsedMilliseconds + " ms)");
-                    Console.WriteLine("Open result? (y/n) ");
-                    if (Console.ReadLine() == "y")
+                    Console.WriteLine($"Parent: {MountainProjectDataSearch.GetParent(result, -1).Name}");
+                    Console.WriteLine("\nOpen result? (y/n) ");
+                    if (Console.ReadKey().Key == ConsoleKey.Y)
                         Process.Start(result.URL);
                 }
 
-                Console.WriteLine("Search something else? (y/n) ");
-                keepSearching = Console.ReadLine();
+                Console.WriteLine("\nSearch something else? (y/n) ");
+                keepSearching = Console.ReadKey().Key == ConsoleKey.Y;
             }
         }
 

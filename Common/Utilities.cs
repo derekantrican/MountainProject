@@ -14,6 +14,8 @@ namespace Common
     public static class Utilities
     {
         public const string MPBASEURL = "https://www.mountainproject.com";
+        public const string ALLLOCATIONSURL = "https://www.mountainproject.com/route-guide";
+        public const string INTERNATIONALURL = "https://www.mountainproject.com/area/105907743/international";
         public static string LogPath;
         public static string LogString = "";
         public static bool ShowLogLines = true;

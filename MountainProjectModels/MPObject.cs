@@ -14,11 +14,12 @@ namespace MountainProjectModels
         {
             this.Name = WebUtility.HtmlDecode(name);
             this.URL = url;
+            this.ParentUrls = new List<string>();
         }
 
         public MPObject()
         {
-
+            this.ParentUrls = new List<string>();
         }
 
         private string name { get; set; }
@@ -41,6 +42,7 @@ namespace MountainProjectModels
         }
         public string URL { get; set; }
         public int Popularity { get; set; }
+        public List<string> ParentUrls = new List<string>();
 
         public override string ToString()
         {

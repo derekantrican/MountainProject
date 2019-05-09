@@ -117,7 +117,7 @@ namespace MountainProjectBot
             if (string.IsNullOrEmpty(replyText))
                 replyText = $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
 
-            replyText += "\n\nBot Links: ";
+            replyText += "\n\n-----\nBot Links: ";
             string commentLink = WebUtility.HtmlEncode("https://reddit.com" + replyTo.Permalink);
             replyText += CreateMDLink("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink) + " | ";
             replyText += CreateMDLink("Donate", "https://www.paypal.me/derekantrican") + " | ";
@@ -137,10 +137,11 @@ namespace MountainProjectBot
             {
                 Area inputArea = inputMountainProjectObject as Area;
                 result += $"{inputArea.Name} [{inputArea.Statistics}]\n\n";
+                result += GetLocationString(inputArea);
 
                 //Todo: additional info to add
-                // - located in {destArea}
-                // - popular routes
+                // - popular routes (this can be parsed from the "Classic Climbing Routes" section on an Area's page)
+                // - description?
 
                 result += inputArea.URL;
             }
@@ -154,14 +155,40 @@ namespace MountainProjectBot
 
                 result += "]\n\n";
 
+                result += GetLocationString(inputRoute);
+
                 //Todo: additional info to add
-                // - located in {destArea}
-                // - # of bolts (if sport)
+                // - description?
 
                 result += inputRoute.URL;
             }
 
             return result;
+        }
+
+        private static string GetLocationString(MPObject child)
+        {
+            MPObject immediateParent = MountainProjectDataSearch.GetParent(child, -1); //Get immediate parent (eg the wall that the route is on)
+            if (immediateParent == null ||  //If "child" is a dest area, the parent will be "All Locations" which won't be in our directory
+                immediateParent.URL == Utilities.INTERNATIONALURL) //If "child" is an area like "Europe"
+                return "";
+
+            MPObject outerParent = MountainProjectDataSearch.GetParent(child, 1); //Get state that route/area is in
+            if (outerParent.URL == Utilities.INTERNATIONALURL)
+            {
+                if (child.ParentUrls.Count > 3)
+                    outerParent = MountainProjectDataSearch.GetParent(child, 3); //If this is international, get the country instead of the state (eg "China")
+                else
+                    return ""; //Return a blank string if we are in an area like "China" (so we don't return a string like "China is located in Asia")
+            }
+
+            string locationString = $"Located in {immediateParent.Name}";
+            if (outerParent != null && outerParent.URL != immediateParent.URL)
+                locationString += $", {outerParent.Name}";
+
+            locationString += "\n\n";
+
+            return locationString;
         }
 
         private static List<Comment> RemoveAlreadyRepliedTo(List<Comment> comments)

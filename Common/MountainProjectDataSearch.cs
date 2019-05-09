@@ -72,7 +72,7 @@ namespace Common
             foreach (Area destArea in destAreas)
             {
                 //If we're matching the name of a destArea (eg a State), we'll assume that the route/area is within that state
-                //(eg routes named "Sweet Home Alabama") instead of considering a match on the destArea eg: Utilities.StringMatch(input, destArea.Name)
+                //(eg routes named "Sweet Home Alabama") instead of considering a match on the destArea ie: Utilities.StringMatch(input, destArea.Name)
 
                 List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, destArea.SubAreas);
                 matchedObjects.AddRange(matchedSubAreas);
@@ -119,6 +119,51 @@ namespace Common
             }
 
             return matchedObjects;
+        }
+
+        public static MPObject GetItemWithMatchingUrl(string url, List<MPObject> listToSearch)
+        {
+            foreach (MPObject item in listToSearch)
+            {
+                if (item.URL == url)
+                    return item;
+                else
+                {
+                    if (item is Area)
+                    {
+                        MPObject matchingRoute = (item as Area).Routes.Find(p => p.URL == url);
+                        if (matchingRoute != null)
+                            return matchingRoute;
+                        else
+                        {
+                            MPObject matchingSubArea = GetItemWithMatchingUrl(url, (item as Area).SubAreas.Cast<MPObject>().ToList());
+                            if (matchingSubArea != null)
+                                return matchingSubArea;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the parent for the child (ie Area that contains the object)
+        /// </summary>
+        /// <param name="child">The object of which to get the parent</param>
+        /// <param name="parentLevel">The parent level. "0" is the highest parent, "1" is the next parent down, etc. "-1" will return the immediate parent</param>
+        /// <returns>The parent object to the child. Will return null if the child has no parents or if the parentLevel is invalid</returns>
+        public static MPObject GetParent(MPObject child, int parentLevel)
+        {
+            string url;
+            if (parentLevel == -1)
+                url = child.ParentUrls.Last();
+            else if (parentLevel > child.ParentUrls.Count - 1) //Out of range
+                return null;
+            else
+                url = child.ParentUrls[parentLevel];
+
+            return GetItemWithMatchingUrl(url, DestAreas.Cast<MPObject>().ToList());
         }
     }
 }

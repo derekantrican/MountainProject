@@ -18,7 +18,7 @@ namespace MountainProjectDBBuilder
         {
             List<Area> destAreas = new List<Area>();
 
-            IHtmlDocument doc = Utilities.GetHtmlDoc(Utilities.MPBASEURL);
+            IHtmlDocument doc = Utilities.GetHtmlDoc(Utilities.ALLLOCATIONSURL);
             List<IElement> destAreaNodes = doc.GetElementsByTagName("a").Where(x => x.Attributes["href"] != null &&
                                                                                     Utilities.MatchesStateUrlRegex(x.Attributes["href"].Value)).ToList();
             destAreaNodes = (from s in destAreaNodes
@@ -65,6 +65,8 @@ namespace MountainProjectDBBuilder
                                             .GetElementsByTagName("td")[1];
             string pageViewsStr = Regex.Match(pageViewsElement.TextContent.Replace(",", ""), @"(\d+)\s*total").Groups[1].Value;
             inputArea.Popularity = Convert.ToInt32(pageViewsStr);
+
+            inputArea.ParentUrls = PopulateParentUrls(doc);
 
             //Get Area's routes
             IElement routesTable = doc.GetElementsByTagName("table").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table").FirstOrDefault();
@@ -140,9 +142,22 @@ namespace MountainProjectDBBuilder
 
             inputRoute.AdditionalInfo = ParseAdditionalRouteInfo(typeString); //Get Route additional info
 
+            inputRoute.ParentUrls = PopulateParentUrls(doc);
+
             doc.Dispose();
 
             Utilities.Log($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
+        }
+
+        public static List<string> PopulateParentUrls(IHtmlDocument doc)
+        {
+            List<string> result = new List<string>();
+            IElement outerDiv = doc.GetElementsByTagName("div").FirstOrDefault(x => x.Children.FirstOrDefault(p => p.TagName == "A" && p.TextContent == "All Locations") != null);
+            List<IElement> parentList = outerDiv.Children.Where(p => p.TagName == "A").ToList();
+            foreach (IElement parentElement in parentList)
+                result.Add(parentElement.Attributes["href"].Value);
+
+            return result;
         }
 
         public static AreaStats PopulateStatistics(IHtmlDocument doc)
