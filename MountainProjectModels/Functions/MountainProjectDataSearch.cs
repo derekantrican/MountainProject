@@ -1,14 +1,11 @@
-﻿using MountainProjectModels;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 
-namespace Common
+namespace MountainProjectAPI
 {
     public static class MountainProjectDataSearch
     {
@@ -87,7 +84,7 @@ namespace Common
 
             foreach (Area subDestArea in subAreas)
             {
-                if (Utilities.StringMatch(input, subDestArea.Name))
+                if (StringMatch(input, subDestArea.Name))
                     matchedObjects.Add(subDestArea);
 
                 if (subDestArea.SubAreas != null &&
@@ -114,11 +111,26 @@ namespace Common
 
             foreach (Route route in routes)
             {
-                if (Utilities.StringMatch(input, route.Name))
+                if (StringMatch(input, route.Name))
                     matchedObjects.Add(route);
             }
 
             return matchedObjects;
+        }
+
+        public static bool StringMatch(string inputString, string targetString, bool caseInsensitive = true)
+        {
+            //Match regardless of # of spaces
+            string input = inputString.Replace(" ", "");
+            string target = targetString.Replace(" ", "");
+
+            if (caseInsensitive)
+            {
+                input = input.ToLower();
+                target = target.ToLower();
+            }
+
+            return target.Contains(input);
         }
 
         public static MPObject GetItemWithMatchingUrl(string url, List<MPObject> listToSearch)

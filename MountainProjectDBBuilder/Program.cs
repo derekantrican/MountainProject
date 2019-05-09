@@ -5,24 +5,39 @@ using System.Linq;
 using System.Net;
 using System.Diagnostics;
 using System.Xml.Serialization;
-using System.Net.Mail;
-using static MountainProjectDBBuilder.Enums;
 using System.Threading.Tasks;
 using Mono.Options;
-using MountainProjectModels;
-using Common;
+using MountainProjectAPI;
 
 namespace MountainProjectDBBuilder
 {
+    /* =====================================================
+     * TODO BEFORE RELEASE/ANNOUCEMENT
+     * 
+     * - BOT: output popular routes with areas
+     * - DBBuiler: Create a nuget package for people to get mountainproject data?
+     * 
+     * =====================================================
+     */
+
+    public enum Mode
+    {
+        None,
+        Parse,
+        BuildDB
+    }
+
     class Program
     {
         static string serializationPath;
+        static string logPath;
+        static string logString = "";
         static Stopwatch totalTimer = new Stopwatch();
         static Mode ProgramMode = Mode.None;
 
         static void Main(string[] args)
         {
-            Utilities.LogPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss") + " Log.txt");
+            logPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss") + " Log.txt");
             serializationPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), "MountainProjectAreas.xml");
 
             ParseStartupArguments(args);
@@ -124,14 +139,12 @@ namespace MountainProjectDBBuilder
             }
         }
 
-        private static void BuildDB(bool showLogLines = true)
+        private static void BuildDB()
         {
-            Utilities.ShowLogLines = showLogLines;
-
             try
             {
                 totalTimer.Start();
-                Utilities.Log("Starting DB Build...");
+                Log("Starting DB Build...");
 
                 List<Area> destAreas = Parsers.GetDestAreas();
                 List<Task> areaTasks = new List<Task>();
@@ -143,41 +156,52 @@ namespace MountainProjectDBBuilder
                 Task.WaitAll(areaTasks.ToArray());
 
                 totalTimer.Stop();
-                Utilities.Log($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
+                Log($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
                 SerializeResults(destAreas);
                 SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed}", "");
             }
             catch (Exception ex)
             {
 
-                Utilities.Log(Environment.NewLine + Environment.NewLine);
-                Utilities.Log("!!!-------------EXCEPTION ENCOUNTERED-------------!!!");
-                Utilities.Log($"EXCEPTION MESSAGE: {ex?.Message}\n");
-                Utilities.Log($"INNER EXCEPTION: {ex?.InnerException}\n");
-                Utilities.Log($"STACK TRACE: {ex?.StackTrace}\n");
+                Log(Environment.NewLine + Environment.NewLine);
+                Log("!!!-------------EXCEPTION ENCOUNTERED-------------!!!");
+                Log($"EXCEPTION MESSAGE: {ex?.Message}\n");
+                Log($"INNER EXCEPTION: {ex?.InnerException}\n");
+                Log($"STACK TRACE: {ex?.StackTrace}\n");
                 SendReport($"MountainProjectDBBuilder completed WITH ERRORS in {totalTimer.Elapsed}",
                     $"{ex?.Message}\n{ex.InnerException}\n{ex?.StackTrace}");
             }
             finally
             {
-                Utilities.SaveLogToFile();
+                SaveLogToFile();
             }
         }
 
         private static void SerializeResults(List<Area> inputAreas)
         {
-            Utilities.Log("[SerializeResults] Serializing areas to file");
+            Log("[SerializeResults] Serializing areas to file");
             TextWriter writer = new StreamWriter(serializationPath);
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<Area>));
             xmlSerializer.Serialize(writer, inputAreas);
             writer.Close();
         }
 
+        public static void Log(string itemToLog)
+        {
+            logString += itemToLog + "\n";
+            Console.WriteLine(itemToLog);
+        }
+
+        public static void SaveLogToFile()
+        {
+            File.AppendAllText(logPath, logString);
+        }
+
         private static void SendReport(string subject, string message)
         {
             try
             {
-                Utilities.Log("[SendReport] Sending report");
+                Log("[SendReport] Sending report");
                 string url = @"https://script.google.com/macros/s/AKfycbzSbnYebCUPam1CkMgkD65LzTF_EQIbxFAGBeSZpqS4Shg36m8/exec?";
                 url += $"subjectonly={Uri.EscapeDataString(subject)}&messageonly={Uri.EscapeDataString(message)}";
 
@@ -193,7 +217,7 @@ namespace MountainProjectDBBuilder
             }
             catch (Exception ex)
             {
-                Utilities.Log("[SendReport] Could not send email: " + ex.Message);
+                Log("[SendReport] Could not send email: " + ex.Message);
             }
         }
     }

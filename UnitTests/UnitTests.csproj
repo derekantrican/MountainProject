@@ -64,10 +64,6 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{E62FB652-BB9E-433B-AE16-662A7B7CA286}</Project>
-      <Name>Common</Name>
-    </ProjectReference>
     <ProjectReference Include="..\MountainProjectBot\MountainProjectBot.csproj">
       <Project>{242F7F6C-3608-443B-9890-122311F7F2B1}</Project>
       <Name>MountainProjectBot</Name>
@@ -76,9 +72,9 @@
       <Project>{a69989d0-fd83-4b73-ba54-e6c0c53de49d}</Project>
       <Name>MountainProjectDBBuilder</Name>
     </ProjectReference>
-    <ProjectReference Include="..\MountainProjectModels\MountainProjectModels.csproj">
+    <ProjectReference Include="..\MountainProjectModels\MountainProjectAPI.csproj">
       <Project>{BA6405D4-00B4-4945-BC5D-5FBC214B91E1}</Project>
-      <Name>MountainProjectModels</Name>
+      <Name>MountainProjectAPI</Name>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets" Condition="Exists('$(VSToolsPath)\TeamTest\Microsoft.TestTools.targets')" />

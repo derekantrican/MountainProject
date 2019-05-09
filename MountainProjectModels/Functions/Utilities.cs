@@ -2,35 +2,22 @@
 using AngleSharp.Html.Parser;
 using System;
 using System.Collections.Generic;
-using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
-namespace Common
+namespace MountainProjectAPI
 {
     public static class Utilities
     {
         public const string MPBASEURL = "https://www.mountainproject.com";
         public const string ALLLOCATIONSURL = "https://www.mountainproject.com/route-guide";
         public const string INTERNATIONALURL = "https://www.mountainproject.com/area/105907743/international";
-        public static string LogPath;
-        public static string LogString = "";
-        public static bool ShowLogLines = true;
 
         public static void Log(string itemToLog)
         {
-            LogString += itemToLog + "\n";
-
-            if (ShowLogLines)
-                Console.WriteLine(itemToLog);
-        }
-
-        public static void SaveLogToFile()
-        {
-            File.AppendAllText(LogPath, LogString);
+            Console.WriteLine(itemToLog);
         }
 
         public static bool MatchesStateUrlRegex(string urlToMatch)
@@ -92,32 +79,13 @@ namespace Common
 
             foreach (string state in states)
             {
-                Regex stateRegex = new Regex(RegexSanitize(MPBASEURL) + "\\/area\\/\\d*\\/" + state.ToLower() + "$");
+                string sanitizedString = MPBASEURL.Replace("/", "\\/").Replace(".", "\\.");
+                Regex stateRegex = new Regex(sanitizedString + "\\/area\\/\\d*\\/" + state.ToLower() + "$");
                 if (stateRegex.IsMatch(urlToMatch))
                     return true;
             }
 
             return false;
-        }
-
-        public static string RegexSanitize(string input)
-        {
-            return input.Replace("/", "\\/").Replace(".", "\\.");
-        }
-
-        public static bool StringMatch(string inputString, string targetString, bool caseInsensitive = true)
-        {
-            //Match regardless of # of spaces
-            string input = inputString.Replace(" ", "");
-            string target = targetString.Replace(" ", "");
-
-            if (caseInsensitive)
-            {
-                input = input.ToLower();
-                target = target.ToLower();
-            }
-
-            return target.Contains(input);
         }
 
         public static IHtmlDocument GetHtmlDoc(string url)

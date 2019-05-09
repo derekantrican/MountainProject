@@ -1,7 +1,5 @@
 ﻿using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
-using Common;
-using MountainProjectModels;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,7 +8,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
 
-namespace MountainProjectDBBuilder
+namespace MountainProjectAPI
 {
     public static class Parsers
     {
