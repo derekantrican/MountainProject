@@ -15,11 +15,6 @@ namespace MountainProjectAPI
         public const string ALLLOCATIONSURL = "https://www.mountainproject.com/route-guide";
         public const string INTERNATIONALURL = "https://www.mountainproject.com/area/105907743/international";
 
-        public static void Log(string itemToLog)
-        {
-            Console.WriteLine(itemToLog);
-        }
-
         public static bool MatchesStateUrlRegex(string urlToMatch)
         {
             List<string> states = new List<string>()

@@ -48,7 +48,7 @@ namespace MountainProjectAPI
 
         public static async Task ParseAreaAsync(Area inputArea, bool recursive = true)
         {
-            Utilities.Log($"Current Area: {inputArea.Name}");
+            Console.WriteLine($"Current Area: {inputArea.Name}");
 
             Stopwatch areaStopwatch = Stopwatch.StartNew();
             IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL);
@@ -97,12 +97,12 @@ namespace MountainProjectAPI
                     await ParseAreaAsync(subArea); //Parse sub area
             }
 
-            Utilities.Log($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
+            Console.WriteLine($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
         }
 
         public static async Task ParseRouteAsync(Route inputRoute)
         {
-            Utilities.Log($"Current Route: {inputRoute.Name}");
+            Console.WriteLine($"Current Route: {inputRoute.Name}");
 
             Stopwatch routeStopwatch = Stopwatch.StartNew();
             IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL);
@@ -144,7 +144,7 @@ namespace MountainProjectAPI
 
             doc.Dispose();
 
-            Utilities.Log($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
+            Console.WriteLine($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
         }
 
         public static List<string> PopulateParentUrls(IHtmlDocument doc)
