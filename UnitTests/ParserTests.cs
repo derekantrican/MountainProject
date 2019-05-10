@@ -134,10 +134,9 @@ namespace UnitTests
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            Route testRoute = new Route() { URL = url };
-            Parsers.ParseRouteAsync(testRoute).Wait();
+            string name = Parsers.ParseName(Utilities.GetHtmlDoc(url));
 
-            Assert.AreEqual(expectedName, testRoute.Name);
+            Assert.AreEqual(expectedName, name);
         }
 
         [DataTestMethod]
@@ -150,10 +149,9 @@ namespace UnitTests
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            Route testRoute = new Route() { URL = url };
-            Parsers.ParseRouteAsync(testRoute).Wait();
+            List<Route.RouteType> routeTypes = Parsers.ParseRouteTypes(Utilities.GetHtmlDoc(url));
 
-            CollectionAssert.AreEquivalent(expectedTypes, testRoute.Types); //Compare collections WITHOUT order
+            CollectionAssert.AreEquivalent(expectedTypes, routeTypes); //Compare collections WITHOUT order
         }
 
         [DataTestMethod]
@@ -165,10 +163,9 @@ namespace UnitTests
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            Route testRoute = new Route() { URL = url };
-            Parsers.ParseRouteAsync(testRoute).Wait();
+            string grade = Parsers.ParseRouteGrade(Utilities.GetHtmlDoc(url));
 
-            Assert.AreEqual(expectedGrade, testRoute.Grade);
+            Assert.AreEqual(expectedGrade, grade);
         }
 
         [DataTestMethod]
@@ -180,10 +177,9 @@ namespace UnitTests
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            Route testRoute = new Route() { URL = url };
-            Parsers.ParseRouteAsync(testRoute).Wait();
+            string additionalInfo = Parsers.ParseAdditionalRouteInfo(Utilities.GetHtmlDoc(url));
 
-            Assert.AreEqual(expectedAdditionalInfo, testRoute.AdditionalInfo);
+            Assert.AreEqual(expectedAdditionalInfo, additionalInfo);
         }
 
         [DataTestMethod] //https://stackoverflow.com/a/54296734/2246411

@@ -46,6 +46,7 @@ namespace MountainProjectAPI
             return destAreas;
         }
 
+        #region Parse Area
         public static async Task ParseAreaAsync(Area inputArea, bool recursive = true)
         {
             Console.WriteLine($"Current Area: {inputArea.Name}");
@@ -54,18 +55,11 @@ namespace MountainProjectAPI
             IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL);
 
             if (string.IsNullOrEmpty(inputArea.Name))
-                inputArea.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
+                inputArea.Name = ParseName(doc);
 
             inputArea.Statistics = PopulateStatistics(doc);
-
-            //Get Area "popularity" (page views)
-            IElement pageViewsElement = doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Page Views:"))
-                                            .GetElementsByTagName("td")[1];
-            string pageViewsStr = Regex.Match(pageViewsElement.TextContent.Replace(",", ""), @"(\d+)\s*total").Groups[1].Value;
-            inputArea.Popularity = Convert.ToInt32(pageViewsStr);
-
+            inputArea.Popularity = ParsePopularity(doc);
             inputArea.ParentUrls = GetParentUrls(doc);
-
             inputArea.PopularRouteUrls = GetPopularRouteUrls(doc, 3);
 
             //Get Area's routes
@@ -102,53 +96,6 @@ namespace MountainProjectAPI
             Console.WriteLine($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
         }
 
-        public static async Task ParseRouteAsync(Route inputRoute)
-        {
-            Console.WriteLine($"Current Route: {inputRoute.Name}");
-
-            Stopwatch routeStopwatch = Stopwatch.StartNew();
-            IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL);
-
-            if (string.IsNullOrEmpty(inputRoute.Name))
-                inputRoute.Name = Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
-
-            //Get Route type
-            string typeString = HttpUtility.HtmlDecode(doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Type:"))
-                                        .GetElementsByTagName("td")[1].TextContent).Trim();
-            inputRoute.Types = ParseRouteTypes(typeString);
-
-            //Get Route "popularity" (page views)
-            IElement pageViewsElement = doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Page Views:"))
-                                            .GetElementsByTagName("td")[1];
-            string pageViewsStr = Regex.Match(pageViewsElement.TextContent.Replace(",", ""), @"(\d+)\s*total").Groups[1].Value;
-            inputRoute.Popularity = Convert.ToInt32(pageViewsStr);
-
-            //Get Route grade
-            List<IElement> gradesOnPage = doc.GetElementsByTagName("span").Where(x => x.Attributes["class"] != null &&
-                                                                                               (x.Attributes["class"].Value == "rateHueco" || x.Attributes["class"].Value == "rateYDS")).ToList();
-            IElement sidebar = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar");
-            gradesOnPage.RemoveAll(p => sidebar.Descendents().Contains(p));
-            string routeGrade = "";
-            IElement gradeElement = gradesOnPage.FirstOrDefault();
-            if (gradeElement != null)
-                routeGrade = HttpUtility.HtmlDecode(gradeElement.TextContent.Replace(gradeElement.GetElementsByTagName("a").FirstOrDefault().TextContent, "")).Trim();
-            else
-            {
-                IElement gradesSection = doc.GetElementsByTagName("h2").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "inline-block mr-2");
-                routeGrade = HttpUtility.HtmlDecode(gradesSection.TextContent);
-            }
-
-            inputRoute.Grade = routeGrade;
-
-            inputRoute.AdditionalInfo = ParseAdditionalRouteInfo(typeString); //Get Route additional info
-
-            inputRoute.ParentUrls = GetParentUrls(doc);
-
-            doc.Dispose();
-
-            Console.WriteLine($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
-        }
-
         public static List<string> GetPopularRouteUrls(IHtmlDocument doc, int numberToReturn)
         {
             List<string> result = new List<string>();
@@ -162,17 +109,6 @@ namespace MountainProjectAPI
                 result.Add(row.GetElementsByTagName("a").FirstOrDefault().Attributes["href"].Value);
 
             return result.Take(numberToReturn).ToList();
-        }
-
-        public static List<string> GetParentUrls(IHtmlDocument doc)
-        {
-            List<string> result = new List<string>();
-            IElement outerDiv = doc.GetElementsByTagName("div").FirstOrDefault(x => x.Children.FirstOrDefault(p => p.TagName == "A" && p.TextContent == "All Locations") != null);
-            List<IElement> parentList = outerDiv.Children.Where(p => p.TagName == "A").ToList();
-            foreach (IElement parentElement in parentList)
-                result.Add(parentElement.Attributes["href"].Value);
-
-            return result;
         }
 
         public static AreaStats PopulateStatistics(IHtmlDocument doc)
@@ -210,82 +146,157 @@ namespace MountainProjectAPI
 
             return new AreaStats(boulderCount, TRCount, sportCount, tradCount);
         }
+        #endregion Parse Area
 
-        public static List<Route.RouteType> ParseRouteTypes(string inputString)
+        #region Parse Route
+        public static async Task ParseRouteAsync(Route inputRoute)
         {
+            Console.WriteLine($"Current Route: {inputRoute.Name}");
+
+            Stopwatch routeStopwatch = Stopwatch.StartNew();
+            IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL);
+
+            if (string.IsNullOrEmpty(inputRoute.Name))
+                inputRoute.Name = ParseName(doc);
+
+            inputRoute.Types = ParseRouteTypes(doc);
+            inputRoute.Popularity = ParsePopularity(doc);
+            inputRoute.Grade = ParseRouteGrade(doc);
+            inputRoute.AdditionalInfo = ParseAdditionalRouteInfo(doc);
+            inputRoute.ParentUrls = GetParentUrls(doc);
+
+            doc.Dispose();
+
+            Console.WriteLine($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
+        }
+
+        public static string ParseRouteGrade(IHtmlDocument doc)
+        {
+            List<IElement> gradesOnPage = doc.GetElementsByTagName("span").Where(x => x.Attributes["class"] != null &&
+                                                                                   (x.Attributes["class"].Value == "rateHueco" || x.Attributes["class"].Value == "rateYDS")).ToList();
+            IElement sidebar = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar");
+            gradesOnPage.RemoveAll(p => sidebar.Descendents().Contains(p));
+            string routeGrade = "";
+            IElement gradeElement = gradesOnPage.FirstOrDefault();
+            if (gradeElement != null)
+                routeGrade = HttpUtility.HtmlDecode(gradeElement.TextContent.Replace(gradeElement.GetElementsByTagName("a").FirstOrDefault().TextContent, "")).Trim();
+            else
+            {
+                IElement gradesSection = doc.GetElementsByTagName("h2").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "inline-block mr-2");
+                routeGrade = HttpUtility.HtmlDecode(gradesSection.TextContent);
+            }
+
+            return routeGrade;
+        }
+
+        public static List<Route.RouteType> ParseRouteTypes(IHtmlDocument doc)
+        {
+            string typeString = HttpUtility.HtmlDecode(doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Type:"))
+                                        .GetElementsByTagName("td")[1].TextContent).Trim();
+
             List<Route.RouteType> result = new List<Route.RouteType>();
 
-            if (Regex.IsMatch(inputString, "BOULDER", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(typeString, "BOULDER", RegexOptions.IgnoreCase))
             {
-                inputString = Regex.Replace(inputString, "BOULDER", "", RegexOptions.IgnoreCase);
+                typeString = Regex.Replace(typeString, "BOULDER", "", RegexOptions.IgnoreCase);
                 result.Add(Route.RouteType.Boulder);
             }
 
-            if (Regex.IsMatch(inputString, "TRAD", RegexOptions.IgnoreCase)) //This has to go before an attempt to match "TR" so that we don't accidentally match "TR" instead of "TRAD"
+            if (Regex.IsMatch(typeString, "TRAD", RegexOptions.IgnoreCase)) //This has to go before an attempt to match "TR" so that we don't accidentally match "TR" instead of "TRAD"
             {
-                inputString = Regex.Replace(inputString, "TRAD", "", RegexOptions.IgnoreCase);
+                typeString = Regex.Replace(typeString, "TRAD", "", RegexOptions.IgnoreCase);
                 result.Add(Route.RouteType.Trad);
             }
 
-            if (Regex.IsMatch(inputString, "TR|TOP ROPE", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(typeString, "TR|TOP ROPE", RegexOptions.IgnoreCase))
             {
-                inputString = Regex.Replace(inputString, "TR|TOP ROPE", "", RegexOptions.IgnoreCase);
+                typeString = Regex.Replace(typeString, "TR|TOP ROPE", "", RegexOptions.IgnoreCase);
                 result.Add(Route.RouteType.TopRope);
             }
 
-            if (Regex.IsMatch(inputString, "AID", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(typeString, "AID", RegexOptions.IgnoreCase))
             {
-                inputString = Regex.Replace(inputString, "AID", "", RegexOptions.IgnoreCase);
+                typeString = Regex.Replace(typeString, "AID", "", RegexOptions.IgnoreCase);
                 result.Add(Route.RouteType.Aid);
             }
 
-            if (Regex.IsMatch(inputString, "SPORT", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(typeString, "SPORT", RegexOptions.IgnoreCase))
             {
-                inputString = Regex.Replace(inputString, "SPORT", "", RegexOptions.IgnoreCase);
+                typeString = Regex.Replace(typeString, "SPORT", "", RegexOptions.IgnoreCase);
                 result.Add(Route.RouteType.Sport);
             }
 
-            if (Regex.IsMatch(inputString, "MIXED", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(typeString, "MIXED", RegexOptions.IgnoreCase))
             {
-                inputString = Regex.Replace(inputString, "MIXED", "", RegexOptions.IgnoreCase);
+                typeString = Regex.Replace(typeString, "MIXED", "", RegexOptions.IgnoreCase);
                 result.Add(Route.RouteType.Mixed);
             }
 
-            if (Regex.IsMatch(inputString, "ICE", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(typeString, "ICE", RegexOptions.IgnoreCase))
             {
-                inputString = Regex.Replace(inputString, "ICE", "", RegexOptions.IgnoreCase);
+                typeString = Regex.Replace(typeString, "ICE", "", RegexOptions.IgnoreCase);
                 result.Add(Route.RouteType.Ice);
             }
 
-            if (Regex.IsMatch(inputString, "ALPINE", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(typeString, "ALPINE", RegexOptions.IgnoreCase))
             {
-                inputString = Regex.Replace(inputString, "ALPINE", "", RegexOptions.IgnoreCase);
+                typeString = Regex.Replace(typeString, "ALPINE", "", RegexOptions.IgnoreCase);
                 result.Add(Route.RouteType.Alpine);
             }
 
-            if (Regex.IsMatch(inputString, "SNOW", RegexOptions.IgnoreCase))
+            if (Regex.IsMatch(typeString, "SNOW", RegexOptions.IgnoreCase))
             {
-                inputString = Regex.Replace(inputString, "SNOW", "", RegexOptions.IgnoreCase);
+                typeString = Regex.Replace(typeString, "SNOW", "", RegexOptions.IgnoreCase);
                 result.Add(Route.RouteType.Snow);
             }
 
             return result;
         }
 
-        public static string ParseAdditionalRouteInfo(string inputString)
+        public static string ParseAdditionalRouteInfo(IHtmlDocument doc)
         {
-            inputString = Regex.Replace(inputString, "TRAD|TR|SPORT|BOULDER|MIXED|ICE|ALPINE|AID|SNOW", "", RegexOptions.IgnoreCase);
-            if (!string.IsNullOrEmpty(Regex.Replace(inputString, "[^a-zA-Z0-9]", "")))
-            {
-                inputString = Regex.Replace(inputString, @"\s+", " "); //Replace multiple spaces (more than one in a row) with a single space
-                inputString = Regex.Replace(inputString, @"\s+,", ","); //Remove any spaces before commas
-                inputString = Regex.Replace(inputString, "^,+|,+$|,{2,}", ""); //Remove any commas at the beginning/end of string (or multiple commas in a row)
-                inputString = inputString.Trim(); //Trim any extra whitespace from the beginning/end of string
+            string typeString = HttpUtility.HtmlDecode(doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Type:"))
+                            .GetElementsByTagName("td")[1].TextContent).Trim();
 
-                return inputString;
+            typeString = Regex.Replace(typeString, "TRAD|TR|SPORT|BOULDER|MIXED|ICE|ALPINE|AID|SNOW", "", RegexOptions.IgnoreCase);
+            if (!string.IsNullOrEmpty(Regex.Replace(typeString, "[^a-zA-Z0-9]", "")))
+            {
+                typeString = Regex.Replace(typeString, @"\s+", " "); //Replace multiple spaces (more than one in a row) with a single space
+                typeString = Regex.Replace(typeString, @"\s+,", ","); //Remove any spaces before commas
+                typeString = Regex.Replace(typeString, "^,+|,+$|,{2,}", ""); //Remove any commas at the beginning/end of string (or multiple commas in a row)
+                typeString = typeString.Trim(); //Trim any extra whitespace from the beginning/end of string
+
+                return typeString;
             }
 
             return "";
         }
+        #endregion Parse Route
+
+        #region Common Parse Methods
+        public static List<string> GetParentUrls(IHtmlDocument doc)
+        {
+            List<string> result = new List<string>();
+            IElement outerDiv = doc.GetElementsByTagName("div").FirstOrDefault(x => x.Children.FirstOrDefault(p => p.TagName == "A" && p.TextContent == "All Locations") != null);
+            List<IElement> parentList = outerDiv.Children.Where(p => p.TagName == "A").ToList();
+            foreach (IElement parentElement in parentList)
+                result.Add(parentElement.Attributes["href"].Value);
+
+            return result;
+        }
+
+        public static int ParsePopularity(IHtmlDocument doc)
+        {
+            IElement pageViewsElement = doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Page Views:"))
+                                .GetElementsByTagName("td")[1];
+            string pageViewsStr = Regex.Match(pageViewsElement.TextContent.Replace(",", ""), @"(\d+)\s*total").Groups[1].Value;
+            return Convert.ToInt32(pageViewsStr);
+        }
+
+        public static string ParseName(IHtmlDocument doc)
+        {
+            return Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
+        }
+        #endregion Common Parse Methods
     }
 }
