@@ -22,6 +22,8 @@ Most of these haven't been updated in a while. And I figured I'd learn something
 - Once built, use cmd to run the program (eg `MountainProjectDBBuilder.exe -build`. You can see all options by using `MountainProjectDBBuilder.exe -help`). *Heads-up: building the DB will take a while (currently clocked at about 9 hours!)*
 - Once finished, in the same location you should have a "MountainProjectAreas.xml" file of every route and area on MountainProject.com (here is the latest I have created: https://drive.google.com/open?id=12C0EWBpPLjjlDw0zan6Q6U5KZjaq5OxQ)
 
+![screenshot](https://i.imgur.com/eCFjCRi.gif)
+
 -------------
 
 ### Reporting issues & contributing:
