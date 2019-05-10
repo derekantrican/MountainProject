@@ -35,7 +35,15 @@ namespace MountainProjectAPI
 
         public override string ToString()
         {
-            return Name + " (" + TypeString + ", " + Grade + ")";
+            string result = "";
+            result += $"{this.Name} [{this.TypeString} {this.Grade}";
+
+            if (!string.IsNullOrEmpty(this.AdditionalInfo))
+                result += ", " + this.AdditionalInfo;
+
+            result += "]";
+
+            return result;
         }
     }
 }

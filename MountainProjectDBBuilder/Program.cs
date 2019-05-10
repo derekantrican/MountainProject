@@ -115,17 +115,9 @@ namespace MountainProjectDBBuilder
                 {
                     string resultStr = "";
                     if (result is Area)
-                        resultStr = $"{result.Name} [{(result as Area).Statistics.ToString()}]";
+                        resultStr = (result as Area).ToString();
                     else if (result is Route)
-                    {
-                        Route resultRoute = result as Route;
-                        resultStr = $"{resultRoute.Name} [{resultRoute.TypeString} {resultRoute.Grade}";
-
-                        if (!string.IsNullOrEmpty(resultRoute.AdditionalInfo))
-                            resultStr += " " + resultRoute.AdditionalInfo;
-
-                        resultStr += "]";
-                    }
+                        resultStr = (result as Route).ToString();
 
                     Console.WriteLine("The following was found: " + resultStr + " (Found in " + stopwatch.ElapsedMilliseconds + " ms)");
                     Console.WriteLine($"Parent: {MountainProjectDataSearch.GetParent(result, -1).Name}");

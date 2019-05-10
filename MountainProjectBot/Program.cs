@@ -132,11 +132,11 @@ namespace MountainProjectBot
             if (inputMountainProjectObject is Area)
             {
                 Area inputArea = inputMountainProjectObject as Area;
-                result += $"{inputArea.Name} [{inputArea.Statistics}]\n\n";
+                result += inputArea.ToString() + "\n\n";
                 result += GetLocationString(inputArea);
+                result += GetPopularRoutes(inputArea);
 
                 //Todo: additional info to add
-                // - popular routes (this can be parsed from the "Classic Climbing Routes" section on an Area's page)
                 // - description?
 
                 result += inputArea.URL;
@@ -144,16 +144,11 @@ namespace MountainProjectBot
             else if (inputMountainProjectObject is Route)
             {
                 Route inputRoute = inputMountainProjectObject as Route;
-                result += $"{inputRoute.Name} [{inputRoute.TypeString} {inputRoute.Grade},";
-
-                if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
-                    result += " " + inputRoute.AdditionalInfo;
-
-                result += "]\n\n";
-
+                result += inputRoute.ToString() + "\n\n";
                 result += GetLocationString(inputRoute);
 
                 //Todo: additional info to add
+                // - FA?
                 // - description?
 
                 result += inputRoute.URL;
@@ -185,6 +180,24 @@ namespace MountainProjectBot
             locationString += "\n\n";
 
             return locationString;
+        }
+
+        private static string GetPopularRoutes(Area area)
+        {
+            string result = "Popular routes: ";
+
+            if (area.PopularRouteUrls.Count == 0)
+                return "";
+
+            foreach (string url in area.PopularRouteUrls)
+            {
+                Route popularRoute = MountainProjectDataSearch.GetItemWithMatchingUrl(url, area.SubAreas.Cast<MPObject>().ToList()) as Route;
+                result += $"\n   {popularRoute.Name}";
+            }
+
+            result += "\n\n";
+
+            return result;
         }
 
         private static List<Comment> RemoveAlreadyRepliedTo(List<Comment> comments)

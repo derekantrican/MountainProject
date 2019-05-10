@@ -64,7 +64,9 @@ namespace MountainProjectAPI
             string pageViewsStr = Regex.Match(pageViewsElement.TextContent.Replace(",", ""), @"(\d+)\s*total").Groups[1].Value;
             inputArea.Popularity = Convert.ToInt32(pageViewsStr);
 
-            inputArea.ParentUrls = PopulateParentUrls(doc);
+            inputArea.ParentUrls = GetParentUrls(doc);
+
+            inputArea.PopularRouteUrls = GetPopularRouteUrls(doc, 3);
 
             //Get Area's routes
             IElement routesTable = doc.GetElementsByTagName("table").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table").FirstOrDefault();
@@ -140,14 +142,29 @@ namespace MountainProjectAPI
 
             inputRoute.AdditionalInfo = ParseAdditionalRouteInfo(typeString); //Get Route additional info
 
-            inputRoute.ParentUrls = PopulateParentUrls(doc);
+            inputRoute.ParentUrls = GetParentUrls(doc);
 
             doc.Dispose();
 
             Console.WriteLine($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
         }
 
-        public static List<string> PopulateParentUrls(IHtmlDocument doc)
+        public static List<string> GetPopularRouteUrls(IHtmlDocument doc, int numberToReturn)
+        {
+            List<string> result = new List<string>();
+
+            IElement outerTable = doc.GetElementsByTagName("table").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "table table-striped route-table hidden-sm-up");
+            if (outerTable == null) //Some areas don't have a "classic climbs" table (later we can approximate this based on the Popularity property)
+                return result;
+
+            List<IElement> rows = outerTable.GetElementsByTagName("tr").ToList(); //Skip the header row
+            foreach (IElement row in rows)
+                result.Add(row.GetElementsByTagName("a").FirstOrDefault().Attributes["href"].Value);
+
+            return result.Take(numberToReturn).ToList();
+        }
+
+        public static List<string> GetParentUrls(IHtmlDocument doc)
         {
             List<string> result = new List<string>();
             IElement outerDiv = doc.GetElementsByTagName("div").FirstOrDefault(x => x.Children.FirstOrDefault(p => p.TagName == "A" && p.TextContent == "All Locations") != null);

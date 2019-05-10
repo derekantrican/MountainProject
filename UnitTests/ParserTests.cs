@@ -79,9 +79,9 @@ namespace UnitTests
         }
 
         [DataTestMethod]
-        [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", 2, 0)] //Subdest areas have subareas but no routes
-        [DataRow("/area/108184422/deception-wall", 0, 17)] //Walls have routes but no subareas
-        public void TestSubAreaParse(string url, int expectedSubAreas, int expectedRoutes)
+        [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", 2)] //Subdest areas have subareas
+        [DataRow("/area/108184422/deception-wall", 0)] //Walls don't have subareas
+        public void TestAreaSubAreaParse(string url, int expectedSubAreas)
         {
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
@@ -92,9 +92,37 @@ namespace UnitTests
 
             int subsubareasCount = testSubDestArea.SubAreas == null ? 0 : testSubDestArea.SubAreas.Count;
             Assert.AreEqual(expectedSubAreas, subsubareasCount);
+        }
+
+        [DataTestMethod]
+        [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", 0)] //Subdest areas don't have routes
+        [DataRow("/area/108184422/deception-wall", 17)] //Walls have routes
+        public void TestAreaRouteParse(string url, int expectedRoutes)
+        {
+            if (!url.Contains(Utilities.MPBASEURL))
+                url = Utilities.MPBASEURL + url;
+
+            Area testSubDestArea = new Area() { URL = url };
+
+            Parsers.ParseAreaAsync(testSubDestArea, false).Wait();
 
             int routesCount = testSubDestArea.Routes == null ? 0 : testSubDestArea.Routes.Count;
             Assert.AreEqual(expectedRoutes, routesCount);
+        }
+
+        [DataTestMethod]
+        [DataRow("/area/105841134/red-river-gorge", new object[] { new[] { "/route/105860741/roadside-attraction", "/route/106405603/crack-attack", "/route/105868000/rock-wars" } })] //Some popular routes
+        [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", new object[] { new string[0] })] //No popular routes listed
+        public void TestAreaPopularClimbsParse(string url, object[] expectedPopClimbs)
+        {
+            if (!url.Contains(Utilities.MPBASEURL))
+                url = Utilities.MPBASEURL + url;
+
+            List<string> popularRoutes = Parsers.GetPopularRouteUrls(Utilities.GetHtmlDoc(url), 3);
+            for (int i = 0; i < popularRoutes.Count; i++)
+                popularRoutes[i] = popularRoutes[i].Replace(Utilities.MPBASEURL, "");
+
+            CollectionAssert.AreEqual(expectedPopClimbs, popularRoutes);
         }
 
         [DataTestMethod]
@@ -166,7 +194,7 @@ namespace UnitTests
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            List<string> parents = Parsers.PopulateParentUrls(Utilities.GetHtmlDoc(url));
+            List<string> parents = Parsers.GetParentUrls(Utilities.GetHtmlDoc(url));
             for (int i = 0; i < parents.Count; i++)
                 parents[i] = parents[i].Replace(Utilities.MPBASEURL, "");
 
