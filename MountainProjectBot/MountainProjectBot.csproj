@@ -153,7 +153,7 @@
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\MountainProjectModels\MountainProjectAPI.csproj">
+    <ProjectReference Include="..\MountainProjectAPI\MountainProjectAPI.csproj">
       <Project>{ba6405d4-00b4-4945-bc5d-5fbc214b91e1}</Project>
       <Name>MountainProjectAPI</Name>
     </ProjectReference>

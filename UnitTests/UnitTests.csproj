@@ -72,7 +72,7 @@
       <Project>{a69989d0-fd83-4b73-ba54-e6c0c53de49d}</Project>
       <Name>MountainProjectDBBuilder</Name>
     </ProjectReference>
-    <ProjectReference Include="..\MountainProjectModels\MountainProjectAPI.csproj">
+    <ProjectReference Include="..\MountainProjectAPI\MountainProjectAPI.csproj">
       <Project>{BA6405D4-00B4-4945-BC5D-5FBC214B91E1}</Project>
       <Name>MountainProjectAPI</Name>
     </ProjectReference>

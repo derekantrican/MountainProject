@@ -9,7 +9,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "UnitTests\Unit
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MountainProjectBot", "MountainProjectBot\MountainProjectBot.csproj", "{242F7F6C-3608-443B-9890-122311F7F2B1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MountainProjectAPI", "MountainProjectModels\MountainProjectAPI.csproj", "{BA6405D4-00B4-4945-BC5D-5FBC214B91E1}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MountainProjectAPI", "MountainProjectAPI\MountainProjectAPI.csproj", "{BA6405D4-00B4-4945-BC5D-5FBC214B91E1}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
