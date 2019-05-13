@@ -16,7 +16,7 @@ namespace MountainProjectBot
         const string XMLPATH = @"..\..\MountainProjectDBBuilder\bin\MountainProjectAreas.xml";
         const string CREDENTIALSPATH = @"..\Credentials.txt";
         const string REPLIEDTOCOMMENTSPATH = "RepliedTo.txt";
-        const string SUBREDDITNAME = "/r/DerekAntProjectTest";
+        const string SUBREDDITNAME = "/r/MountainProjectBot";
         const string BOTKEYWORD = "!MountainProject";
 
         static Reddit redditService;
@@ -113,7 +113,7 @@ namespace MountainProjectBot
             if (string.IsNullOrEmpty(replyText))
                 replyText = $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
 
-            replyText += "\n\n-----\nBot Links: ";
+            replyText += "\n\n-----\n\n";
             string commentLink = WebUtility.HtmlEncode("https://reddit.com" + replyTo.Permalink);
             replyText += CreateMDLink("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink) + " | ";
             replyText += CreateMDLink("Donate", "https://www.paypal.me/derekantrican") + " | ";
