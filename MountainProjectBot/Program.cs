@@ -96,6 +96,11 @@ namespace MountainProjectBot
                     {
                         Console.WriteLine("Rate limit hit. Postponing reply until next iteration");
                     }
+                    catch (Exception e)
+                    {
+                        Console.WriteLine($"Exception occurred with comment https://reddit.com{comment.Permalink}");
+                        Console.WriteLine($"{e.Message}\n{e.StackTrace}");
+                    }
                 }
 
                 Console.WriteLine("Sleeping for 10 seconds...");
@@ -191,7 +196,11 @@ namespace MountainProjectBot
 
             foreach (string url in area.PopularRouteUrls)
             {
-                Route popularRoute = MountainProjectDataSearch.GetItemWithMatchingUrl(url, area.SubAreas.Cast<MPObject>().ToList()) as Route;
+                List<MPObject> itemsToSearch = new List<MPObject>();
+                itemsToSearch.AddRange(area.SubAreas);
+                itemsToSearch.AddRange(area.Routes);
+
+                Route popularRoute = MountainProjectDataSearch.GetItemWithMatchingUrl(url, itemsToSearch) as Route;
                 result += $"\n- {popularRoute.Name}";
             }
 
