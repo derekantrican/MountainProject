@@ -6,9 +6,12 @@ This is a reddit bot for connecting [MountainProject.com](https://mountainprojec
 
 **Donate to this project:** https://www.paypal.me/derekantrican
 
-### ----Currently this bot is "in progress" and not active----
+### ----Currently this bot is "beta" and you can test it out on https://reddit.com/r/MountainProjectBot/ ----
 
+-----------
 ### Roadmap
+
+**Stage 0 (beta):** Same as Stage 1, but on [/r/MountainProjectBot](https://reddit.com/r/MountainProjectBot/) as a "test environment"
 
 **Stage 1:** Implement the bot on [/r/climbing](https://reddit.com/r/climbing) with "popularity" filtering and partial matching (case-insensitive). *Popularity filtering:* if multiple routes/areas match a search term, we will attempt to return the intended one by using the "page views" value published on MountainProject. *Partial matching:* eg "Deception Crags" will match "Exit 38: Deception Crags"
 
@@ -18,6 +21,7 @@ This is a reddit bot for connecting [MountainProject.com](https://mountainprojec
 
 **Stage 4:** *(theoretical)* The eventual, end goal. Automatically parse [/r/climbing](https://reddit.com/r/climbing) submission titles for route/area names and automatically comment on the post with the route/area information. This would elimate the situation that currently happens: people commenting "where is this?", "what difficulty?", etc
 
+-----------
 ### Reporting issues & contributing:
 
 **Reporting issues:** Please report issues via the issues page: https://github.com/derekantrican/MountainProjectScraper/issues
