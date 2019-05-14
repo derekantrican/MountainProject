@@ -161,6 +161,7 @@ namespace MountainProjectAPI
 
             inputRoute.Types = ParseRouteTypes(doc);
             inputRoute.Popularity = ParsePopularity(doc);
+            inputRoute.Rating = ParseRouteRating(doc);
             inputRoute.Grade = ParseRouteGrade(doc);
             inputRoute.AdditionalInfo = ParseAdditionalRouteInfo(doc);
             inputRoute.ParentUrls = GetParentUrls(doc);
@@ -168,6 +169,16 @@ namespace MountainProjectAPI
             doc.Dispose();
 
             Console.WriteLine($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
+        }
+
+        public static double ParseRouteRating(IHtmlDocument doc)
+        {
+            IElement ratingElement = doc.GetElementsByTagName("span").FirstOrDefault(x => x.Children.FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value.Contains("scoreStars")) != null);
+            double rating = 0;
+            string ratingStr = Regex.Match(ratingElement.TextContent, @"Avg.*?(\d+(\.\d*)?)").Groups[1].Value;
+            double.TryParse(ratingStr, out rating);
+
+            return rating;
         }
 
         public static string ParseRouteGrade(IHtmlDocument doc)

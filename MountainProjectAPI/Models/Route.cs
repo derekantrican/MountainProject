@@ -28,6 +28,7 @@ namespace MountainProjectAPI
             Snow
         }
 
+        public double Rating { get; set; }
         public string Grade { get; set; }
         public List<RouteType> Types { get; set; }
         public string TypeString { get { return string.Join(", ", Types); } }

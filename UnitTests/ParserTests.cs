@@ -169,6 +169,19 @@ namespace UnitTests
         }
 
         [DataTestMethod]
+        [DataRow("/route/111859673/side-dish", 1.8)] //Decimal
+        [DataRow("/route/109063052/geflugelfrikadelle", 4)] //No decimal
+        public void TestRouteRatingParse(string url, double expectedRating)
+        {
+            if (!url.Contains(Utilities.MPBASEURL))
+                url = Utilities.MPBASEURL + url;
+
+            double rating = Parsers.ParseRouteRating(Utilities.GetHtmlDoc(url));
+
+            Assert.AreEqual(expectedRating, rating);
+        }
+
+        [DataTestMethod]
         [DataRow("/route/109063052/geflugelfrikadelle", "40 ft")]
         [DataRow("/route/116181996/13-above-the-night", "1000 ft, 5 pitches, Grade IV")] //Lots of additional info
         [DataRow("/route/110425910/birds-of-a-feather", "50 ft")] //Had a weird (multiple comma) parsing issue before

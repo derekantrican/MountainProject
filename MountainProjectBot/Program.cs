@@ -136,20 +136,20 @@ namespace MountainProjectBot
                 result += GetLocationString(inputArea);
                 result += GetPopularRoutes(inputArea);
 
-                //Todo: additional info to add
-                // - description?
-
                 result += inputArea.URL;
             }
             else if (inputMountainProjectObject is Route)
             {
                 Route inputRoute = inputMountainProjectObject as Route;
-                result += inputRoute.ToString() + "\n\n";
-                result += GetLocationString(inputRoute);
+                result += inputRoute.Name + "\n\n";
+                result += $"Grade: {inputRoute.Grade}";
 
-                //Todo: additional info to add
-                // - FA?
-                // - description?
+                if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
+                    result += ", " + inputRoute.AdditionalInfo;
+
+                result += "\n\n";
+                result += $"Rating: {inputRoute.Rating}/5\n\n";
+                result += GetLocationString(inputRoute);
 
                 result += inputRoute.URL;
             }
@@ -184,7 +184,7 @@ namespace MountainProjectBot
 
         private static string GetPopularRoutes(Area area)
         {
-            string result = "Popular routes: ";
+            string result = "Popular routes:\n";
 
             if (area.PopularRouteUrls.Count == 0)
                 return "";
@@ -192,7 +192,7 @@ namespace MountainProjectBot
             foreach (string url in area.PopularRouteUrls)
             {
                 Route popularRoute = MountainProjectDataSearch.GetItemWithMatchingUrl(url, area.SubAreas.Cast<MPObject>().ToList()) as Route;
-                result += $"\n   {popularRoute.Name}";
+                result += $"\n- {popularRoute.Name}";
             }
 
             result += "\n\n";
