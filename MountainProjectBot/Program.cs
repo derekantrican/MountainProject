@@ -148,7 +148,7 @@ namespace MountainProjectBot
                     result += ", " + inputRoute.AdditionalInfo;
 
                 result += "\n\n";
-                result += $"Rating: {inputRoute.Rating}/5\n\n";
+                result += $"Rating: {inputRoute.Rating}/4\n\n";
                 result += GetLocationString(inputRoute);
 
                 result += inputRoute.URL;
