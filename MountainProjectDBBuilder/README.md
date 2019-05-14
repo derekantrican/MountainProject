@@ -8,6 +8,7 @@ There are a few other people who have attempted to create APIs or scrapers of Mo
 - https://laughinggoat.github.io/mpdata.html (MountainProject "tick" scraper written in Python)
 - https://github.com/rohanbk/Mountain-Project-Scraper (MountainProject scraper written in Python)
 - https://github.com/nickroberts404/MountainScrape (another MountainProject scraper written in Python)
+- https://github.com/rankrh/MountainProject (another MountainProject scraper written in Python)
 - https://github.com/jlauters/OpenMPAPI (Unofficial MountainProject API written in JavaScript)
 - https://github.com/berto/mountain-project (Another unofficial MountainProject API written in JavaScript)
 - https://github.com/mastahyeti/mountain_project (Unofficial MountainProject API written in Ruby)
