@@ -10,6 +10,7 @@ There are a few other people who have attempted to create APIs or scrapers of Mo
 - https://github.com/nickroberts404/MountainScrape (MountainProject scraper written in Python)
 - https://github.com/rankrh/MountainProject (MountainProject scraper written in Python)
 - https://github.com/Graham-Dom/MP-Project (MountainProject scraper written in Python)
+- https://github.com/alexcrist/mountain-project-scraper (MountainProject scraper written in JavaScript)
 - https://github.com/jlauters/OpenMPAPI (Unofficial MountainProject API written in JavaScript)
 - https://github.com/berto/mountain-project (Unofficial MountainProject API written in JavaScript)
 - https://github.com/mastahyeti/mountain_project (Unofficial MountainProject API written in Ruby)
