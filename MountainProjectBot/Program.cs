@@ -13,9 +13,11 @@ namespace MountainProjectBot
 {
     class Program
     {
-        const string XMLPATH = @"..\..\MountainProjectDBBuilder\bin\MountainProjectAreas.xml";
-        const string CREDENTIALSPATH = @"..\Credentials.txt";
-        const string REPLIEDTOCOMMENTSPATH = "RepliedTo.txt";
+        const string XMLNAME = "MountainProjectAreas.xml";
+        static string xmlPath = Path.Combine(@"..\..\MountainProjectDBBuilder\bin\", XMLNAME);
+        const string CREDENTIALSNAME = "Credentials.txt";
+        static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
+        static string repliedToPath = "RepliedTo.txt";
         const string SUBREDDITNAME = "/r/MountainProjectBot";
         const string BOTKEYWORD = "!MountainProject";
 
@@ -24,8 +26,17 @@ namespace MountainProjectBot
 
         static void Main(string[] args)
         {
+            if (args.FirstOrDefault(p => p.Contains("xmlpath=")) != null)
+                xmlPath = args.FirstOrDefault(p => p.Contains("xmlpath=")).Split('=')[1];
+
+            if (args.FirstOrDefault(p => p.Contains("credentials=")) != null)
+                credentialsPath = args.FirstOrDefault(p => p.Contains("credentials=")).Split('=')[1];
+
+            if (args.FirstOrDefault(p => p.Contains("repliedto=")) != null)
+                repliedToPath = args.FirstOrDefault(p => p.Contains("repliedto=")).Split('=')[1];
+
             CheckRequiredFiles();
-            MountainProjectDataSearch.InitMountainProjectData(XMLPATH);
+            MountainProjectDataSearch.InitMountainProjectData(xmlPath);
             AuthReddit().Wait();
             DoBotLoop().Wait();
         }
@@ -34,16 +45,26 @@ namespace MountainProjectBot
         {
             Console.WriteLine("Checking required files...");
 
-            if (!File.Exists(XMLPATH))
+            if (!File.Exists(xmlPath))
             {
-                Console.WriteLine("The xml has not been built");
-                ExitAfterKeyPress();
+                if (File.Exists(XMLNAME)) //If the file does not exist in the built directory, check for it in the same directory
+                    xmlPath = XMLNAME;
+                else
+                {
+                    Console.WriteLine("The xml has not been built");
+                    ExitAfterKeyPress();
+                }
             }
 
-            if (!File.Exists(CREDENTIALSPATH))
+            if (!File.Exists(credentialsPath))
             {
-                Console.WriteLine("The credentials file does not exist");
-                ExitAfterKeyPress();
+                if (File.Exists(CREDENTIALSNAME)) //If the file does not exist in the built directory, check for it in the same directory
+                    credentialsPath = CREDENTIALSNAME;
+                else
+                {
+                    Console.WriteLine("The credentials file does not exist");
+                    ExitAfterKeyPress();
+                }
             }
 
             Console.WriteLine("All required files present");
@@ -62,7 +83,7 @@ namespace MountainProjectBot
 
         private static WebAgent GetWebAgentCredentialsFromFile()
         {
-            List<string> fileLines = File.ReadAllLines(CREDENTIALSPATH).ToList();
+            List<string> fileLines = File.ReadAllLines(credentialsPath).ToList();
 
             string username = fileLines.FirstOrDefault(p => p.Contains("username")).Split(':')[1];
             string password = fileLines.FirstOrDefault(p => p.Contains("password")).Split(':')[1];
@@ -211,10 +232,10 @@ namespace MountainProjectBot
 
         private static List<Comment> RemoveAlreadyRepliedTo(List<Comment> comments)
         {
-            if (!File.Exists(REPLIEDTOCOMMENTSPATH))
-                File.Create(REPLIEDTOCOMMENTSPATH).Close();
+            if (!File.Exists(repliedToPath))
+                File.Create(repliedToPath).Close();
 
-            string text = File.ReadAllText(REPLIEDTOCOMMENTSPATH);
+            string text = File.ReadAllText(repliedToPath);
             comments.RemoveAll(c => text.Contains(c.Id));
 
             return comments;
@@ -222,10 +243,10 @@ namespace MountainProjectBot
 
         private static void LogCommentBeenRepliedTo(Comment comment)
         {
-            if (!File.Exists(REPLIEDTOCOMMENTSPATH))
-                File.Create(REPLIEDTOCOMMENTSPATH).Close();
+            if (!File.Exists(repliedToPath))
+                File.Create(repliedToPath).Close();
 
-            File.AppendAllText(REPLIEDTOCOMMENTSPATH, comment.Id);
+            File.AppendAllText(repliedToPath, comment.Id);
         }
 
         private static string CreateMDLink(string linkText, string linkUrl)
