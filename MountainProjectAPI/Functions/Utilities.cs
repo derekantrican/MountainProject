@@ -14,6 +14,7 @@ namespace MountainProjectAPI
         public const string MPBASEURL = "https://www.mountainproject.com";
         public const string ALLLOCATIONSURL = "https://www.mountainproject.com/route-guide";
         public const string INTERNATIONALURL = "https://www.mountainproject.com/area/105907743/international";
+        public const string AUSTRALIAURL = "https://www.mountainproject.com/area/105907756/australia";
 
         public static bool MatchesStateUrlRegex(string urlToMatch)
         {

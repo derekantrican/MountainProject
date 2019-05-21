@@ -170,12 +170,12 @@ namespace MountainProjectAPI
         public static MPObject GetParent(MPObject child, int parentLevel)
         {
             string url;
-            if (parentLevel == -1)
-                url = child.ParentUrls.Last();
-            else if (parentLevel > child.ParentUrls.Count - 1) //Out of range
-                return null;
-            else
+            if (parentLevel < 0 && Math.Abs(parentLevel) <= child.ParentUrls.Count) //"Negative indicies"
+                url = child.ParentUrls[child.ParentUrls.Count + parentLevel];
+            else if (parentLevel <= child.ParentUrls.Count - 1) //Positive indicies (check for "within range")
                 url = child.ParentUrls[parentLevel];
+            else //Out of range
+                return null;
 
             return GetItemWithMatchingUrl(url, DestAreas.Cast<MPObject>().ToList());
         }
