@@ -62,29 +62,23 @@ namespace MountainProjectBot
             MPObject innerParent, outerParent;
             innerParent = null;
             if (child is Route)
-            {
                 innerParent = MountainProjectDataSearch.GetParent(child, -2); //Get the "second to last" parent https://github.com/derekantrican/MountainProject/issues/12
-                if (innerParent == null ||  //If "child" is a dest area, the parent will be "All Locations" which won't be in our directory
-                    innerParent.URL == Utilities.INTERNATIONALURL) //If "child" is an area like "Europe"
-                    return "";
-            }
             else if (child is Area)
-            {
                 innerParent = MountainProjectDataSearch.GetParent(child, -1); //Get immediate parent
-                if (innerParent == null ||  //If "child" is a dest area, the parent will be "All Locations" which won't be in our directory
-                    innerParent.URL == Utilities.INTERNATIONALURL) //If "child" is an area like "Europe"
-                    return "";
-            }
+
+            if (innerParent == null ||  //If "child" is a dest area, the parent will be "All Locations" which won't be in our directory
+                innerParent.URL == Utilities.INTERNATIONALURL) //If "child" is an area like "Europe"
+                return "";
 
             outerParent = MountainProjectDataSearch.GetParent(child, 1); //Get state that route/area is in
-            if (outerParent.URL == Utilities.INTERNATIONALURL)
+            if (outerParent.URL == Utilities.INTERNATIONALURL) //If this is international, get the country instead of the state (eg "China")
             {
                 if (child.ParentUrls.Count > 3)
                 {
                     if (child.ParentUrls.Contains(Utilities.AUSTRALIAURL)) //Australia is both a continent and a country so it is an exception
                         outerParent = MountainProjectDataSearch.GetParent(child, 2);
                     else
-                        outerParent = MountainProjectDataSearch.GetParent(child, 3); //If this is international, get the country instead of the state (eg "China")
+                        outerParent = MountainProjectDataSearch.GetParent(child, 3);
                 }
                 else
                     return ""; //Return a blank string if we are in an area like "China" (so we don't return a string like "China is located in Asia")
