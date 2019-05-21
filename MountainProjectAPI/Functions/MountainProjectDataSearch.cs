@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 
 namespace MountainProjectAPI
@@ -34,6 +35,8 @@ namespace MountainProjectAPI
         {
             Console.WriteLine("Getting info from MountainProject");
             Stopwatch searchStopwatch = Stopwatch.StartNew();
+
+            searchText = Utilities.FilterStringForMatch(searchText);
 
             List<MPObject> results = DeepSearch(searchText, DestAreas);
             List<string> resultNames = results.Select(p => p.Name).ToList();
@@ -84,7 +87,7 @@ namespace MountainProjectAPI
 
             foreach (Area subDestArea in subAreas)
             {
-                if (StringMatch(input, subDestArea.Name))
+                if (StringMatch(input, subDestArea.NameForMatch))
                     matchedObjects.Add(subDestArea);
 
                 if (subDestArea.SubAreas != null &&
@@ -111,7 +114,7 @@ namespace MountainProjectAPI
 
             foreach (Route route in routes)
             {
-                if (StringMatch(input, route.Name))
+                if (StringMatch(input, route.NameForMatch))
                     matchedObjects.Add(route);
             }
 
@@ -120,9 +123,8 @@ namespace MountainProjectAPI
 
         public static bool StringMatch(string inputString, string targetString, bool caseInsensitive = true)
         {
-            //Match regardless of # of spaces
-            string input = inputString.Replace(" ", "");
-            string target = targetString.Replace(" ", "");
+            string input = inputString;
+            string target = targetString;
 
             if (caseInsensitive)
             {

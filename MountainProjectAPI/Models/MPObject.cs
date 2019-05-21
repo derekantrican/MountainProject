@@ -29,13 +29,21 @@ namespace MountainProjectAPI
             {
                 if (Regex.Match(value, ", The", RegexOptions.IgnoreCase).Success)
                 {
-                    value = Regex.Replace(value, ", The", "", RegexOptions.IgnoreCase);
+                    value = value.Replace(", The", "");
                     value = "The " + value;
                 }
 
                 name = value.Trim();
+
+                //Remove any special characters (spaces, apostrophes, etc) and leave only letter characters (of any language)
+                //Ideally, we would do this during MountainProjectDataSearch.StringMatch but Regex.Replace takes a significant 
+                //amount of time. So running it during the DBBuild saves time for the Reddit bot
+                NameForMatch = Utilities.FilterStringForMatch(name);
             }
         }
+
+        public string NameForMatch { get; set; }
+
         public string URL { get; set; }
         public int Popularity { get; set; }
         public List<string> ParentUrls = new List<string>();

@@ -110,5 +110,10 @@ namespace MountainProjectAPI
 
             return doc;
         }
+
+        public static string FilterStringForMatch(string input)
+        {
+            return Regex.Replace(input, @"\P{L}", "");
+        }
     }
 }
