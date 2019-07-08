@@ -26,6 +26,8 @@ namespace MountainProjectBot
 
         static void Main(string[] args)
         {
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+
             if (args.FirstOrDefault(p => p.Contains("xmlpath=")) != null)
                 xmlPath = args.FirstOrDefault(p => p.Contains("xmlpath=")).Split('=')[1];
 
@@ -40,6 +42,21 @@ namespace MountainProjectBot
             AuthReddit().Wait();
             DoBotLoop().Wait();
         }
+
+
+        #region Error Handling
+        private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            Exception ex = e.ExceptionObject as Exception;
+
+            string exceptionString = "";
+            exceptionString += $"[{DateTime.Now}] EXCEPTION TYPE: {ex?.GetType()}\n\n";
+            exceptionString += $"[{DateTime.Now}] EXCEPTION MESSAGE: {ex?.Message}\n\n";
+            exceptionString += $"[{DateTime.Now}] INNER EXCEPTION: {ex?.InnerException}\n\n";
+            exceptionString += $"[{DateTime.Now}] STACK TRACE: {ex?.StackTrace}\n\n";
+            File.AppendAllText("CRASHREPORT (" + DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss") + ").log", exceptionString);
+        }
+        #endregion Error Handling
 
         private static void CheckRequiredFiles()
         {
