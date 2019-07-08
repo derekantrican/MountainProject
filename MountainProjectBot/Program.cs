@@ -18,7 +18,7 @@ namespace MountainProjectBot
         const string CREDENTIALSNAME = "Credentials.txt";
         static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
         static string repliedToPath = "RepliedTo.txt";
-        const string SUBREDDITNAME = "/r/MountainProjectBot";
+        const string SUBREDDITNAME = "/r/climbing";
         const string BOTKEYWORD = "!MountainProject";
 
         static Reddit redditService;
