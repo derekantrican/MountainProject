@@ -107,12 +107,17 @@ namespace MountainProjectBot
                 itemsToSearch.AddRange(area.Routes);
 
                 Route popularRoute = MountainProjectDataSearch.GetItemWithMatchingUrl(url, itemsToSearch) as Route;
-                result += $"\n- {popularRoute.Name}";
+                result += $"\n- {CreateMDLink(popularRoute.Name, popularRoute.URL)} [{popularRoute.Grade}, {popularRoute.AdditionalInfo}]";
             }
 
             result += "\n\n";
 
             return result;
+        }
+
+        private static string CreateMDLink(string linkText, string linkUrl)
+        {
+            return $"[{linkText}]({linkUrl})";
         }
     }
 }
