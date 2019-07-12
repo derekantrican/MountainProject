@@ -50,10 +50,15 @@ namespace MountainProjectBot
             Exception ex = e.ExceptionObject as Exception;
 
             string exceptionString = "";
-            exceptionString += $"[{DateTime.Now}] EXCEPTION TYPE: {ex?.GetType()}\n\n";
-            exceptionString += $"[{DateTime.Now}] EXCEPTION MESSAGE: {ex?.Message}\n\n";
-            exceptionString += $"[{DateTime.Now}] INNER EXCEPTION: {ex?.InnerException}\n\n";
-            exceptionString += $"[{DateTime.Now}] STACK TRACE: {ex?.StackTrace}\n\n";
+            exceptionString += $"[{DateTime.Now}] EXCEPTION TYPE: {ex?.GetType()}" + Environment.NewLine + Environment.NewLine;
+            exceptionString += $"[{DateTime.Now}] EXCEPTION MESSAGE: {ex?.Message}" + Environment.NewLine + Environment.NewLine;
+            exceptionString += $"[{DateTime.Now}] STACK TRACE: {ex?.StackTrace}" + Environment.NewLine + Environment.NewLine;
+            if (ex.InnerException != null)
+            {
+                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION: {ex?.InnerException}" + Environment.NewLine + Environment.NewLine;
+                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION STACK TRACE: {ex?.InnerException.StackTrace}" + Environment.NewLine + Environment.NewLine;
+            }
+
             File.AppendAllText("CRASHREPORT (" + DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss") + ").log", exceptionString);
         }
         #endregion Error Handling
@@ -118,27 +123,35 @@ namespace MountainProjectBot
                 //Get the latest 1000 comments on the subreddit, the filter to the ones that have the keyword
                 //and have not already been replied to
                 Console.WriteLine("Getting comments...");
-                List<Comment> comments = await subReddit.GetComments(1000, 1000).Where(c => c.Body.Contains(BOTKEYWORD)).ToList();
-                comments = RemoveAlreadyRepliedTo(comments);
 
-                foreach (Comment comment in comments)
+                try
                 {
-                    try
+                    List<Comment> comments = await subReddit.GetComments(1000, 1000).Where(c => c.Body.Contains(BOTKEYWORD)).ToList();
+                    comments = RemoveAlreadyRepliedTo(comments);
+
+                    foreach (Comment comment in comments)
                     {
-                        string reply = GetReplyForComment(comment);
-                        await comment.ReplyAsync(reply);
-                        Console.WriteLine($"Replied to comment {comment.Id}");
-                        LogCommentBeenRepliedTo(comment);
+                        try
+                        {
+                            string reply = GetReplyForComment(comment);
+                            await comment.ReplyAsync(reply);
+                            Console.WriteLine($"Replied to comment {comment.Id}");
+                            LogCommentBeenRepliedTo(comment);
+                        }
+                        catch (RateLimitException)
+                        {
+                            Console.WriteLine("Rate limit hit. Postponing reply until next iteration");
+                        }
+                        catch (Exception e)
+                        {
+                            Console.WriteLine($"Exception occurred with comment https://reddit.com{comment.Permalink}");
+                            Console.WriteLine($"{e.Message}\n{e.StackTrace}");
+                        }
                     }
-                    catch (RateLimitException)
-                    {
-                        Console.WriteLine("Rate limit hit. Postponing reply until next iteration");
-                    }
-                    catch (Exception e)
-                    {
-                        Console.WriteLine($"Exception occurred with comment https://reddit.com{comment.Permalink}");
-                        Console.WriteLine($"{e.Message}\n{e.StackTrace}");
-                    }
+                }
+                catch (RedditHttpException e)
+                {
+                    Console.WriteLine($"Issue connecting to reddit: {e.Message}");
                 }
 
                 Console.WriteLine("Sleeping for 10 seconds...");
