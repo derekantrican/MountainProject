@@ -171,6 +171,7 @@ namespace MountainProjectBot
             replyText += CreateMDLink("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink) + " | ";
             replyText += CreateMDLink("Donate", "https://www.paypal.me/derekantrican") + " | ";
             replyText += CreateMDLink("GitHub", "https://github.com/derekantrican/MountainProject") + " | ";
+            replyText += CreateMDLink("FAQ", "https://github.com/derekantrican/MountainProject/wiki/Bot-FAQ");
 
             return replyText;
         }
