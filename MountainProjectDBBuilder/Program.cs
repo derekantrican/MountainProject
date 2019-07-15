@@ -11,22 +11,13 @@ using MountainProjectAPI;
 
 namespace MountainProjectDBBuilder
 {
-    /* =====================================================
-     * TODO BEFORE RELEASE/ANNOUCEMENT
-     * 
-     * - BOT: output popular routes with areas
-     * - DBBuiler: Create a nuget package for people to get mountainproject data?
-     * 
-     * =====================================================
-     */
-
     public enum Mode
     {
         None,
         Parse,
         BuildDB
     }
-
+    
     class Program
     {
         static string serializationPath;
