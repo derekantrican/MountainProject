@@ -32,7 +32,7 @@ namespace MountainProjectBot
             if (inputMountainProjectObject is Area)
             {
                 Area inputArea = inputMountainProjectObject as Area;
-                result += inputArea.ToString() + "\n\n";
+                result += $"{BoldText(inputArea.Name)} [{inputArea.Statistics}]\n\n";
                 result += GetLocationString(inputArea);
                 result += GetPopularRoutes(inputArea);
 
@@ -41,7 +41,7 @@ namespace MountainProjectBot
             else if (inputMountainProjectObject is Route)
             {
                 Route inputRoute = inputMountainProjectObject as Route;
-                result += inputRoute.Name + "\n\n";
+                result += $"{BoldText(inputRoute.Name)}\n\n";
                 result += $"Grade: {inputRoute.Grade}";
 
                 if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
@@ -84,9 +84,9 @@ namespace MountainProjectBot
                     return ""; //Return a blank string if we are in an area like "China" (so we don't return a string like "China is located in Asia")
             }
 
-            string locationString = $"Located in {innerParent.Name}";
+            string locationString = $"Located in {CreateMDLink(innerParent.Name, innerParent.URL)}";
             if (outerParent != null && outerParent.URL != innerParent.URL)
-                locationString += $", {outerParent.Name}";
+                locationString += $", {CreateMDLink(outerParent.Name, outerParent.URL)}";
 
             locationString += "\n\n";
 
@@ -107,12 +107,21 @@ namespace MountainProjectBot
                 itemsToSearch.AddRange(area.Routes);
 
                 Route popularRoute = MountainProjectDataSearch.GetItemWithMatchingUrl(url, itemsToSearch) as Route;
-                result += $"\n- {CreateMDLink(popularRoute.Name, popularRoute.URL)} [{popularRoute.Grade}, {popularRoute.AdditionalInfo}]";
+                result += $"\n- {CreateMDLink(popularRoute.Name, popularRoute.URL)} [{popularRoute.Grade}";
+                if (!string.IsNullOrEmpty(popularRoute.AdditionalInfo))
+                    result += $", {popularRoute.AdditionalInfo}";
+
+                result += "]";
             }
 
             result += "\n\n";
 
             return result;
+        }
+
+        private static string BoldText(string textToBold)
+        {
+            return $"**{textToBold}**";
         }
 
         private static string CreateMDLink(string linkText, string linkUrl)
