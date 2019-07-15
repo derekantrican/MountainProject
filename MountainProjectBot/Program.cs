@@ -149,9 +149,17 @@ namespace MountainProjectBot
                         }
                     }
                 }
-                catch (RedditHttpException e)
+                catch (Exception e)
                 {
-                    Console.WriteLine($"Issue connecting to reddit: {e.Message}");
+                    //Handle all sorts of "timeout" errors
+                    if (e is RedditHttpException ||
+                        e is WebException ||
+                        (e is TaskCanceledException && !(e as TaskCanceledException).CancellationToken.IsCancellationRequested))
+                    {
+                        Console.WriteLine($"Issue connecting to reddit: {e.Message}");
+                    }
+                    else //If it isn't one of the errors above, it might be more serious. So throw it to be caught as an unhandled exception
+                        throw;
                 }
 
                 Console.WriteLine("Sleeping for 10 seconds...");
