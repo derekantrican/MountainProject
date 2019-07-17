@@ -174,13 +174,13 @@ namespace MountainProjectBot
 
             string replyText = BotReply.GetReplyForCommentBody(replyTo.Body);
 
-            replyText += "\n\n-----\n\n";
+            replyText += Markdown.HRule;
 
             string commentLink = WebUtility.HtmlEncode("https://reddit.com" + replyTo.Permalink);
-            replyText += CreateMDLink("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink) + " | ";
-            replyText += CreateMDLink("Donate", "https://www.paypal.me/derekantrican") + " | ";
-            replyText += CreateMDLink("GitHub", "https://github.com/derekantrican/MountainProject") + " | ";
-            replyText += CreateMDLink("FAQ", "https://github.com/derekantrican/MountainProject/wiki/Bot-FAQ");
+            replyText += Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink) + " | ";
+            replyText += Markdown.Link("Donate", "https://www.paypal.me/derekantrican") + " | ";
+            replyText += Markdown.Link("GitHub", "https://github.com/derekantrican/MountainProject") + " | ";
+            replyText += Markdown.Link("FAQ", "https://github.com/derekantrican/MountainProject/wiki/Bot-FAQ");
 
             return replyText;
         }
@@ -202,11 +202,6 @@ namespace MountainProjectBot
                 File.Create(repliedToPath).Close();
 
             File.AppendAllText(repliedToPath, comment.Id);
-        }
-
-        private static string CreateMDLink(string linkText, string linkUrl)
-        {
-            return $"[{linkText}]({linkUrl})";
         }
 
         private static void ExitAfterKeyPress()

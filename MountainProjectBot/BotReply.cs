@@ -32,7 +32,7 @@ namespace MountainProjectBot
             if (inputMountainProjectObject is Area)
             {
                 Area inputArea = inputMountainProjectObject as Area;
-                result += $"{BoldText(inputArea.Name)} [{inputArea.Statistics}]\n\n";
+                result += $"{Markdown.Bold(inputArea.Name)} [{inputArea.Statistics}]\n\n";
                 result += GetLocationString(inputArea);
                 result += GetPopularRoutes(inputArea);
 
@@ -41,7 +41,7 @@ namespace MountainProjectBot
             else if (inputMountainProjectObject is Route)
             {
                 Route inputRoute = inputMountainProjectObject as Route;
-                result += $"{BoldText(inputRoute.Name)}\n\n";
+                result += $"{Markdown.Bold(inputRoute.Name)}\n\n";
                 result += $"Grade: {inputRoute.Grade}";
 
                 if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
@@ -84,9 +84,9 @@ namespace MountainProjectBot
                     return ""; //Return a blank string if we are in an area like "China" (so we don't return a string like "China is located in Asia")
             }
 
-            string locationString = $"Located in {CreateMDLink(innerParent.Name, innerParent.URL)}";
+            string locationString = $"Located in {Markdown.Link(innerParent.Name, innerParent.URL)}";
             if (outerParent != null && outerParent.URL != innerParent.URL)
-                locationString += $", {CreateMDLink(outerParent.Name, outerParent.URL)}";
+                locationString += $", {Markdown.Link(outerParent.Name, outerParent.URL)}";
 
             locationString += "\n\n";
 
@@ -107,7 +107,7 @@ namespace MountainProjectBot
                 itemsToSearch.AddRange(area.Routes);
 
                 Route popularRoute = MountainProjectDataSearch.GetItemWithMatchingUrl(url, itemsToSearch) as Route;
-                result += $"\n- {CreateMDLink(popularRoute.Name, popularRoute.URL)} [{popularRoute.Grade}";
+                result += $"\n- {Markdown.Link(popularRoute.Name, popularRoute.URL)} [{popularRoute.Grade}";
                 if (!string.IsNullOrEmpty(popularRoute.AdditionalInfo))
                     result += $", {popularRoute.AdditionalInfo}";
 
@@ -117,16 +117,6 @@ namespace MountainProjectBot
             result += "\n\n";
 
             return result;
-        }
-
-        private static string BoldText(string textToBold)
-        {
-            return $"**{textToBold}**";
-        }
-
-        private static string CreateMDLink(string linkText, string linkUrl)
-        {
-            return $"[{linkText}]({linkUrl})";
         }
     }
 }
