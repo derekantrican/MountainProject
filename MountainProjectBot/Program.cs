@@ -121,6 +121,8 @@ namespace MountainProjectBot
         {
             while (true)
             {
+                _ = Task.Run(() => PingStatus()); //Send the bot status (for Uptime Robot)
+
                 //Get the latest 1000 comments on the subreddit, the filter to the ones that have the keyword
                 //and have not already been replied to
                 Console.WriteLine("Getting comments...");
@@ -203,6 +205,25 @@ namespace MountainProjectBot
                 File.Create(repliedToPath).Close();
 
             File.AppendAllText(repliedToPath, comment.Id);
+        }
+
+        private static void PingStatus()
+        {
+            string url = "https://script.google.com/macros/s/AKfycbzjGHLRxHDecvJoqZZCG-ZrEs8oOUTHJuAl0xHa0y_iZ2ntbjs/exec?ping";
+
+            try
+            {
+                HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(url);
+                httpRequest.AutomaticDecompression = DecompressionMethods.GZip;
+
+                using (HttpWebResponse licensingResponse = (HttpWebResponse)httpRequest.GetResponse())
+                using (Stream stream = licensingResponse.GetResponseStream())
+                using (StreamReader reader = new StreamReader(stream))
+                {
+                    string response = reader.ReadToEnd();
+                }
+            }
+            catch { } //Discard any errors
         }
 
         private static void ExitAfterKeyPress()
