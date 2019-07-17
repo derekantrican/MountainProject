@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,7 +20,7 @@ namespace MountainProjectBot
         static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
         static string repliedToPath = "RepliedTo.txt";
         const string SUBREDDITNAME = "/r/climbing";
-        const string BOTKEYWORD = "!MountainProject";
+        const string BOTKEYWORDREGEX = @"(?i)!mountain\s*project";
 
         static Reddit redditService;
         static Subreddit subReddit;
@@ -126,7 +127,7 @@ namespace MountainProjectBot
 
                 try
                 {
-                    List<Comment> comments = await subReddit.GetComments(1000, 1000).Where(c => c.Body.Contains(BOTKEYWORD)).ToList();
+                    List<Comment> comments = await subReddit.GetComments(1000, 1000).Where(c => Regex.IsMatch(c.Body, BOTKEYWORDREGEX)).ToList();
                     comments = RemoveAlreadyRepliedTo(comments);
 
                     foreach (Comment comment in comments)

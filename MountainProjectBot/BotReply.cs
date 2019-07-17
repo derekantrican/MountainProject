@@ -3,16 +3,20 @@ using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
 using System.Net;
+using System.Text.RegularExpressions;
 
 namespace MountainProjectBot
 {
     public static class BotReply
     {
-        const string BOTKEYWORD = "!MountainProject";
+        const string BOTKEYWORDREGEX = @"(?i)!mountain\s*project(.*)";
 
         public static string GetReplyForCommentBody(string commentBody)
         {
-            string queryText = commentBody.Split(new string[] { BOTKEYWORD }, StringSplitOptions.None)[1].Trim();
+            //Get everything AFTER the keyword, but on the same line
+            string queryText = Regex.Match(commentBody, BOTKEYWORDREGEX).Groups[1].Value.Trim();
+            if (string.IsNullOrWhiteSpace(queryText))
+                return "I didn't understand what you were looking for. Please use the Feedback button below if you think this is a bug";
 
             MPObject searchResult = MountainProjectDataSearch.SearchMountainProject(queryText);
             string replyText = GetFormattedString(searchResult);
