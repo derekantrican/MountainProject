@@ -27,12 +27,12 @@ namespace MountainProjectBot
             if (inputMountainProjectObject == null)
                 return null;
 
-            string result = "I found the following info:\n\n";
+            string result = "I found the following info:" + Markdown.NewLine;
 
             if (inputMountainProjectObject is Area)
             {
                 Area inputArea = inputMountainProjectObject as Area;
-                result += $"{Markdown.Bold(inputArea.Name)} [{inputArea.Statistics}]\n\n";
+                result += $"{Markdown.Bold(inputArea.Name)} [{inputArea.Statistics}]" + Markdown.NewLine;
                 result += GetLocationString(inputArea);
                 result += GetPopularRoutes(inputArea);
 
@@ -41,14 +41,14 @@ namespace MountainProjectBot
             else if (inputMountainProjectObject is Route)
             {
                 Route inputRoute = inputMountainProjectObject as Route;
-                result += $"{Markdown.Bold(inputRoute.Name)}\n\n";
+                result += $"{Markdown.Bold(inputRoute.Name)}" + Markdown.NewLine;
                 result += $"Grade: {inputRoute.Grade}";
 
                 if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
                     result += ", " + inputRoute.AdditionalInfo;
 
-                result += "\n\n";
-                result += $"Rating: {inputRoute.Rating}/4\n\n";
+                result += Markdown.NewLine;
+                result += $"Rating: {inputRoute.Rating}/4" + Markdown.NewLine;
                 result += GetLocationString(inputRoute);
 
                 result += inputRoute.URL;
@@ -88,7 +88,7 @@ namespace MountainProjectBot
             if (outerParent != null && outerParent.URL != innerParent.URL)
                 locationString += $", {Markdown.Link(outerParent.Name, outerParent.URL)}";
 
-            locationString += "\n\n";
+            locationString += Markdown.NewLine;
 
             return locationString;
         }
@@ -114,7 +114,7 @@ namespace MountainProjectBot
                 result += "]";
             }
 
-            result += "\n\n";
+            result += Markdown.NewLine;
 
             return result;
         }
