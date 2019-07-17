@@ -1,5 +1,7 @@
 # MountainProjectBot
 
+![status](https://img.shields.io/uptimerobot/status/m783112785-670539cecd20760bce144d87.svg?style=popout)
+
 This is a reddit bot for connecting [MountainProject.com](https://mountainproject.com) and the [/r/climbing](https://reddit.com/r/climbing) subreddit.
 
 **Feedback:** https://forms.gle/RKiU2Bzy9gXg4VBw8
