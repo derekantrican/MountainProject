@@ -27,7 +27,7 @@ namespace UnitTests
             {
                 string query = testCriteria_search[i, 0];
                 string expectedUrl = testCriteria_search[i, 1];
-                MPObject result = MountainProjectDataSearch.SearchMountainProject(query);
+                MPObject result = MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(query));
 
                 Assert.AreEqual(Utilities.MPBASEURL + expectedUrl, result.URL);
             }
@@ -53,7 +53,7 @@ namespace UnitTests
             {
                 string query = testCriteria_location[i, 0];
                 string expectedLocation = testCriteria_location[i, 1];
-                string resultLocation = BotReply.GetLocationString(MountainProjectDataSearch.SearchMountainProject(query));
+                string resultLocation = BotReply.GetLocationString(MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(query)));
                 resultLocation = resultLocation.Replace("\n\n", ""); //Remove markdown newline
                 resultLocation = resultLocation.Replace("Located in ", ""); //Simplify results for unit test
 

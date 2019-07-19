@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Functions\SearchParameters.cs" />
     <Compile Include="Models\Area.cs" />
     <Compile Include="Models\AreaStats.cs" />
     <Compile Include="Functions\MountainProjectDataSearch.cs" />

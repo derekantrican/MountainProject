@@ -31,18 +31,53 @@ namespace MountainProjectAPI
             Console.WriteLine("MountainProject Info deserialized successfully");
         }
 
-        public static MPObject SearchMountainProject(string searchText)
+        public static List<MPObject> SearchMountainProject(string searchText, SearchParameters parameters = null)
         {
             Console.WriteLine("Getting info from MountainProject");
             Stopwatch searchStopwatch = Stopwatch.StartNew();
 
             searchText = Utilities.FilterStringForMatch(searchText);
 
-            List<MPObject> results = DeepSearch(searchText, DestAreas);
+            List<MPObject> results = new List<MPObject>();
+            if (parameters != null && !string.IsNullOrEmpty(parameters.SpecificLocation))
+            {
+                List<MPObject> locationMatches = DeepSearch(Utilities.FilterStringForMatch(parameters.SpecificLocation), DestAreas, parameters);
+                locationMatches.RemoveAll(p => p is Route);
+                Area location = FilterByPopularity(locationMatches) as Area;
 
-            Console.WriteLine($"Found {results.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms. Filtering by priority...");
+                results = SearchSubAreasForMatch(searchText, location.SubAreas, parameters);
+            }
+            else
+                results = DeepSearch(searchText, DestAreas, parameters);
 
-            return FilterByPopularity(results);
+
+            Console.WriteLine($"Found {results.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms");
+
+            return results;
+        }
+
+        public static SearchParameters ParseParameters(ref string input)
+        {
+            SearchParameters parameters = new SearchParameters();
+            if (Regex.IsMatch(input, "-area", RegexOptions.IgnoreCase))
+            {
+                parameters.OnlyAreas = true;
+                input = Regex.Replace(input, "-area", "", RegexOptions.IgnoreCase);
+            }
+
+            if (Regex.IsMatch(input, "-route", RegexOptions.IgnoreCase))
+            {
+                parameters.OnlyRoutes = true;
+                input = Regex.Replace(input, "-route", "", RegexOptions.IgnoreCase);
+            }
+
+            if (Regex.IsMatch(input, "-location", RegexOptions.IgnoreCase))
+            {
+                parameters.SpecificLocation = Regex.Match(input, @"-location:([^-\n]*)", RegexOptions.IgnoreCase).Groups[1].Value;
+                input = Regex.Replace(input, @"-location:[^-\n]*", "", RegexOptions.IgnoreCase);
+            }
+
+            return parameters;
         }
 
         public static MPObject FilterByPopularity(List<MPObject> listToFilter)
@@ -65,7 +100,7 @@ namespace MountainProjectAPI
                 return null;
         }
 
-        public static List<MPObject> DeepSearch(string input, List<Area> destAreas)
+        public static List<MPObject> DeepSearch(string input, List<Area> destAreas, SearchParameters parameters = null)
         {
             List<MPObject> matchedObjects = new List<MPObject>();
             foreach (Area destArea in destAreas)
@@ -73,33 +108,36 @@ namespace MountainProjectAPI
                 //If we're matching the name of a destArea (eg a State), we'll assume that the route/area is within that state
                 //(eg routes named "Sweet Home Alabama") instead of considering a match on the destArea ie: Utilities.StringMatch(input, destArea.Name)
 
-                List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, destArea.SubAreas);
+                List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, destArea.SubAreas, parameters);
                 matchedObjects.AddRange(matchedSubAreas);
             }
 
             return matchedObjects;
         }
 
-        private static List<MPObject> SearchSubAreasForMatch(string input, List<Area> subAreas)
+        private static List<MPObject> SearchSubAreasForMatch(string input, List<Area> subAreas, SearchParameters parameters = null)
         {
             List<MPObject> matchedObjects = new List<MPObject>();
 
             foreach (Area subDestArea in subAreas)
             {
-                if (StringMatch(input, subDestArea.NameForMatch))
+                if (StringMatch(input, subDestArea.NameForMatch) &&
+                    (parameters != null && !parameters.OnlyRoutes))
+                {
                     matchedObjects.Add(subDestArea);
+                }
 
                 if (subDestArea.SubAreas != null &&
                     subDestArea.SubAreas.Count() > 0)
                 {
-                    List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, subDestArea.SubAreas);
+                    List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, subDestArea.SubAreas, parameters);
                     matchedObjects.AddRange(matchedSubAreas);
                 }
 
                 if (subDestArea.Routes != null &&
                     subDestArea.Routes.Count() > 0)
                 {
-                    List<MPObject> matchedRoutes = SearchRoutes(input, subDestArea.Routes);
+                    List<MPObject> matchedRoutes = SearchRoutes(input, subDestArea.Routes, parameters);
                     matchedObjects.AddRange(matchedRoutes);
                 }
             }
@@ -107,14 +145,17 @@ namespace MountainProjectAPI
             return matchedObjects;
         }
 
-        private static List<MPObject> SearchRoutes(string input, List<Route> routes)
+        private static List<MPObject> SearchRoutes(string input, List<Route> routes, SearchParameters parameters = null)
         {
             List<MPObject> matchedObjects = new List<MPObject>();
 
             foreach (Route route in routes)
             {
-                if (StringMatch(input, route.NameForMatch))
+                if (StringMatch(input, route.NameForMatch) &&
+                    (parameters != null && !parameters.OnlyAreas))
+                {
                     matchedObjects.Add(route);
+                }
             }
 
             return matchedObjects;
