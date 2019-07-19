@@ -96,7 +96,7 @@ namespace MountainProjectDBBuilder
                 Console.WriteLine("\n\nPlease input the string you would like to parse: ");
                 string input = Console.ReadLine();
 
-                SearchParameters parameters = MountainProjectDataSearch.ParseParameters(ref input);
+                SearchParameters searchParameters = MountainProjectDataSearch.ParseParameters(ref input);
 
                 bool allResults = input.Contains("-all");
                 Stopwatch stopwatch = Stopwatch.StartNew();
@@ -106,7 +106,7 @@ namespace MountainProjectDBBuilder
 
                     input = Utilities.FilterStringForMatch(input);
 
-                    List<MPObject> results = MountainProjectDataSearch.SearchMountainProject(input, parameters);
+                    List<MPObject> results = MountainProjectDataSearch.SearchMountainProject(input, searchParameters);
                     stopwatch.Stop();
                     List<MPObject> matchedObjectsByPopularity = results.OrderByDescending(p => p.Popularity).ToList();
 
@@ -127,7 +127,7 @@ namespace MountainProjectDBBuilder
                 }
                 else
                 {
-                    MPObject result = MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(input, parameters));
+                    MPObject result = MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(input, searchParameters));
                     stopwatch.Stop();
 
                     if (result == null)
