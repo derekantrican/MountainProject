@@ -2,6 +2,7 @@
 using MountainProjectAPI;
 using MountainProjectBot;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace UnitTests
 {
@@ -11,7 +12,6 @@ namespace UnitTests
         string[,] testCriteria_search = new string[,]
         {
             { "Red River Gorge", "/area/105841134/red-river-gorge" },
-            { "Prime Rib of Goat", "/route/107730934/prime-rib-of-goat" },
             { "Exit 38: Deception Crags", "/area/105791955/exit-38-deception-crags" },
             { "Deception Crags", "/area/105791955/exit-38-deception-crags" }, //Partial name match
             { "Helm's Deep", "/route/106887440/helms-deep" }, //Special character (apostrophe)
@@ -36,7 +36,6 @@ namespace UnitTests
         string[,] testCriteria_location = new string[,]
         {
             { "Red River Gorge", "Kentucky" },
-            { "Prime Rib of Goat", "Mazama, Washington" },
             { "Exit 38: Deception Crags", "Exit 38, Washington" },
             { "Deception Crags", "Exit 38, Washington" },
             { "no-rang-na-rang", "South Korea" }, //International
@@ -53,9 +52,11 @@ namespace UnitTests
             {
                 string query = testCriteria_location[i, 0];
                 string expectedLocation = testCriteria_location[i, 1];
-                string resultLocation = BotReply.GetLocationString(MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(query)));
-                resultLocation = resultLocation.Replace("\n\n", ""); //Remove markdown newline
+                MPObject searchResult = MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(query));
+                string resultLocation = BotReply.GetLocationString(searchResult);
+                resultLocation = resultLocation.Replace(Markdown.NewLine, ""); //Remove markdown newline
                 resultLocation = resultLocation.Replace("Located in ", ""); //Simplify results for unit test
+                resultLocation = Regex.Replace(resultLocation, @"\[|\]|\(.*?\)", ""); //Remove markdown link formatting
 
                 Assert.AreEqual(expectedLocation, resultLocation);
             }

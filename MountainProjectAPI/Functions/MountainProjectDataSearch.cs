@@ -122,7 +122,7 @@ namespace MountainProjectAPI
             foreach (Area subDestArea in subAreas)
             {
                 if (StringMatch(input, subDestArea.NameForMatch) &&
-                    (parameters != null && !parameters.OnlyRoutes))
+                    (parameters == null || !parameters.OnlyRoutes))
                 {
                     matchedObjects.Add(subDestArea);
                 }
@@ -152,7 +152,7 @@ namespace MountainProjectAPI
             foreach (Route route in routes)
             {
                 if (StringMatch(input, route.NameForMatch) &&
-                    (parameters != null && !parameters.OnlyAreas))
+                    (parameters == null || !parameters.OnlyAreas))
                 {
                     matchedObjects.Add(route);
                 }

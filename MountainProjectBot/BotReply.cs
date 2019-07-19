@@ -18,14 +18,14 @@ namespace MountainProjectBot
             if (string.IsNullOrWhiteSpace(queryText))
                 return "I didn't understand what you were looking for. Please use the Feedback button below if you think this is a bug";
 
-            SearchParameters parameters = MountainProjectDataSearch.ParseParameters(ref queryText);
+            SearchParameters searchParameters = MountainProjectDataSearch.ParseParameters(ref queryText);
 
-            MPObject searchResult = MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(queryText, parameters));
+            MPObject searchResult = MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(queryText, searchParameters));
             string replyText = GetFormattedString(searchResult);
             if (string.IsNullOrEmpty(replyText))
             {
-                if (parameters != null && !string.IsNullOrEmpty(parameters.SpecificLocation))
-                    replyText = $"I could not find anything for \"{queryText}\" in \"{parameters.SpecificLocation}\". Please use the Feedback button below if you think this is a bug";
+                if (searchParameters != null && !string.IsNullOrEmpty(searchParameters.SpecificLocation))
+                    replyText = $"I could not find anything for \"{queryText}\" in \"{searchParameters.SpecificLocation}\". Please use the Feedback button below if you think this is a bug";
                 else
                     replyText = $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
             }
