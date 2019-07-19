@@ -96,30 +96,93 @@ namespace MountainProjectDBBuilder
                 Console.WriteLine("\n\nPlease input the string you would like to parse: ");
                 string input = Console.ReadLine();
 
+                bool allResults = input.Contains("-all");
                 Stopwatch stopwatch = Stopwatch.StartNew();
-                MPObject result = MountainProjectDataSearch.SearchMountainProject(input);
-                stopwatch.Stop();
+                if (allResults)
+                {
+                    input = input.Replace("-all", "").Trim();
+                    input = Utilities.FilterStringForMatch(input);
 
-                if (result == null)
-                    Console.WriteLine("Nothing found matching \"" + input + "\"");
+                    List<MPObject> results = MountainProjectDataSearch.DeepSearch(input, MountainProjectDataSearch.DestAreas);
+                    stopwatch.Stop();
+                    List<MPObject> matchedObjectsByPopularity = results.OrderByDescending(p => p.Popularity).ToList();
+
+                    if (results.Count == 0)
+                        Console.WriteLine("Nothing found matching \"" + input + "\"");
+                    else
+                    {
+                        Console.WriteLine($"Found {matchedObjectsByPopularity.Count} items match that search query (found in {stopwatch.ElapsedMilliseconds} ms):");
+                        foreach (MPObject result in matchedObjectsByPopularity)
+                        {
+                            string url = result.URL.Replace(Utilities.MPBASEURL, "");
+                            if (result is Route)
+                                Console.WriteLine($"    Route: {result.Name} (Pop: {result.Popularity}) | Location: {GetLocationString(result)} | {url}");
+                            else if (result is Area)
+                                Console.WriteLine($"    Area: {result.Name} (Pop: {result.Popularity}) | Location: {GetLocationString(result)} | {url}");
+                        }
+                    }
+                }
                 else
                 {
-                    string resultStr = "";
-                    if (result is Area)
-                        resultStr = (result as Area).ToString();
-                    else if (result is Route)
-                        resultStr = (result as Route).ToString();
+                    MPObject result = MountainProjectDataSearch.SearchMountainProject(input);
+                    stopwatch.Stop();
 
-                    Console.WriteLine("The following was found: " + resultStr + " (Found in " + stopwatch.ElapsedMilliseconds + " ms)");
-                    Console.WriteLine($"Parent: {MountainProjectDataSearch.GetParent(result, -1).Name}");
-                    Console.WriteLine("\nOpen result? (y/n) ");
-                    if (Console.ReadKey().Key == ConsoleKey.Y)
-                        Process.Start(result.URL);
+                    if (result == null)
+                        Console.WriteLine("Nothing found matching \"" + input + "\"");
+                    else
+                    {
+                        string resultStr = "";
+                        if (result is Area)
+                            resultStr = (result as Area).ToString();
+                        else if (result is Route)
+                            resultStr = (result as Route).ToString();
+
+                        Console.WriteLine($"The following was found (found in {stopwatch.ElapsedMilliseconds} ms):");
+                        Console.WriteLine("    " + resultStr);
+                        Console.WriteLine($"    Location: {GetLocationString(result)}");
+                        Console.WriteLine("\nOpen result? (y/n) ");
+                        if (Console.ReadKey().Key == ConsoleKey.Y)
+                            Process.Start(result.URL);
+                    }
                 }
 
                 Console.WriteLine("\nSearch something else? (y/n) ");
                 keepSearching = Console.ReadKey().Key == ConsoleKey.Y;
             }
+        }
+
+        private static string GetLocationString(MPObject child)
+        {
+            MPObject innerParent, outerParent;
+            innerParent = null;
+            if (child is Route)
+                innerParent = MountainProjectDataSearch.GetParent(child, -2); //Get the "second to last" parent https://github.com/derekantrican/MountainProject/issues/12
+            else if (child is Area)
+                innerParent = MountainProjectDataSearch.GetParent(child, -1); //Get immediate parent
+
+            if (innerParent == null ||  //If "child" is a dest area, the parent will be "All Locations" which won't be in our directory
+                innerParent.URL == Utilities.INTERNATIONALURL) //If "child" is an area like "Europe"
+                return "";
+
+            outerParent = MountainProjectDataSearch.GetParent(child, 1); //Get state that route/area is in
+            if (outerParent.URL == Utilities.INTERNATIONALURL) //If this is international, get the country instead of the state (eg "China")
+            {
+                if (child.ParentUrls.Count > 3)
+                {
+                    if (child.ParentUrls.Contains(Utilities.AUSTRALIAURL)) //Australia is both a continent and a country so it is an exception
+                        outerParent = MountainProjectDataSearch.GetParent(child, 2);
+                    else
+                        outerParent = MountainProjectDataSearch.GetParent(child, 3);
+                }
+                else
+                    return ""; //Return a blank string if we are in an area like "China" (so we don't return a string like "China is located in Asia")
+            }
+
+            string locationString = $"Located in {innerParent.Name}";
+            if (outerParent != null && outerParent.URL != innerParent.URL)
+                locationString += $", {outerParent.Name}";
+
+            return locationString;
         }
 
         private static void BuildDB()

@@ -39,7 +39,6 @@ namespace MountainProjectAPI
             searchText = Utilities.FilterStringForMatch(searchText);
 
             List<MPObject> results = DeepSearch(searchText, DestAreas);
-            List<string> resultNames = results.Select(p => p.Name).ToList();
 
             Console.WriteLine($"Found {results.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms. Filtering by priority...");
 
@@ -66,7 +65,7 @@ namespace MountainProjectAPI
                 return null;
         }
 
-        private static List<MPObject> DeepSearch(string input, List<Area> destAreas)
+        public static List<MPObject> DeepSearch(string input, List<Area> destAreas)
         {
             List<MPObject> matchedObjects = new List<MPObject>();
             foreach (Area destArea in destAreas)
