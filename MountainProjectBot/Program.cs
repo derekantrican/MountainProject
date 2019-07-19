@@ -138,7 +138,6 @@ namespace MountainProjectBot
                         {
                             string reply = GetReplyForComment(comment);
                             await comment.ReplyAsync(reply);
-                            await comment.UpvoteAsync();
                             Console.WriteLine($"Replied to comment {comment.Id}");
                             LogCommentBeenRepliedTo(comment);
                         }
