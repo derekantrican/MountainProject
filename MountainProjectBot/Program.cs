@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -154,8 +155,9 @@ namespace MountainProjectBot
                 }
                 catch (Exception e)
                 {
-                    //Handle all sorts of "timeout" errors
+                    //Handle all sorts of "timeout" or internet connection errors
                     if (e is RedditHttpException ||
+                        e is HttpRequestException ||
                         e is WebException ||
                         (e is TaskCanceledException && !(e as TaskCanceledException).CancellationToken.IsCancellationRequested))
                     {
