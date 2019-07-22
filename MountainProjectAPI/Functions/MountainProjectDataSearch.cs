@@ -41,14 +41,22 @@ namespace MountainProjectAPI
             List<MPObject> results = new List<MPObject>();
             if (parameters != null && !string.IsNullOrEmpty(parameters.SpecificLocation))
             {
-                List<MPObject> locationMatches = DeepSearch(Utilities.FilterStringForMatch(parameters.SpecificLocation), DestAreas, parameters);
+                List<MPObject> locationMatches = DeepSearch(Utilities.FilterStringForMatch(parameters.SpecificLocation), DestAreas,
+                                                            allowDestAreaMatch: true, parameters: parameters);
                 locationMatches.RemoveAll(p => p is Route);
-                Area location = FilterByPopularity(locationMatches) as Area;
 
+                if (locationMatches.Count == 0) //If there is no matching location, just do a normal search and return
+                {
+                    results = DeepSearch(searchText, DestAreas, parameters: parameters);
+                    Console.WriteLine($"Found {results.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms");
+                    return results;
+                }
+
+                Area location = FilterByPopularity(locationMatches) as Area;
                 results = SearchSubAreasForMatch(searchText, location.SubAreas, parameters);
             }
             else
-                results = DeepSearch(searchText, DestAreas, parameters);
+                results = DeepSearch(searchText, DestAreas, parameters: parameters);
 
 
             Console.WriteLine($"Found {results.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms");
@@ -100,13 +108,18 @@ namespace MountainProjectAPI
                 return null;
         }
 
-        public static List<MPObject> DeepSearch(string input, List<Area> destAreas, SearchParameters parameters = null)
+        public static List<MPObject> DeepSearch(string input, List<Area> destAreas, bool allowDestAreaMatch = false, SearchParameters parameters = null)
         {
             List<MPObject> matchedObjects = new List<MPObject>();
             foreach (Area destArea in destAreas)
             {
-                //If we're matching the name of a destArea (eg a State), we'll assume that the route/area is within that state
-                //(eg routes named "Sweet Home Alabama") instead of considering a match on the destArea ie: Utilities.StringMatch(input, destArea.Name)
+                //Controls whether dest area names should be matched (should the keyword "Alabama" match the state or a route named "Sweet Home Alabama")
+                if (allowDestAreaMatch &&
+                    StringMatch(input, destArea.NameForMatch) &&
+                    (parameters == null || !parameters.OnlyRoutes))
+                {
+                    matchedObjects.Add(destArea);
+                }
 
                 List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, destArea.SubAreas, parameters);
                 matchedObjects.AddRange(matchedSubAreas);
