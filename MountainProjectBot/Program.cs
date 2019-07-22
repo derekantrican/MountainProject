@@ -55,10 +55,10 @@ namespace MountainProjectBot
             exceptionString += $"[{DateTime.Now}] EXCEPTION TYPE: {ex?.GetType()}" + Environment.NewLine + Environment.NewLine;
             exceptionString += $"[{DateTime.Now}] EXCEPTION MESSAGE: {ex?.Message}" + Environment.NewLine + Environment.NewLine;
             exceptionString += $"[{DateTime.Now}] STACK TRACE: {ex?.StackTrace}" + Environment.NewLine + Environment.NewLine;
-            if (ex.InnerException != null)
+            if (ex?.InnerException != null)
             {
-                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION: {ex?.InnerException}" + Environment.NewLine + Environment.NewLine;
-                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION STACK TRACE: {ex?.InnerException.StackTrace}" + Environment.NewLine + Environment.NewLine;
+                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION: {ex.InnerException}" + Environment.NewLine + Environment.NewLine;
+                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION STACK TRACE: {ex.InnerException.StackTrace}" + Environment.NewLine + Environment.NewLine;
             }
 
             File.AppendAllText("CRASHREPORT (" + DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss") + ").log", exceptionString);
