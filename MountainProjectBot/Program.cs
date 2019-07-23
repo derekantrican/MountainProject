@@ -130,28 +130,10 @@ namespace MountainProjectBot
 
                 try
                 {
-                    List<Comment> comments = await subReddit.GetComments(1000, 1000).Where(c => Regex.IsMatch(c.Body, BOTKEYWORDREGEX)).ToList();
-                    comments = RemoveAlreadyRepliedTo(comments);
+                    List<Comment> recentComments = await subReddit.GetComments(1000, 1000).ToList();
 
-                    foreach (Comment comment in comments)
-                    {
-                        try
-                        {
-                            string reply = GetReplyForComment(comment);
-                            await comment.ReplyAsync(reply);
-                            Console.WriteLine($"Replied to comment {comment.Id}");
-                            LogCommentBeenRepliedTo(comment);
-                        }
-                        catch (RateLimitException)
-                        {
-                            Console.WriteLine("Rate limit hit. Postponing reply until next iteration");
-                        }
-                        catch (Exception e)
-                        {
-                            Console.WriteLine($"Exception occurred with comment https://reddit.com{comment.Permalink}");
-                            Console.WriteLine($"{e.Message}\n{e.StackTrace}");
-                        }
-                    }
+                    await RespondToRequests(recentComments);
+                    await RespondToMPUrls(recentComments);
                 }
                 catch (Exception e)
                 {
@@ -172,21 +154,127 @@ namespace MountainProjectBot
             }
         }
 
-        public static string GetReplyForComment(Comment replyTo)
+        private static async Task RespondToRequests(List<Comment> recentComments) //Respond to comments that specifically called the bot (!MountainProject)
         {
-            Console.WriteLine("Getting reply for comment");
+            List<Comment> botRequestComments = recentComments.Where(c => Regex.IsMatch(c.Body, BOTKEYWORDREGEX)).ToList();
+            botRequestComments = RemoveAlreadyRepliedTo(botRequestComments);
 
-            string replyText = BotReply.GetReplyForCommentBody(replyTo.Body);
+            foreach (Comment comment in botRequestComments)
+            {
+                try
+                {
+                    Console.WriteLine("Getting reply for comment");
 
-            replyText += Markdown.HRule;
+                    string reply = BotReply.GetReplyForCommentBody(comment.Body);
+                    reply += Markdown.HRule;
+                    reply += GetBotLinks(comment);
 
-            string commentLink = WebUtility.HtmlEncode("https://reddit.com" + replyTo.Permalink);
-            replyText += Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink) + " | ";
-            replyText += Markdown.Link("Donate", "https://www.paypal.me/derekantrican") + " | ";
-            replyText += Markdown.Link("GitHub", "https://github.com/derekantrican/MountainProject") + " | ";
-            replyText += Markdown.Link("FAQ", "https://github.com/derekantrican/MountainProject/wiki/Bot-FAQ");
+                    await comment.ReplyAsync(reply);
+                    Console.WriteLine($"Replied to comment {comment.Id}");
+                    LogCommentBeenRepliedTo(comment);
+                }
+                catch (RateLimitException)
+                {
+                    Console.WriteLine("Rate limit hit. Postponing reply until next iteration");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Exception occurred with comment https://reddit.com{comment.Permalink}");
+                    Console.WriteLine($"{e.Message}\n{e.StackTrace}");
+                }
+            }
+        }
 
-            return replyText;
+        private static async Task RespondToMPUrls(List<Comment> recentComments) //Respond to comments that have a mountainproject url
+        {
+            List<Comment> mountainProjectUrlComments = recentComments.Where(c => c.Body.Contains("mountainproject.com")).ToList();
+            mountainProjectUrlComments.RemoveAll(c => c.AuthorName == "MountainProjectBot" || c.AuthorName == "ClimbingRouteBot"); //Don't reply to bots
+            mountainProjectUrlComments = await RemoveCommentsOnSelfPosts(mountainProjectUrlComments); //Don't reply to self posts (aka text posts)
+            mountainProjectUrlComments = RemoveAlreadyRepliedTo(mountainProjectUrlComments);
+
+            foreach (Comment comment in mountainProjectUrlComments)
+            {
+                try
+                {
+                    string mpUrl = Regex.Match(comment.Body, @"(https:\/\/)?(www.)?mountainproject\.com.*?(?=\)|\s|$)").Value;
+                    if (!mpUrl.Contains("www."))
+                        mpUrl = "www." + mpUrl;
+
+                    if (!mpUrl.Contains("https://"))
+                        mpUrl = "https://" + mpUrl;
+
+                    MPObject foundObject;
+                    try
+                    {
+                        mpUrl = GetRedirectURL(mpUrl);
+                        MPObject mpObjectWithUrl = MountainProjectDataSearch.GetItemWithMatchingUrl(mpUrl, MountainProjectDataSearch.DestAreas.Cast<MPObject>().ToList());
+                        foundObject = MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(mpObjectWithUrl.Name));
+
+                        if (mpObjectWithUrl == null || foundObject == null || foundObject.URL != mpObjectWithUrl.URL)
+                        {
+                            LogCommentBeenRepliedTo(comment); //Don't check this comment again
+                            continue;
+                        }
+                    }
+                    catch //Something went wrong. We'll assume that it was because the url didn't match anything
+                    {
+                        LogCommentBeenRepliedTo(comment); //Don't check this comment again
+                        continue;
+                    }
+
+                    Console.WriteLine("Getting reply for comment");
+
+                    string reply = $"(FYI in the future you can call me by saying {Markdown.InlineCode($"!MountainProject {foundObject.Name}")})" + Markdown.NewLine;
+                    reply += BotReply.GetFormattedString(foundObject, false);
+                    reply += Markdown.HRule;
+                    reply += GetBotLinks(comment);
+
+                    await comment.ReplyAsync(reply);
+                    Console.WriteLine($"Replied to comment {comment.Id}");
+                    LogCommentBeenRepliedTo(comment);
+                }
+                catch (RateLimitException)
+                {
+                    Console.WriteLine("Rate limit hit. Postponing reply until next iteration");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"Exception occurred with comment https://reddit.com{comment.Permalink}");
+                    Console.WriteLine($"{e.Message}\n{e.StackTrace}");
+                }
+            }
+        }
+
+        private static string GetRedirectURL(string url)
+        {
+            try
+            {
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+                return ((HttpWebResponse)req.GetResponse()).ResponseUri.ToString();
+            }
+            catch
+            {
+                return "";
+            }
+        }
+
+        private static string GetBotLinks(Comment relatedComment = null)
+        {
+            string botLinks = "";
+
+            if (relatedComment != null)
+            {
+                string commentLink = WebUtility.HtmlEncode("https://reddit.com" + relatedComment.Permalink);
+                botLinks += Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink) + " | ";
+            }
+            else
+                botLinks += Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url") + " | ";
+
+            botLinks += Markdown.Link("Donate", "https://www.paypal.me/derekantrican") + " | ";
+            botLinks += Markdown.Link("GitHub", "https://github.com/derekantrican/MountainProject") + " | ";
+            botLinks += Markdown.Link("FAQ", "https://github.com/derekantrican/MountainProject/wiki/Bot-FAQ");
+
+            return botLinks;
         }
 
         private static List<Comment> RemoveAlreadyRepliedTo(List<Comment> comments)
@@ -198,6 +286,23 @@ namespace MountainProjectBot
             comments.RemoveAll(c => text.Contains(c.Id));
 
             return comments;
+        }
+
+        private static async Task<List<Comment>> RemoveCommentsOnSelfPosts(List<Comment> comments)
+        {
+            List<Comment> result = new List<Comment>();
+            List<Post> subredditPosts = await subReddit.GetPosts(100).ToList();
+            subredditPosts.RemoveAll(p => p.IsSelfPost);
+
+            foreach (Comment comment in comments)
+            {
+                string postLink = comment.Permalink.ToString().Replace(comment.Id + "/", "");
+                Post parentPost = subredditPosts.Find(p => p.Permalink.ToString() == postLink);
+                if (parentPost != null)
+                    result.Add(comment);
+            }
+
+            return result;
         }
 
         private static void LogCommentBeenRepliedTo(Comment comment)

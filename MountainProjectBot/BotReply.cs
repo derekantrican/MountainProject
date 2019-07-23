@@ -1,8 +1,5 @@
 ﻿using MountainProjectAPI;
-using RedditSharp.Things;
-using System;
 using System.Collections.Generic;
-using System.Net;
 using System.Text.RegularExpressions;
 
 namespace MountainProjectBot
@@ -33,12 +30,14 @@ namespace MountainProjectBot
             return replyText;
         }
 
-        public static string GetFormattedString(MPObject inputMountainProjectObject)
+        public static string GetFormattedString(MPObject inputMountainProjectObject, bool withPrefix = true)
         {
             if (inputMountainProjectObject == null)
                 return null;
 
-            string result = "I found the following info:" + Markdown.NewLine;
+            string result = "";
+            if (withPrefix)
+                result += "I found the following info:" + Markdown.NewLine;
 
             if (inputMountainProjectObject is Area)
             {
