@@ -311,7 +311,7 @@ namespace MountainProjectBot
             if (!File.Exists(repliedToPath))
                 File.Create(repliedToPath).Close();
 
-            File.AppendAllText(repliedToPath, comment.Id);
+            File.AppendAllLines(repliedToPath, new string[] { comment.Id });
         }
 
         private static void PingStatus()

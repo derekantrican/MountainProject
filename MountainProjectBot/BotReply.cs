@@ -52,7 +52,7 @@ namespace MountainProjectBot
             {
                 Route inputRoute = inputMountainProjectObject as Route;
                 result += $"{Markdown.Bold(inputRoute.Name)}" + Markdown.NewLine;
-                result += $"Type: {string.Join(", ", inputRoute.Types)}";
+                result += $"Type: {string.Join(", ", inputRoute.Types)}" + Markdown.NewLine;
                 result += $"Grade: {inputRoute.Grade}";
 
                 if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
