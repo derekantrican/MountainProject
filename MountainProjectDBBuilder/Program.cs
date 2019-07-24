@@ -23,8 +23,9 @@ namespace MountainProjectDBBuilder
         static string serializationPath;
         static string logPath;
         static string logString = "";
+        static OutputCapture outputCapture = new OutputCapture();
         static Stopwatch totalTimer = new Stopwatch();
-        static Mode ProgramMode = Mode.None;
+        static Mode programMode = Mode.None;
 
         static void Main(string[] args)
         {
@@ -33,7 +34,7 @@ namespace MountainProjectDBBuilder
 
             ParseStartupArguments(args);
 
-            switch (ProgramMode)
+            switch (programMode)
             {
                 case Mode.BuildDB:
                 case Mode.None:
@@ -61,12 +62,12 @@ namespace MountainProjectDBBuilder
                     {
                         "build",
                         "Build xml from MountainProject",
-                        (arg) => { ProgramMode = Mode.BuildDB; }
+                        (arg) => { programMode = Mode.BuildDB; }
                     },
                     {
                         "parse",
                         "Parse an input string",
-                        (arg) => { ProgramMode = Mode.Parse; }
+                        (arg) => { programMode = Mode.Parse; }
                     }
                 };
 
@@ -96,7 +97,7 @@ namespace MountainProjectDBBuilder
                 Console.WriteLine("\n\nPlease input the string you would like to parse: ");
                 string input = Console.ReadLine();
 
-                SearchParameters searchParameters = MountainProjectDataSearch.ParseParameters(ref input);
+                SearchParameters searchParameters = SearchParameters.ParseParameters(ref input);
 
                 bool allResults = input.Contains("-all");
                 Stopwatch stopwatch = Stopwatch.StartNew();
@@ -205,13 +206,14 @@ namespace MountainProjectDBBuilder
                 Task.WaitAll(areaTasks.ToArray());
 
                 totalTimer.Stop();
+                Log(outputCapture.Captured.ToString());
                 Log($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
                 SerializeResults(destAreas);
                 SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed}", "");
             }
             catch (Exception ex)
             {
-
+                Log(outputCapture.Captured.ToString());
                 Log(Environment.NewLine + Environment.NewLine);
                 Log("!!!-------------EXCEPTION ENCOUNTERED-------------!!!");
                 Log($"EXCEPTION MESSAGE: {ex?.Message}\n");
@@ -223,6 +225,7 @@ namespace MountainProjectDBBuilder
             finally
             {
                 SaveLogToFile();
+                outputCapture.Dispose();
             }
         }
 
@@ -238,7 +241,7 @@ namespace MountainProjectDBBuilder
         public static void Log(string itemToLog)
         {
             logString += itemToLog + "\n";
-            Console.WriteLine(itemToLog);
+            //Console.WriteLine(itemToLog);
         }
 
         public static void SaveLogToFile()

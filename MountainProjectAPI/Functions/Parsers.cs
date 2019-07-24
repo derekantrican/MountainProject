@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
+using static MountainProjectAPI.Route;
 
 namespace MountainProjectAPI
 {
@@ -78,7 +79,7 @@ namespace MountainProjectAPI
             //Populate route details
             foreach (IElement routeElement in htmlRoutes)
             {
-                Route route = new Route() { Name = routeElement.TextContent, URL = routeElement.Attributes["href"].Value };
+                Route route = new Route(routeElement.TextContent, routeElement.Attributes["href"].Value);
                 inputArea.Routes.Add(route);
                 await ParseRouteAsync(route); //Parse route
             }
@@ -162,7 +163,7 @@ namespace MountainProjectAPI
             inputRoute.Types = ParseRouteTypes(doc);
             inputRoute.Popularity = ParsePopularity(doc);
             inputRoute.Rating = ParseRouteRating(doc);
-            inputRoute.Grade = ParseRouteGrade(doc);
+            inputRoute.Grades = ParseRouteGrades(doc);
             inputRoute.AdditionalInfo = ParseAdditionalRouteInfo(doc);
             inputRoute.ParentUrls = GetParentUrls(doc);
 
@@ -181,84 +182,118 @@ namespace MountainProjectAPI
             return rating;
         }
 
-        public static string ParseRouteGrade(IHtmlDocument doc)
+        public static SerializableDictionary<GradeSystem, string> ParseRouteGrades(IHtmlDocument doc)
         {
-            List<IElement> gradesOnPage = doc.GetElementsByTagName("span").Where(x => x.Attributes["class"] != null &&
-                                                                                   (x.Attributes["class"].Value == "rateHueco" || x.Attributes["class"].Value == "rateYDS")).ToList();
-            IElement sidebar = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar");
-            gradesOnPage.RemoveAll(p => sidebar.Descendents().Contains(p));
-            string routeGrade = "";
-            IElement gradeElement = gradesOnPage.FirstOrDefault();
-            if (gradeElement != null)
-                routeGrade = HttpUtility.HtmlDecode(gradeElement.TextContent.Replace(gradeElement.GetElementsByTagName("a").FirstOrDefault().TextContent, "")).Trim();
-            else
+            SerializableDictionary<GradeSystem, string> gradeDict = new SerializableDictionary<GradeSystem, string>();
+            foreach (IElement spanElement in doc.GetElementsByTagName("span"))
             {
-                IElement gradesSection = doc.GetElementsByTagName("h2").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "inline-block mr-2");
-                routeGrade = HttpUtility.HtmlDecode(gradesSection.TextContent);
+                if (spanElement.Attributes["class"] == null ||
+                    string.IsNullOrEmpty(spanElement.GetElementsByTagName("a").FirstOrDefault()?.TextContent))
+                    continue;
+
+                string gradeValue = HttpUtility.HtmlDecode(spanElement.TextContent.Replace(spanElement.GetElementsByTagName("a").FirstOrDefault().TextContent, "")).Trim();
+                switch (spanElement.Attributes["class"].Value)
+                {
+                    case "rateYDS": 
+                        //I think there's an issue with the MountainProject website where Hueco grades are listed as YDS (eg /route/111259770/three-pipe-problem).
+                        //I've reported this to them (I think) but for now I'm "coding around it".
+                        if (gradeValue.Contains("5."))
+                            gradeDict.Add(GradeSystem.YDS, gradeValue);
+                        else if (gradeValue.Contains("V"))
+                            gradeDict.Add(GradeSystem.Hueco, gradeValue);
+                        break;
+                    case "rateFrench":
+                        gradeDict.Add(GradeSystem.French, gradeValue);
+                        break;
+                    case "rateEwbanks":
+                        gradeDict.Add(GradeSystem.Ewbanks, gradeValue);
+                        break;
+                    case "rateUIAA":
+                        gradeDict.Add(GradeSystem.UIAA, gradeValue);
+                        break;
+                    case "rateZA":
+                        gradeDict.Add(GradeSystem.SouthAfrica, gradeValue);
+                        break;
+                    case "rateBritish":
+                        gradeDict.Add(GradeSystem.Britsh, gradeValue);
+                        break;
+                    case "rateHueco":
+                        gradeDict.Add(GradeSystem.Hueco, gradeValue);
+                        break;
+                    case "rateFont":
+                        gradeDict.Add(GradeSystem.Fontainebleau, gradeValue);
+                        break;
+                }
             }
 
-            return routeGrade;
+            if (gradeDict.Count == 0)
+            {
+                IElement gradesSection = doc.GetElementsByTagName("h2").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "inline-block mr-2");
+                gradeDict.Add(GradeSystem.Unlabled, HttpUtility.HtmlDecode(gradesSection.TextContent));
+            }
+
+            return gradeDict;
         }
 
-        public static List<Route.RouteType> ParseRouteTypes(IHtmlDocument doc)
+        public static List<RouteType> ParseRouteTypes(IHtmlDocument doc)
         {
             string typeString = HttpUtility.HtmlDecode(doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Type:"))
                                         .GetElementsByTagName("td")[1].TextContent).Trim();
 
-            List<Route.RouteType> result = new List<Route.RouteType>();
+            List<RouteType> result = new List<RouteType>();
 
             if (Regex.IsMatch(typeString, "BOULDER", RegexOptions.IgnoreCase))
             {
                 typeString = Regex.Replace(typeString, "BOULDER", "", RegexOptions.IgnoreCase);
-                result.Add(Route.RouteType.Boulder);
+                result.Add(RouteType.Boulder);
             }
 
             if (Regex.IsMatch(typeString, "TRAD", RegexOptions.IgnoreCase)) //This has to go before an attempt to match "TR" so that we don't accidentally match "TR" instead of "TRAD"
             {
                 typeString = Regex.Replace(typeString, "TRAD", "", RegexOptions.IgnoreCase);
-                result.Add(Route.RouteType.Trad);
+                result.Add(RouteType.Trad);
             }
 
             if (Regex.IsMatch(typeString, "TR|TOP ROPE", RegexOptions.IgnoreCase))
             {
                 typeString = Regex.Replace(typeString, "TR|TOP ROPE", "", RegexOptions.IgnoreCase);
-                result.Add(Route.RouteType.TopRope);
+                result.Add(RouteType.TopRope);
             }
 
             if (Regex.IsMatch(typeString, "AID", RegexOptions.IgnoreCase))
             {
                 typeString = Regex.Replace(typeString, "AID", "", RegexOptions.IgnoreCase);
-                result.Add(Route.RouteType.Aid);
+                result.Add(RouteType.Aid);
             }
 
             if (Regex.IsMatch(typeString, "SPORT", RegexOptions.IgnoreCase))
             {
                 typeString = Regex.Replace(typeString, "SPORT", "", RegexOptions.IgnoreCase);
-                result.Add(Route.RouteType.Sport);
+                result.Add(RouteType.Sport);
             }
 
             if (Regex.IsMatch(typeString, "MIXED", RegexOptions.IgnoreCase))
             {
                 typeString = Regex.Replace(typeString, "MIXED", "", RegexOptions.IgnoreCase);
-                result.Add(Route.RouteType.Mixed);
+                result.Add(RouteType.Mixed);
             }
 
             if (Regex.IsMatch(typeString, "ICE", RegexOptions.IgnoreCase))
             {
                 typeString = Regex.Replace(typeString, "ICE", "", RegexOptions.IgnoreCase);
-                result.Add(Route.RouteType.Ice);
+                result.Add(RouteType.Ice);
             }
 
             if (Regex.IsMatch(typeString, "ALPINE", RegexOptions.IgnoreCase))
             {
                 typeString = Regex.Replace(typeString, "ALPINE", "", RegexOptions.IgnoreCase);
-                result.Add(Route.RouteType.Alpine);
+                result.Add(RouteType.Alpine);
             }
 
             if (Regex.IsMatch(typeString, "SNOW", RegexOptions.IgnoreCase))
             {
                 typeString = Regex.Replace(typeString, "SNOW", "", RegexOptions.IgnoreCase);
-                result.Add(Route.RouteType.Snow);
+                result.Add(RouteType.Snow);
             }
 
             return result;

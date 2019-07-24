@@ -4,14 +4,15 @@ namespace MountainProjectAPI
 {
     public class Route : MPObject
     {
-        public Route(string name, string grade, RouteType type, string url) : base(name, url)
+        public Route(string name, string url) : base(name, url)
         {
-            this.Grade = grade;
+            this.Grades = new SerializableDictionary<GradeSystem, string>();
             this.Types = new List<RouteType>();
         }
 
         public Route()
         {
+            this.Grades = new SerializableDictionary<GradeSystem, string>();
             this.Types = new List<RouteType>();
         }
 
@@ -28,8 +29,21 @@ namespace MountainProjectAPI
             Snow
         }
 
+        public enum GradeSystem
+        {
+            YDS,
+            French,
+            Ewbanks,
+            UIAA,
+            SouthAfrica,
+            Britsh,
+            Hueco,
+            Fontainebleau,
+            Unlabled
+        }
+
         public double Rating { get; set; }
-        public string Grade { get; set; }
+        public SerializableDictionary<GradeSystem, string> Grades { get; set; }
         public List<RouteType> Types { get; set; }
         public string TypeString { get { return string.Join(", ", Types); } }
         public string AdditionalInfo { get; set; }
@@ -37,7 +51,7 @@ namespace MountainProjectAPI
         public override string ToString()
         {
             string result = "";
-            result += $"{this.Name} [{this.TypeString} {this.Grade}";
+            result += $"{this.Name} [{this.TypeString} {this.Grades[GradeSystem.YDS]}";
 
             if (!string.IsNullOrEmpty(this.AdditionalInfo))
                 result += ", " + this.AdditionalInfo;

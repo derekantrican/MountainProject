@@ -157,6 +157,7 @@ namespace MountainProjectBot
         private static async Task RespondToRequests(List<Comment> recentComments) //Respond to comments that specifically called the bot (!MountainProject)
         {
             List<Comment> botRequestComments = recentComments.Where(c => Regex.IsMatch(c.Body, BOTKEYWORDREGEX)).ToList();
+            botRequestComments.RemoveAll(c => c.AuthorName == "MountainProjectBot" || c.AuthorName == "ClimbingRouteBot"); //Don't reply to bots
             botRequestComments = RemoveAlreadyRepliedTo(botRequestComments);
 
             foreach (Comment comment in botRequestComments)
@@ -225,7 +226,7 @@ namespace MountainProjectBot
                     Console.WriteLine("Getting reply for comment");
 
                     string reply = $"(FYI in the future you can call me by saying {Markdown.InlineCode($"!MountainProject {foundObject.Name}")})" + Markdown.NewLine;
-                    reply += BotReply.GetFormattedString(foundObject, false);
+                    reply += BotReply.GetFormattedString(foundObject, withPrefix: false);
                     reply += Markdown.HRule;
                     reply += GetBotLinks(comment);
 

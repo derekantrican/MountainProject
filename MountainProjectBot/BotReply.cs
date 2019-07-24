@@ -1,6 +1,7 @@
 ﻿using MountainProjectAPI;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using static MountainProjectAPI.Route;
 
 namespace MountainProjectBot
 {
@@ -15,10 +16,11 @@ namespace MountainProjectBot
             if (string.IsNullOrWhiteSpace(queryText))
                 return "I didn't understand what you were looking for. Please use the Feedback button below if you think this is a bug";
 
-            SearchParameters searchParameters = MountainProjectDataSearch.ParseParameters(ref queryText);
+            ResultParameters resultParameters = ResultParameters.ParseParameters(ref queryText);
+            SearchParameters searchParameters = SearchParameters.ParseParameters(ref queryText);
 
             MPObject searchResult = MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(queryText, searchParameters));
-            string replyText = GetFormattedString(searchResult);
+            string replyText = GetFormattedString(searchResult, resultParameters);
             if (string.IsNullOrEmpty(replyText))
             {
                 if (searchParameters != null && !string.IsNullOrEmpty(searchParameters.SpecificLocation))
@@ -30,7 +32,7 @@ namespace MountainProjectBot
             return replyText;
         }
 
-        public static string GetFormattedString(MPObject inputMountainProjectObject, bool withPrefix = true)
+        public static string GetFormattedString(MPObject inputMountainProjectObject, ResultParameters parameters = null, bool withPrefix = true)
         {
             if (inputMountainProjectObject == null)
                 return null;
@@ -44,21 +46,21 @@ namespace MountainProjectBot
                 Area inputArea = inputMountainProjectObject as Area;
                 result += $"{Markdown.Bold(inputArea.Name)} [{inputArea.Statistics}]" + Markdown.NewLine;
                 result += GetLocationString(inputArea);
-                result += GetPopularRoutes(inputArea);
+                result += GetPopularRoutes(inputArea, parameters);
 
                 result += inputArea.URL;
             }
             else if (inputMountainProjectObject is Route)
             {
                 Route inputRoute = inputMountainProjectObject as Route;
-                result += $"{Markdown.Bold(inputRoute.Name)}" + Markdown.NewLine;
-                result += $"Type: {string.Join(", ", inputRoute.Types)}" + Markdown.NewLine;
-                result += $"Grade: {inputRoute.Grade}";
-
+                result += $"{Markdown.Bold(inputRoute.Name)}";
                 if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
-                    result += ", " + inputRoute.AdditionalInfo;
+                    result += $" [{inputRoute.AdditionalInfo}]";
 
                 result += Markdown.NewLine;
+
+                result += $"Type: {string.Join(", ", inputRoute.Types)}" + Markdown.NewLine;
+                result += $"Grade: {GetRouteGrade(inputRoute, parameters)}" + Markdown.NewLine;
                 result += $"Rating: {inputRoute.Rating}/4" + Markdown.NewLine;
                 result += GetLocationString(inputRoute);
 
@@ -104,7 +106,7 @@ namespace MountainProjectBot
             return locationString;
         }
 
-        public static string GetPopularRoutes(Area area)
+        private static string GetPopularRoutes(Area area, ResultParameters parameters)
         {
             string result = "Popular routes:\n";
 
@@ -118,7 +120,7 @@ namespace MountainProjectBot
                 itemsToSearch.AddRange(area.Routes);
 
                 Route popularRoute = MountainProjectDataSearch.GetItemWithMatchingUrl(url, itemsToSearch) as Route;
-                result += $"\n- {Markdown.Link(popularRoute.Name, popularRoute.URL)} [{popularRoute.Grade}";
+                result += $"\n- {Markdown.Link(popularRoute.Name, popularRoute.URL)} [{GetRouteGrade(popularRoute, parameters)}";
                 if (!string.IsNullOrEmpty(popularRoute.AdditionalInfo))
                     result += $", {popularRoute.AdditionalInfo}";
 
@@ -128,6 +130,27 @@ namespace MountainProjectBot
             result += Markdown.NewLine;
 
             return result;
+        }
+
+        private static string GetRouteGrade(Route route, ResultParameters parameters)
+        {
+            GradeSystem requestedSystem = parameters != null ? parameters.GradeSystem : GradeSystem.YDS;
+            if (route.Grades.ContainsKey(requestedSystem))
+                return $"{route.Grades[requestedSystem]} ({requestedSystem.ToString()})";
+            else if (requestedSystem == GradeSystem.Hueco && route.Grades.ContainsKey(GradeSystem.YDS)) //If the user wanted hueco, but we only have YDS
+                return $"{route.Grades[GradeSystem.YDS]} ({GradeSystem.YDS.ToString()})";
+            else if (requestedSystem == GradeSystem.YDS && route.Grades.ContainsKey(GradeSystem.Hueco)) //If the user wanted YDS, but we only have Hueco
+                return $"{route.Grades[GradeSystem.Hueco]} ({GradeSystem.Hueco.ToString()})";
+            else if (requestedSystem == GradeSystem.French && route.Grades.ContainsKey(GradeSystem.Fontainebleau)) //If the user wanted French, but we only have Fontainebleau
+                return $"{route.Grades[GradeSystem.Fontainebleau]} ({GradeSystem.Fontainebleau.ToString()})";
+            else if (requestedSystem == GradeSystem.Fontainebleau && route.Grades.ContainsKey(GradeSystem.French)) //If the user wanted Fontainebleau, but we only have French
+                return $"{route.Grades[GradeSystem.French]} ({GradeSystem.French.ToString()})";
+            else if (route.Grades.ContainsKey(GradeSystem.Unlabled))
+                return route.Grades[GradeSystem.Unlabled];
+            else if (route.Grades.ContainsKey(GradeSystem.YDS))
+                return $"{route.Grades[GradeSystem.YDS]} ({GradeSystem.YDS.ToString()})";
+
+            return "";
         }
     }
 }

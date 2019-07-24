@@ -48,6 +48,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Functions\ResultParameters.cs" />
     <Compile Include="Functions\SearchParameters.cs" />
     <Compile Include="Models\Area.cs" />
     <Compile Include="Models\AreaStats.cs" />
@@ -57,6 +58,7 @@
     <Compile Include="Models\Route.cs" />
     <Compile Include="Models\MPObject.cs" />
     <Compile Include="Functions\Utilities.cs" />
+    <Compile Include="SerializableDictionary.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
