@@ -14,19 +14,19 @@ namespace MountainProjectAPI
             if (Regex.IsMatch(input, "-area", RegexOptions.IgnoreCase))
             {
                 parameters.OnlyAreas = true;
-                input = Regex.Replace(input, "-area", "", RegexOptions.IgnoreCase);
+                input = Regex.Replace(input, "-area", "", RegexOptions.IgnoreCase).Trim();
             }
 
             if (Regex.IsMatch(input, "-route", RegexOptions.IgnoreCase))
             {
                 parameters.OnlyRoutes = true;
-                input = Regex.Replace(input, "-route", "", RegexOptions.IgnoreCase);
+                input = Regex.Replace(input, "-route", "", RegexOptions.IgnoreCase).Trim();
             }
 
             if (Regex.IsMatch(input, "-location", RegexOptions.IgnoreCase))
             {
                 parameters.SpecificLocation = Regex.Match(input, @"-location:([^-\n]*)", RegexOptions.IgnoreCase).Groups[1].Value;
-                input = Regex.Replace(input, @"-location:[^-\n]*", "", RegexOptions.IgnoreCase);
+                input = Regex.Replace(input, @"-location:[^-\n]*", "", RegexOptions.IgnoreCase).Trim();
             }
 
             return parameters;

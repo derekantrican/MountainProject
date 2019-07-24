@@ -53,7 +53,10 @@ namespace MountainProjectAPI
                 }
 
                 Area location = FilterByPopularity(locationMatches) as Area;
-                results = SearchSubAreasForMatch(searchText, location.SubAreas, parameters);
+                if (location.SubAreas.Count > 0)
+                    results = SearchSubAreasForMatch(searchText, location.SubAreas, parameters);
+                else
+                    results = SearchRoutes(searchText, location.Routes, parameters);
             }
             else
                 results = DeepSearch(searchText, DestAreas, parameters: parameters);

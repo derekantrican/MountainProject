@@ -50,7 +50,7 @@ namespace MountainProjectAPI
                         break;
                 }
 
-                input = Regex.Replace(input, @"-grade:[^-\n]*", "", RegexOptions.IgnoreCase);
+                input = Regex.Replace(input, @"-grade:[^-\n]*", "", RegexOptions.IgnoreCase).Trim();
             }
 
             return parameters;
