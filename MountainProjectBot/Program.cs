@@ -21,6 +21,7 @@ namespace MountainProjectBot
         const string CREDENTIALSNAME = "Credentials.txt";
         static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
         static string repliedToPath = "RepliedTo.txt";
+        static string blacklistedPath = "BlacklistedUsers.txt";
         static List<string> subredditNames = new List<string>() { "climbing", "climbingporn", "bouldering", "socalclimbing", "climbingvids", "mountainprojectbot",
                                                                   "climbergirls", "climbingcirclejerk", "iceclimbing", "rockclimbing", "tradclimbing"};
         const string BOTKEYWORDREGEX = @"(?i)!mountain\s*project";
@@ -40,6 +41,9 @@ namespace MountainProjectBot
 
             if (args.FirstOrDefault(p => p.Contains("repliedto=")) != null)
                 repliedToPath = args.FirstOrDefault(p => p.Contains("repliedto=")).Split('=')[1];
+
+            if (args.FirstOrDefault(p => p.Contains("blacklisted=")) != null)
+                repliedToPath = args.FirstOrDefault(p => p.Contains("blacklisted=")).Split('=')[1];
 
             CheckRequiredFiles();
             MountainProjectDataSearch.InitMountainProjectData(xmlPath);
@@ -217,6 +221,7 @@ namespace MountainProjectBot
                 List<Comment> filteredComments = subredditsAndRecentComments[subreddit].Where(c => c.Body.Contains("mountainproject.com")).ToList();
                 filteredComments.RemoveAll(c => c.IsArchived);
                 filteredComments.RemoveAll(c => c.AuthorName == "MountainProjectBot" || c.AuthorName == "ClimbingRouteBot"); //Don't reply to bots
+                filteredComments = RemoveBlacklisted(filteredComments); //Remove comments from users who don't want the bot to automatically reply to them
                 filteredComments = RemoveAlreadyRepliedTo(filteredComments);
                 filteredComments = await RemoveCommentsOnSelfPosts(subreddit, filteredComments); //Don't reply to self posts (aka text posts)
                 subredditsAndRecentComments[subreddit] = filteredComments;
@@ -319,6 +324,17 @@ namespace MountainProjectBot
 
             string text = File.ReadAllText(repliedToPath);
             comments.RemoveAll(c => text.Contains(c.Id));
+
+            return comments;
+        }
+
+        private static List<Comment> RemoveBlacklisted(List<Comment> comments)
+        {
+            if (!File.Exists(blacklistedPath))
+                File.Create(blacklistedPath).Close();
+
+            string text = File.ReadAllText(blacklistedPath);
+            comments.RemoveAll(c => text.Contains(c.AuthorName));
 
             return comments;
         }
