@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
-using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 
 namespace MountainProjectAPI
@@ -33,7 +32,7 @@ namespace MountainProjectAPI
 
         public static List<MPObject> SearchMountainProject(string searchText, SearchParameters parameters = null)
         {
-            Console.WriteLine("Getting info from MountainProject");
+            Console.WriteLine($"Getting info from MountainProject for \"{searchText}\"");
             Stopwatch searchStopwatch = Stopwatch.StartNew();
 
             searchText = Utilities.FilterStringForMatch(searchText);

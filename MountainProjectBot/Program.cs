@@ -3,6 +3,7 @@ using RedditSharp;
 using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -20,11 +21,12 @@ namespace MountainProjectBot
         const string CREDENTIALSNAME = "Credentials.txt";
         static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
         static string repliedToPath = "RepliedTo.txt";
-        const string SUBREDDITNAME = "/r/climbing";
+        static List<string> subredditNames = new List<string>() { "climbing", "climbingporn", "bouldering", "socalclimbing", "climbingvids", "mountainprojectbot",
+                                                                  "climbergirls", "climbingcirclejerk", "iceclimbing", "rockclimbing", "tradclimbing"};
         const string BOTKEYWORDREGEX = @"(?i)!mountain\s*project";
 
         static Reddit redditService;
-        static Subreddit subReddit;
+        static List<Subreddit> subreddits = new List<Subreddit>();
 
         static void Main(string[] args)
         {
@@ -44,7 +46,6 @@ namespace MountainProjectBot
             AuthReddit().Wait();
             DoBotLoop().Wait();
         }
-
 
         #region Error Handling
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -100,7 +101,9 @@ namespace MountainProjectBot
 
             WebAgent webAgent = GetWebAgentCredentialsFromFile();
             redditService = new Reddit(webAgent, true);
-            subReddit = await redditService.GetSubredditAsync(SUBREDDITNAME);
+
+            foreach (string subRedditName in subredditNames)
+                subreddits.Add(await redditService.GetSubredditAsync(subRedditName));
 
             Console.WriteLine("Reddit authed successfully");
         }
@@ -127,13 +130,28 @@ namespace MountainProjectBot
                 //Get the latest 1000 comments on the subreddit, the filter to the ones that have the keyword
                 //and have not already been replied to
                 Console.WriteLine("Getting comments...");
-
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                long elapsed;
+                
                 try
                 {
-                    List<Comment> recentComments = await subReddit.GetComments(1000, 1000).ToList();
+                    Console.WriteLine("Getting recent comments for each subreddit");
+                    elapsed = stopwatch.ElapsedMilliseconds;
+                    Dictionary<Subreddit, List<Comment>> subredditsAndRecentComments = new Dictionary<Subreddit, List<Comment>>();
+                    foreach (Subreddit subreddit in subreddits)
+                        subredditsAndRecentComments.Add(subreddit, await subreddit.GetComments(1000, 1000).ToList());
 
-                    await RespondToRequests(recentComments);
-                    await RespondToMPUrls(recentComments);
+                    Console.WriteLine($"Done getting recent comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+
+                    Console.WriteLine("Checking for requests (comments with !MountainProject)");
+                    elapsed = stopwatch.ElapsedMilliseconds;
+                    await RespondToRequests(subredditsAndRecentComments.SelectMany(p => p.Value).ToList());
+                    Console.WriteLine($"Done with requests ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+
+                    Console.WriteLine("Checking for MP links");
+                    elapsed = stopwatch.ElapsedMilliseconds;
+                    await RespondToMPUrls(subredditsAndRecentComments);
+                    Console.WriteLine($"Done with MP links ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
                 }
                 catch (Exception e)
                 {
@@ -149,6 +167,7 @@ namespace MountainProjectBot
                         throw;
                 }
 
+                Console.WriteLine($"Loop elapsed time: {stopwatch.ElapsedMilliseconds} ms");
                 Console.WriteLine("Sleeping for 10 seconds...");
                 Thread.Sleep(10000); //Sleep for 10 seconds so as not to overload reddit
             }
@@ -157,6 +176,7 @@ namespace MountainProjectBot
         private static async Task RespondToRequests(List<Comment> recentComments) //Respond to comments that specifically called the bot (!MountainProject)
         {
             List<Comment> botRequestComments = recentComments.Where(c => Regex.IsMatch(c.Body, BOTKEYWORDREGEX)).ToList();
+            botRequestComments.RemoveAll(c => c.IsArchived);
             botRequestComments.RemoveAll(c => c.AuthorName == "MountainProjectBot" || c.AuthorName == "ClimbingRouteBot"); //Don't reply to bots
             botRequestComments = RemoveAlreadyRepliedTo(botRequestComments);
 
@@ -170,8 +190,12 @@ namespace MountainProjectBot
                     reply += Markdown.HRule;
                     reply += GetBotLinks(comment);
 
-                    await comment.ReplyAsync(reply);
-                    Console.WriteLine($"Replied to comment {comment.Id}");
+                    if (!Debugger.IsAttached)
+                    {
+                        await comment.ReplyAsync(reply);
+                        Console.WriteLine($"Replied to comment {comment.Id}");
+                    }
+
                     LogCommentBeenRepliedTo(comment);
                 }
                 catch (RateLimitException)
@@ -186,14 +210,19 @@ namespace MountainProjectBot
             }
         }
 
-        private static async Task RespondToMPUrls(List<Comment> recentComments) //Respond to comments that have a mountainproject url
+        private static async Task RespondToMPUrls(Dictionary<Subreddit, List<Comment>> subredditsAndRecentComments) //Respond to comments that have a mountainproject url
         {
-            List<Comment> mountainProjectUrlComments = recentComments.Where(c => c.Body.Contains("mountainproject.com")).ToList();
-            mountainProjectUrlComments.RemoveAll(c => c.AuthorName == "MountainProjectBot" || c.AuthorName == "ClimbingRouteBot"); //Don't reply to bots
-            mountainProjectUrlComments = await RemoveCommentsOnSelfPosts(mountainProjectUrlComments); //Don't reply to self posts (aka text posts)
-            mountainProjectUrlComments = RemoveAlreadyRepliedTo(mountainProjectUrlComments);
+            foreach (Subreddit subreddit in subredditsAndRecentComments.Keys.ToList())
+            {
+                List<Comment> filteredComments = subredditsAndRecentComments[subreddit].Where(c => c.Body.Contains("mountainproject.com")).ToList();
+                filteredComments.RemoveAll(c => c.IsArchived);
+                filteredComments.RemoveAll(c => c.AuthorName == "MountainProjectBot" || c.AuthorName == "ClimbingRouteBot"); //Don't reply to bots
+                filteredComments = RemoveAlreadyRepliedTo(filteredComments);
+                filteredComments = await RemoveCommentsOnSelfPosts(subreddit, filteredComments); //Don't reply to self posts (aka text posts)
+                subredditsAndRecentComments[subreddit] = filteredComments;
+            }
 
-            foreach (Comment comment in mountainProjectUrlComments)
+            foreach (Comment comment in subredditsAndRecentComments.SelectMany(p => p.Value))
             {
                 try
                 {
@@ -230,8 +259,12 @@ namespace MountainProjectBot
                     reply += Markdown.HRule;
                     reply += GetBotLinks(comment);
 
-                    await comment.ReplyAsync(reply);
-                    Console.WriteLine($"Replied to comment {comment.Id}");
+                    if (!Debugger.IsAttached)
+                    {
+                        await comment.ReplyAsync(reply);
+                        Console.WriteLine($"Replied to comment {comment.Id}");
+                    }
+
                     LogCommentBeenRepliedTo(comment);
                 }
                 catch (RateLimitException)
@@ -290,10 +323,14 @@ namespace MountainProjectBot
             return comments;
         }
 
-        private static async Task<List<Comment>> RemoveCommentsOnSelfPosts(List<Comment> comments)
+        private static async Task<List<Comment>> RemoveCommentsOnSelfPosts(Subreddit subreddit, List<Comment> comments)
         {
             List<Comment> result = new List<Comment>();
-            List<Post> subredditPosts = await subReddit.GetPosts(100).ToList();
+
+            if (comments.Count == 0)
+                return result;
+
+            List<Post> subredditPosts = await subreddit.GetPosts(100).ToList();
             subredditPosts.RemoveAll(p => p.IsSelfPost);
 
             foreach (Comment comment in comments)

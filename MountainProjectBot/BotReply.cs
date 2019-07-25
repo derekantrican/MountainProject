@@ -1,7 +1,6 @@
 ﻿using MountainProjectAPI;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using static MountainProjectAPI.Route;
 
 namespace MountainProjectBot
 {

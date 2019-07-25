@@ -1,7 +1,6 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MountainProjectAPI;
 using MountainProjectBot;
-using System.Collections.Generic;
 using System.Text.RegularExpressions;
 
 namespace UnitTests
