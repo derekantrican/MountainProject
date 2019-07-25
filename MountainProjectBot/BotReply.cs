@@ -60,7 +60,7 @@ namespace MountainProjectBot
                 result += Markdown.NewLine;
 
                 result += $"Type: {string.Join(", ", inputRoute.Types)}" + Markdown.NewLine;
-                result += $"Grade: {GetRouteGrade(inputRoute, parameters)}" + Markdown.NewLine;
+                result += $"Grade: {inputRoute.GetRouteGrade(parameters)}" + Markdown.NewLine;
                 result += $"Rating: {inputRoute.Rating}/4" + Markdown.NewLine;
                 result += GetLocationString(inputRoute);
 
@@ -120,7 +120,7 @@ namespace MountainProjectBot
                 itemsToSearch.AddRange(area.Routes);
 
                 Route popularRoute = MountainProjectDataSearch.GetItemWithMatchingUrl(url, itemsToSearch) as Route;
-                result += $"\n- {Markdown.Link(popularRoute.Name, popularRoute.URL)} [{GetRouteGrade(popularRoute, parameters)}";
+                result += $"\n- {Markdown.Link(popularRoute.Name, popularRoute.URL)} [{popularRoute.GetRouteGrade(parameters)}";
                 if (!string.IsNullOrEmpty(popularRoute.AdditionalInfo))
                     result += $", {popularRoute.AdditionalInfo}";
 
@@ -130,27 +130,6 @@ namespace MountainProjectBot
             result += Markdown.NewLine;
 
             return result;
-        }
-
-        private static string GetRouteGrade(Route route, ResultParameters parameters)
-        {
-            GradeSystem requestedSystem = parameters != null ? parameters.GradeSystem : GradeSystem.YDS;
-            if (route.Grades.ContainsKey(requestedSystem))
-                return $"{route.Grades[requestedSystem]} ({requestedSystem.ToString()})";
-            else if (requestedSystem == GradeSystem.Hueco && route.Grades.ContainsKey(GradeSystem.YDS)) //If the user wanted hueco, but we only have YDS
-                return $"{route.Grades[GradeSystem.YDS]} ({GradeSystem.YDS.ToString()})";
-            else if (requestedSystem == GradeSystem.YDS && route.Grades.ContainsKey(GradeSystem.Hueco)) //If the user wanted YDS, but we only have Hueco
-                return $"{route.Grades[GradeSystem.Hueco]} ({GradeSystem.Hueco.ToString()})";
-            else if (requestedSystem == GradeSystem.French && route.Grades.ContainsKey(GradeSystem.Fontainebleau)) //If the user wanted French, but we only have Fontainebleau
-                return $"{route.Grades[GradeSystem.Fontainebleau]} ({GradeSystem.Fontainebleau.ToString()})";
-            else if (requestedSystem == GradeSystem.Fontainebleau && route.Grades.ContainsKey(GradeSystem.French)) //If the user wanted Fontainebleau, but we only have French
-                return $"{route.Grades[GradeSystem.French]} ({GradeSystem.French.ToString()})";
-            else if (route.Grades.ContainsKey(GradeSystem.Unlabled))
-                return route.Grades[GradeSystem.Unlabled];
-            else if (route.Grades.ContainsKey(GradeSystem.YDS))
-                return $"{route.Grades[GradeSystem.YDS]} ({GradeSystem.YDS.ToString()})";
-
-            return "";
         }
     }
 }
