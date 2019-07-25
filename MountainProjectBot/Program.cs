@@ -238,14 +238,16 @@ namespace MountainProjectBot
                     if (!mpUrl.Contains("https://"))
                         mpUrl = "https://" + mpUrl;
 
-                    MPObject foundObject;
+                    List<MPObject> searchResults = new List<MPObject>();
+                    MPObject filteredResult;
                     try
                     {
                         mpUrl = GetRedirectURL(mpUrl);
                         MPObject mpObjectWithUrl = MountainProjectDataSearch.GetItemWithMatchingUrl(mpUrl, MountainProjectDataSearch.DestAreas.Cast<MPObject>().ToList());
-                        foundObject = MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(mpObjectWithUrl.Name));
+                        searchResults = MountainProjectDataSearch.SearchMountainProject(mpObjectWithUrl.Name);
+                        filteredResult = MountainProjectDataSearch.FilterByPopularity(searchResults);
 
-                        if (mpObjectWithUrl == null || foundObject == null || foundObject.URL != mpObjectWithUrl.URL)
+                        if (mpObjectWithUrl == null || filteredResult == null || filteredResult.URL != mpObjectWithUrl.URL)
                         {
                             LogCommentBeenRepliedTo(comment); //Don't check this comment again
                             continue;
@@ -259,8 +261,8 @@ namespace MountainProjectBot
 
                     Console.WriteLine("Getting reply for comment");
 
-                    string reply = $"(FYI in the future you can call me by saying {Markdown.InlineCode($"!MountainProject {foundObject.Name}")})" + Markdown.NewLine;
-                    reply += BotReply.GetFormattedString(foundObject, withPrefix: false);
+                    string reply = $"(FYI in the future you can call me by saying {Markdown.InlineCode($"!MountainProject {filteredResult.Name}")})" + Markdown.NewLine;
+                    reply += BotReply.GetFormattedString(filteredResult, searchResults, withPrefix: false);
                     reply += Markdown.HRule;
                     reply += GetBotLinks(comment);
 

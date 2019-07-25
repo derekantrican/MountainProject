@@ -18,8 +18,9 @@ namespace MountainProjectBot
             ResultParameters resultParameters = ResultParameters.ParseParameters(ref queryText);
             SearchParameters searchParameters = SearchParameters.ParseParameters(ref queryText);
 
-            MPObject searchResult = MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(queryText, searchParameters));
-            string replyText = GetFormattedString(searchResult, resultParameters);
+            List<MPObject> searchResults = MountainProjectDataSearch.SearchMountainProject(queryText, searchParameters);
+            MPObject filteredResult = MountainProjectDataSearch.FilterByPopularity(searchResults);
+            string replyText = GetFormattedString(filteredResult, searchResults, resultParameters);
             if (string.IsNullOrEmpty(replyText))
             {
                 if (searchParameters != null && !string.IsNullOrEmpty(searchParameters.SpecificLocation))
@@ -31,27 +32,27 @@ namespace MountainProjectBot
             return replyText;
         }
 
-        public static string GetFormattedString(MPObject inputMountainProjectObject, ResultParameters parameters = null, bool withPrefix = true)
+        public static string GetFormattedString(MPObject finalResult, List<MPObject> allResults, ResultParameters parameters = null, bool withPrefix = true)
         {
-            if (inputMountainProjectObject == null)
+            if (finalResult == null)
                 return null;
 
             string result = "";
             if (withPrefix)
-                result += "I found the following info:" + Markdown.NewLine;
+                result += $"I found the following info (out of {allResults.Count} total results):" + Markdown.NewLine;
 
-            if (inputMountainProjectObject is Area)
+            if (finalResult is Area)
             {
-                Area inputArea = inputMountainProjectObject as Area;
+                Area inputArea = finalResult as Area;
                 result += $"{Markdown.Bold(inputArea.Name)} [{inputArea.Statistics}]" + Markdown.NewLine;
                 result += GetLocationString(inputArea);
                 result += GetPopularRoutes(inputArea, parameters);
 
                 result += inputArea.URL;
             }
-            else if (inputMountainProjectObject is Route)
+            else if (finalResult is Route)
             {
-                Route inputRoute = inputMountainProjectObject as Route;
+                Route inputRoute = finalResult as Route;
                 result += $"{Markdown.Bold(inputRoute.Name)}";
                 if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
                     result += $" [{inputRoute.AdditionalInfo}]";
