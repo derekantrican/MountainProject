@@ -244,19 +244,15 @@ namespace MountainProjectBot
                             mpUrl = "https://" + mpUrl;
 
                         List<MPObject> searchResults = new List<MPObject>();
-                        MPObject filteredResult;
                         try
                         {
                             mpUrl = GetRedirectURL(mpUrl);
                             MPObject mpObjectWithUrl = MountainProjectDataSearch.GetItemWithMatchingUrl(mpUrl, MountainProjectDataSearch.DestAreas.Cast<MPObject>().ToList());
-                            searchResults = MountainProjectDataSearch.SearchMountainProject(mpObjectWithUrl.Name);
-                            filteredResult = MountainProjectDataSearch.FilterByPopularity(searchResults);
-
-                            if (mpObjectWithUrl == null || filteredResult == null || filteredResult.URL != mpObjectWithUrl.URL)
-                                continue;
-
-                            if (foundMPObjects.Find(p => p.URL == filteredResult.URL) == null) //Make sure the item does not already exist in the list
-                                foundMPObjects.Add(filteredResult);
+                            if (mpObjectWithUrl != null &&
+                                foundMPObjects.Find(p => p.URL == mpObjectWithUrl.URL) == null) //Make sure the item does not already exist in the list
+                            {
+                                foundMPObjects.Add(mpObjectWithUrl);
+                            }
                         }
                         catch //Something went wrong. We'll assume that it was because the url didn't match anything
                         {
