@@ -1,5 +1,7 @@
 ﻿using MountainProjectAPI;
+using RedditSharp.Things;
 using System.Collections.Generic;
+using System.Net;
 using System.Text.RegularExpressions;
 
 namespace MountainProjectBot
@@ -20,7 +22,7 @@ namespace MountainProjectBot
 
             List<MPObject> searchResults = MountainProjectDataSearch.SearchMountainProject(queryText, searchParameters);
             MPObject filteredResult = MountainProjectDataSearch.FilterByPopularity(searchResults);
-            string replyText = GetFormattedString(filteredResult, searchResults, resultParameters);
+            string replyText = GetFormattedString(filteredResult, resultParameters);
             if (string.IsNullOrEmpty(replyText))
             {
                 if (searchParameters != null && !string.IsNullOrEmpty(searchParameters.SpecificLocation))
@@ -29,18 +31,17 @@ namespace MountainProjectBot
                     replyText = $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
             }
 
+            replyText = $"I found the following info (out of {searchResults.Count} total results):" + Markdown.NewLine + replyText;
+
             return replyText;
         }
 
-        public static string GetFormattedString(MPObject finalResult, List<MPObject> allResults, ResultParameters parameters = null, bool withPrefix = true)
+        public static string GetFormattedString(MPObject finalResult, ResultParameters parameters = null)
         {
             if (finalResult == null)
                 return null;
 
             string result = "";
-            if (withPrefix)
-                result += $"I found the following info (out of {allResults.Count} total results):" + Markdown.NewLine;
-
             if (finalResult is Area)
             {
                 Area inputArea = finalResult as Area;
@@ -130,6 +131,26 @@ namespace MountainProjectBot
             result += Markdown.NewLine;
 
             return result;
+        }
+
+        public static string GetBotLinks(Comment relatedComment = null)
+        {
+            string botLinks = "";
+
+            if (relatedComment != null)
+            {
+                string commentLink = WebUtility.HtmlEncode("https://reddit.com" + relatedComment.Permalink);
+                botLinks += Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink) + " | ";
+            }
+            else
+                botLinks += Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url") + " | ";
+
+            botLinks += Markdown.Link("FAQ", "https://github.com/derekantrican/MountainProject/wiki/Bot-FAQ") + " | ";
+            botLinks += Markdown.Link("Operators", "https://github.com/derekantrican/MountainProject/wiki/Bot-%22Operators%22") + " | ";
+            botLinks += Markdown.Link("GitHub", "https://github.com/derekantrican/MountainProject") + " | ";
+            botLinks += Markdown.Link("Donate", "https://www.paypal.me/derekantrican");
+
+            return botLinks;
         }
     }
 }

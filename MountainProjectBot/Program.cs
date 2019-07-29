@@ -193,7 +193,7 @@ namespace MountainProjectBot
 
                     string reply = BotReply.GetReplyForCommentBody(comment.Body);
                     reply += Markdown.HRule;
-                    reply += GetBotLinks(comment);
+                    reply += BotReply.GetBotLinks(comment);
 
                     if (!Debugger.IsAttached)
                     {
@@ -232,43 +232,50 @@ namespace MountainProjectBot
             {
                 try
                 {
-                    string mpUrl = Regex.Match(comment.Body, @"(https:\/\/)?(www.)?mountainproject\.com.*?(?=\)|\s|$)").Value;
-                    if (!mpUrl.Contains("www."))
-                        mpUrl = "www." + mpUrl;
-
-                    if (!mpUrl.Contains("https://"))
-                        mpUrl = "https://" + mpUrl;
-
-                    List<MPObject> searchResults = new List<MPObject>();
-                    MPObject filteredResult;
-                    try
+                    List<MPObject> foundMPObjects = new List<MPObject>();
+                    Regex regex = new Regex(@"(https:\/\/)?(www.)?mountainproject\.com.*?(?=\)|\s|$)");
+                    foreach (Match match in regex.Matches(comment.Body))
                     {
-                        mpUrl = GetRedirectURL(mpUrl);
-                        MPObject mpObjectWithUrl = MountainProjectDataSearch.GetItemWithMatchingUrl(mpUrl, MountainProjectDataSearch.DestAreas.Cast<MPObject>().ToList());
-                        searchResults = MountainProjectDataSearch.SearchMountainProject(mpObjectWithUrl.Name);
-                        filteredResult = MountainProjectDataSearch.FilterByPopularity(searchResults);
+                        string mpUrl = match.Value;
+                        if (!mpUrl.Contains("www."))
+                            mpUrl = "www." + mpUrl;
 
-                        if (mpObjectWithUrl == null || filteredResult == null || filteredResult.URL != mpObjectWithUrl.URL)
+                        if (!mpUrl.Contains("https://"))
+                            mpUrl = "https://" + mpUrl;
+
+                        List<MPObject> searchResults = new List<MPObject>();
+                        MPObject filteredResult;
+                        try
                         {
-                            LogCommentBeenRepliedTo(comment); //Don't check this comment again
+                            mpUrl = GetRedirectURL(mpUrl);
+                            MPObject mpObjectWithUrl = MountainProjectDataSearch.GetItemWithMatchingUrl(mpUrl, MountainProjectDataSearch.DestAreas.Cast<MPObject>().ToList());
+                            searchResults = MountainProjectDataSearch.SearchMountainProject(mpObjectWithUrl.Name);
+                            filteredResult = MountainProjectDataSearch.FilterByPopularity(searchResults);
+
+                            if (mpObjectWithUrl == null || filteredResult == null || filteredResult.URL != mpObjectWithUrl.URL)
+                                continue;
+
+                            if (foundMPObjects.Find(p => p.URL == filteredResult.URL) == null) //Make sure the item does not already exist in the list
+                                foundMPObjects.Add(filteredResult);
+                        }
+                        catch //Something went wrong. We'll assume that it was because the url didn't match anything
+                        {
                             continue;
                         }
                     }
-                    catch //Something went wrong. We'll assume that it was because the url didn't match anything
+
+                    if (foundMPObjects.Count == 0)
                     {
                         LogCommentBeenRepliedTo(comment); //Don't check this comment again
                         continue;
                     }
 
-                    Console.WriteLine("Getting reply for comment");
-
                     string reply = "";
                     if (GetBlacklistLevelForUser(comment.AuthorName) != BlacklistLevel.NoFYI)
-                        reply += $"(FYI in the future you can call me by saying {Markdown.InlineCode($"!MountainProject {filteredResult.Name}")})" + Markdown.NewLine;
+                        reply += $"(FYI in the future you can call me by using {Markdown.InlineCode("!MountainProject")})" + Markdown.HRule;
 
-                    reply += BotReply.GetFormattedString(filteredResult, searchResults, withPrefix: false);
-                    reply += Markdown.HRule;
-                    reply += GetBotLinks(comment);
+                    foundMPObjects.ForEach(p => reply += BotReply.GetFormattedString(p) + Markdown.HRule);
+                    reply += BotReply.GetBotLinks(comment);
 
                     if (!Debugger.IsAttached)
                     {
@@ -301,26 +308,6 @@ namespace MountainProjectBot
             {
                 return "";
             }
-        }
-
-        private static string GetBotLinks(Comment relatedComment = null)
-        {
-            string botLinks = "";
-
-            if (relatedComment != null)
-            {
-                string commentLink = WebUtility.HtmlEncode("https://reddit.com" + relatedComment.Permalink);
-                botLinks += Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink) + " | ";
-            }
-            else
-                botLinks += Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url") + " | ";
-
-            botLinks += Markdown.Link("FAQ", "https://github.com/derekantrican/MountainProject/wiki/Bot-FAQ") + " | ";
-            botLinks += Markdown.Link("Operators", "https://github.com/derekantrican/MountainProject/wiki/Bot-%22Operators%22") + " | ";
-            botLinks += Markdown.Link("GitHub", "https://github.com/derekantrican/MountainProject") + " | ";
-            botLinks += Markdown.Link("Donate", "https://www.paypal.me/derekantrican");
-
-            return botLinks;
         }
 
         private static List<Comment> RemoveAlreadyRepliedTo(List<Comment> comments)
