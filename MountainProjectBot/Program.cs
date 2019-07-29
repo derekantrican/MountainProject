@@ -363,12 +363,12 @@ namespace MountainProjectBot
 
         private static List<Comment> RemoveTotallyBlacklisted(List<Comment> comments)
         {
-            List<Comment> result = new List<Comment>();
+            List<Comment> result = comments.ToList();
             foreach (Comment comment in comments)
             {
                 BlacklistLevel level = GetBlacklistLevelForUser(comment.AuthorName);
-                if (level != BlacklistLevel.OnlyKeywordReplies)
-                    result.Add(comment);
+                if (level == BlacklistLevel.OnlyKeywordReplies)
+                    result.Remove(comment);
             }
 
             return result;
