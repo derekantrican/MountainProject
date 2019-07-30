@@ -149,7 +149,7 @@ namespace MountainProjectBot
                     foreach (Subreddit subreddit in subreddits)
                     {
                         int amountOfCommentsToGet = subredditNamesAndCommentAmounts[subreddit.Name.ToLower()];
-                        subredditsAndRecentComments.Add(subreddit, await subreddit.GetComments(amountOfCommentsToGet).ToList());
+                        subredditsAndRecentComments.Add(subreddit, await subreddit.GetComments(amountOfCommentsToGet, amountOfCommentsToGet).ToList());
                     }
 
                     Console.WriteLine($"    Done getting recent comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
