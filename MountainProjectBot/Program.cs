@@ -23,8 +23,11 @@ namespace MountainProjectBot
         static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
         static string repliedToPath = "RepliedTo.txt";
         static string blacklistedPath = "BlacklistedUsers.txt";
-        static List<string> subredditNames = new List<string>() { "climbing", "climbingporn", "bouldering", "socalclimbing", "climbingvids", "mountainprojectbot",
-                                                                  "climbergirls", "climbingcirclejerk", "iceclimbing", "rockclimbing", "tradclimbing"};
+        static Dictionary<string, int> subredditNamesAndCommentAmounts = new Dictionary<string, int>()
+        {
+            {"climbing", 1000 }, {"climbingporn", 30}, {"bouldering", 600}, {"socalclimbing", 50}, {"climbingvids", 30}, {"mountainprojectbot", 500},
+            {"climbergirls", 200 }, {"climbingcirclejerk", 500}, {"iceclimbing", 30 }, {"rockclimbing", 50}, {"tradclimbing", 100}
+        };
         const string BOTKEYWORDREGEX = @"(?i)!mountain\s*project";
 
         static Reddit redditService;
@@ -107,7 +110,7 @@ namespace MountainProjectBot
             WebAgent webAgent = GetWebAgentCredentialsFromFile();
             redditService = new Reddit(webAgent, true);
 
-            foreach (string subRedditName in subredditNames)
+            foreach (string subRedditName in subredditNamesAndCommentAmounts.Keys)
                 subreddits.Add(await redditService.GetSubredditAsync(subRedditName));
 
             Console.WriteLine("Reddit authed successfully");
@@ -144,7 +147,10 @@ namespace MountainProjectBot
                     elapsed = stopwatch.ElapsedMilliseconds;
                     Dictionary<Subreddit, List<Comment>> subredditsAndRecentComments = new Dictionary<Subreddit, List<Comment>>();
                     foreach (Subreddit subreddit in subreddits)
-                        subredditsAndRecentComments.Add(subreddit, await subreddit.GetComments(1000, 1000).ToList());
+                    {
+                        int amountOfCommentsToGet = subredditNamesAndCommentAmounts[subreddit.Name.ToLower()];
+                        subredditsAndRecentComments.Add(subreddit, await subreddit.GetComments(amountOfCommentsToGet).ToList());
+                    }
 
                     Console.WriteLine($"    Done getting recent comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
 
