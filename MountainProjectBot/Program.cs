@@ -134,29 +134,29 @@ namespace MountainProjectBot
 
                 //Get the latest 1000 comments on the subreddit, the filter to the ones that have the keyword
                 //and have not already been replied to
-                Console.WriteLine("Getting comments...");
+                Console.WriteLine("    Getting comments...");
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 long elapsed;
                 
                 try
                 {
-                    Console.WriteLine("Getting recent comments for each subreddit");
+                    Console.WriteLine("    Getting recent comments for each subreddit");
                     elapsed = stopwatch.ElapsedMilliseconds;
                     Dictionary<Subreddit, List<Comment>> subredditsAndRecentComments = new Dictionary<Subreddit, List<Comment>>();
                     foreach (Subreddit subreddit in subreddits)
                         subredditsAndRecentComments.Add(subreddit, await subreddit.GetComments(1000, 1000).ToList());
 
-                    Console.WriteLine($"Done getting recent comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+                    Console.WriteLine($"    Done getting recent comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
 
-                    Console.WriteLine("Checking for requests (comments with !MountainProject)");
+                    Console.WriteLine("    Checking for requests (comments with !MountainProject)");
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await RespondToRequests(subredditsAndRecentComments.SelectMany(p => p.Value).ToList());
-                    Console.WriteLine($"Done with requests ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+                    Console.WriteLine($"    Done with requests ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
 
-                    Console.WriteLine("Checking for MP links");
+                    Console.WriteLine("    Checking for MP links");
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await RespondToMPUrls(subredditsAndRecentComments);
-                    Console.WriteLine($"Done with MP links ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+                    Console.WriteLine($"    Done with MP links ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
                 }
                 catch (Exception e)
                 {
@@ -166,7 +166,7 @@ namespace MountainProjectBot
                         e is WebException ||
                         (e is TaskCanceledException && !(e as TaskCanceledException).CancellationToken.IsCancellationRequested))
                     {
-                        Console.WriteLine($"Issue connecting to reddit: {e.Message}");
+                        Console.WriteLine($"    Issue connecting to reddit: {e.Message}");
                     }
                     else //If it isn't one of the errors above, it might be more serious. So throw it to be caught as an unhandled exception
                         throw;
@@ -189,7 +189,7 @@ namespace MountainProjectBot
             {
                 try
                 {
-                    Console.WriteLine("Getting reply for comment");
+                    Console.WriteLine("    Getting reply for comment");
 
                     string reply = BotReply.GetReplyForCommentBody(comment.Body);
                     reply += Markdown.HRule;
@@ -198,19 +198,19 @@ namespace MountainProjectBot
                     if (!Debugger.IsAttached)
                     {
                         await comment.ReplyAsync(reply);
-                        Console.WriteLine($"Replied to comment {comment.Id}");
+                        Console.WriteLine($"    Replied to comment {comment.Id}");
                     }
 
                     LogCommentBeenRepliedTo(comment);
                 }
                 catch (RateLimitException)
                 {
-                    Console.WriteLine("Rate limit hit. Postponing reply until next iteration");
+                    Console.WriteLine("    Rate limit hit. Postponing reply until next iteration");
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"Exception occurred with comment https://reddit.com{comment.Permalink}");
-                    Console.WriteLine($"{e.Message}\n{e.StackTrace}");
+                    Console.WriteLine($"    Exception occurred with comment https://reddit.com{comment.Permalink}");
+                    Console.WriteLine($"    {e.Message}\n{e.StackTrace}");
                 }
             }
         }
@@ -276,19 +276,19 @@ namespace MountainProjectBot
                     if (!Debugger.IsAttached)
                     {
                         await comment.ReplyAsync(reply);
-                        Console.WriteLine($"Replied to comment {comment.Id}");
+                        Console.WriteLine($"    Replied to comment {comment.Id}");
                     }
 
                     LogCommentBeenRepliedTo(comment);
                 }
                 catch (RateLimitException)
                 {
-                    Console.WriteLine("Rate limit hit. Postponing reply until next iteration");
+                    Console.WriteLine("    Rate limit hit. Postponing reply until next iteration");
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"Exception occurred with comment https://reddit.com{comment.Permalink}");
-                    Console.WriteLine($"{e.Message}\n{e.StackTrace}");
+                    Console.WriteLine($"    Exception occurred with comment https://reddit.com{comment.Permalink}");
+                    Console.WriteLine($"    {e.Message}\n{e.StackTrace}");
                 }
             }
         }

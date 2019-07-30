@@ -32,7 +32,7 @@ namespace MountainProjectAPI
 
         public static List<MPObject> SearchMountainProject(string searchText, SearchParameters parameters = null)
         {
-            Console.WriteLine($"Getting info from MountainProject for \"{searchText}\"");
+            Console.WriteLine($"    Getting info from MountainProject for \"{searchText}\"");
             Stopwatch searchStopwatch = Stopwatch.StartNew();
 
             searchText = Utilities.FilterStringForMatch(searchText);
@@ -47,7 +47,7 @@ namespace MountainProjectAPI
                 if (locationMatches.Count == 0) //If there is no matching location, just do a normal search and return
                 {
                     results = DeepSearch(searchText, DestAreas, parameters: parameters);
-                    Console.WriteLine($"Found {results.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms");
+                    Console.WriteLine($"    Found {results.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms");
                     return results;
                 }
 
@@ -61,7 +61,7 @@ namespace MountainProjectAPI
                 results = DeepSearch(searchText, DestAreas, parameters: parameters);
 
 
-            Console.WriteLine($"Found {results.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"    Found {results.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms");
 
             return results;
         }
@@ -78,7 +78,7 @@ namespace MountainProjectAPI
                 int pop2 = matchedObjectsByPopularity[1].Popularity;
                 double popularityPercentDiff = Math.Round((double)(pop1 - pop2) / pop2 * 100, 2);
 
-                Console.WriteLine($"Filtering based on priority (result has priority {popularityPercentDiff}% higher than next closest)");
+                Console.WriteLine($"    Filtering based on priority (result has priority {popularityPercentDiff}% higher than next closest)");
 
                 return matchedObjectsByPopularity.First(); //Return the most popular matched object (this may prioritize areas over routes. May want to check that later)
             }
