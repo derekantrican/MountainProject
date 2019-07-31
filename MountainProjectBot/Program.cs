@@ -276,7 +276,7 @@ namespace MountainProjectBot
                     if (GetBlacklistLevelForUser(comment.AuthorName) != BlacklistLevel.NoFYI)
                         reply += $"(FYI in the future you can call me by using {Markdown.InlineCode("!MountainProject")})" + Markdown.HRule;
 
-                    foundMPObjects.ForEach(p => reply += BotReply.GetFormattedString(p) + Markdown.HRule);
+                    foundMPObjects.ForEach(p => reply += BotReply.GetFormattedString(p, includeUrl: false) + Markdown.HRule);
                     reply += BotReply.GetBotLinks(comment);
 
                     if (!Debugger.IsAttached)

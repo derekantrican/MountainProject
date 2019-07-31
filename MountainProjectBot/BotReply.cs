@@ -31,12 +31,12 @@ namespace MountainProjectBot
                     replyText = $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
             }
 
-            replyText = $"I found the following info (out of {searchResults.Count} total results):" + Markdown.NewLine + replyText;
+            replyText = $"I found the following info (out of {searchResults.Count} total results):" + Markdown.HRule + replyText;
 
             return replyText;
         }
 
-        public static string GetFormattedString(MPObject finalResult, ResultParameters parameters = null)
+        public static string GetFormattedString(MPObject finalResult, ResultParameters parameters = null, bool includeUrl = true)
         {
             if (finalResult == null)
                 return null;
@@ -49,7 +49,8 @@ namespace MountainProjectBot
                 result += GetLocationString(inputArea);
                 result += GetPopularRoutes(inputArea, parameters);
 
-                result += inputArea.URL;
+                if (includeUrl)
+                    result += inputArea.URL;
             }
             else if (finalResult is Route)
             {
@@ -65,7 +66,8 @@ namespace MountainProjectBot
                 result += $"Rating: {inputRoute.Rating}/4" + Markdown.NewLine;
                 result += GetLocationString(inputRoute);
 
-                result += inputRoute.URL;
+                if (includeUrl)
+                    result += inputRoute.URL;
             }
 
             return result;
