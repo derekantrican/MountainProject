@@ -47,7 +47,7 @@ namespace MountainProjectBot
                 repliedToPath = args.FirstOrDefault(p => p.Contains("repliedto=")).Split('=')[1];
 
             if (args.FirstOrDefault(p => p.Contains("blacklisted=")) != null)
-                repliedToPath = args.FirstOrDefault(p => p.Contains("blacklisted=")).Split('=')[1];
+                blacklistedPath = args.FirstOrDefault(p => p.Contains("blacklisted=")).Split('=')[1];
 
             CheckRequiredFiles();
             MountainProjectDataSearch.InitMountainProjectData(xmlPath);
