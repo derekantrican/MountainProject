@@ -22,16 +22,18 @@ namespace MountainProjectBot
 
             List<MPObject> searchResults = MountainProjectDataSearch.SearchMountainProject(queryText, searchParameters);
             MPObject filteredResult = MountainProjectDataSearch.FilterByPopularity(searchResults);
-            string replyText = GetFormattedString(filteredResult, resultParameters);
-            if (string.IsNullOrEmpty(replyText))
+            string replyText = "";
+            if (searchResults.Count == 0)
             {
                 if (searchParameters != null && !string.IsNullOrEmpty(searchParameters.SpecificLocation))
                     replyText = $"I could not find anything for \"{queryText}\" in \"{searchParameters.SpecificLocation}\". Please use the Feedback button below if you think this is a bug";
                 else
                     replyText = $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
             }
-
-            replyText = $"I found the following info (out of {searchResults.Count} total results):" + Markdown.HRule + replyText;
+            else if (searchResults.Count > 1)
+                replyText = $"I found the following info (out of {searchResults.Count} total results):" + Markdown.HRule + GetFormattedString(filteredResult, resultParameters);
+            else
+                replyText = $"I found the following info:" + Markdown.HRule + GetFormattedString(filteredResult, resultParameters);
 
             return replyText;
         }
