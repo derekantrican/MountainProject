@@ -239,7 +239,7 @@ namespace MountainProjectBot
                 try
                 {
                     List<MPObject> foundMPObjects = new List<MPObject>();
-                    Regex regex = new Regex(@"(https:\/\/)?(www.)?mountainproject\.com.*?(?=\)|\s|$)");
+                    Regex regex = new Regex(@"(https:\/\/)?(www.)?mountainproject\.com.*?(?=\)|\s|]|$)");
                     foreach (Match match in regex.Matches(comment.Body))
                     {
                         string mpUrl = match.Value;
