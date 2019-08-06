@@ -1,6 +1,8 @@
 ﻿using MountainProjectAPI;
 using RedditSharp.Things;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 
@@ -17,25 +19,78 @@ namespace MountainProjectBot
             if (string.IsNullOrWhiteSpace(queryText))
                 return "I didn't understand what you were looking for. Please use the Feedback button below if you think this is a bug";
 
+            return ParseQueryAndGetResponse(queryText);
+        }
+
+        private static string ParseQueryAndGetResponse(string queryText)
+        {
             ResultParameters resultParameters = ResultParameters.ParseParameters(ref queryText);
             SearchParameters searchParameters = SearchParameters.ParseParameters(ref queryText);
 
-            List<MPObject> searchResults = MountainProjectDataSearch.SearchMountainProject(queryText, searchParameters);
-            MPObject filteredResult = MountainProjectDataSearch.FilterByPopularity(searchResults);
-            string replyText = "";
-            if (searchResults.Count == 0)
+            List<MPObject> searchResults = new List<MPObject>();
+            MPObject filteredResult = null;
+            if (!string.IsNullOrEmpty(searchParameters.SpecificLocation))
             {
-                if (searchParameters != null && !string.IsNullOrEmpty(searchParameters.SpecificLocation))
-                    replyText = $"I could not find anything for \"{queryText}\" in \"{searchParameters.SpecificLocation}\". Please use the Feedback button below if you think this is a bug";
-                else
-                    replyText = $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
-            }
-            else if (searchResults.Count > 1)
-                replyText = $"I found the following info (out of {searchResults.Count} total results):" + Markdown.HRule + GetFormattedString(filteredResult, resultParameters);
-            else
-                replyText = $"I found the following info:" + Markdown.HRule + GetFormattedString(filteredResult, resultParameters);
+                //Search under that location
+                searchResults = MountainProjectDataSearch.SearchMountainProject(queryText, searchParameters);
+                filteredResult = MountainProjectDataSearch.FilterByPopularity(searchResults);
 
-            return replyText;
+                if (filteredResult == null)
+                    return $"I could not find anything for \"{queryText}\" in \"{searchParameters.SpecificLocation}\". Please use the Feedback button below if you think this is a bug";
+            }
+            else
+            {
+                Regex locationWordsRegex = new Regex(@"(\s+of\s+)|(\s+on\s+)|(\s+at\s+)|(\s+in\s+)");
+                string possibleSearchText, possibleLocation;
+
+                if (queryText.Contains(",")) //Location by comma (eg "Send me on my way, Red River Gorge")
+                {
+                    possibleSearchText = queryText.Split(',')[0].Trim();
+                    possibleLocation = queryText.Split(',')[1].Trim();
+
+                    searchParameters.SpecificLocation = possibleLocation;
+
+                    searchResults = MountainProjectDataSearch.SearchMountainProject(possibleSearchText, searchParameters);
+                    filteredResult = MountainProjectDataSearch.FilterByPopularity(searchResults);
+                }
+                else if (locationWordsRegex.IsMatch(queryText)) //Location by "location word" (eg "Butterfly Blue in Red River Gorge")
+                {
+                    List<Tuple<List<MPObject>, MPObject, string>> possibleResults = new List<Tuple<List<MPObject>, MPObject, string>>();
+                    foreach (Match match in locationWordsRegex.Matches(queryText))
+                    {
+                        possibleSearchText = queryText.Split(new string[] { match.Value }, StringSplitOptions.None)[0].Trim();
+                        possibleLocation = queryText.Split(new string[] { match.Value }, StringSplitOptions.None)[1].Trim();
+
+                        searchParameters.SpecificLocation = possibleLocation;
+
+                        searchResults = MountainProjectDataSearch.SearchMountainProject(possibleSearchText, searchParameters);
+                        filteredResult = MountainProjectDataSearch.FilterByPopularity(searchResults);
+
+                        if (filteredResult != null)
+                            possibleResults.Add(new Tuple<List<MPObject>, MPObject, string>(searchResults, filteredResult, possibleLocation));
+                    }
+
+                    if (possibleResults.Count > 0)
+                    {
+                        Tuple<List<MPObject>, MPObject, string> selectedTuple = possibleResults.OrderByDescending(p => p.Item2.Popularity).First();
+                        searchResults = selectedTuple.Item1;
+                        filteredResult = selectedTuple.Item2;
+                    }
+                }
+
+                if (filteredResult == null)
+                {
+                    searchResults = MountainProjectDataSearch.SearchMountainProject(queryText);
+                    filteredResult = MountainProjectDataSearch.FilterByPopularity(searchResults);
+                }
+            }
+
+            if (filteredResult == null)
+                return $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
+            else if (searchResults.Count > 1)
+                return $"I found the following info (out of {searchResults.Count} total results):" + Markdown.HRule + GetFormattedString(filteredResult, resultParameters);
+            else
+                return $"I found the following info:" + Markdown.HRule + GetFormattedString(filteredResult, resultParameters);
         }
 
         public static string GetFormattedString(MPObject finalResult, ResultParameters parameters = null, bool includeUrl = true)
