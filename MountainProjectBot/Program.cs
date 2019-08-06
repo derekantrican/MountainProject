@@ -242,7 +242,7 @@ namespace MountainProjectBot
                     Regex regex = new Regex(@"(https:\/\/)?(www.)?mountainproject\.com.*?(?=\)|\s|]|$)");
                     foreach (Match match in regex.Matches(comment.Body))
                     {
-                        string mpUrl = match.Value;
+                        string mpUrl = "https://www.mountainproject.com/area/106423314/czech-republic";//match.Value;
                         if (!mpUrl.Contains("www."))
                             mpUrl = "www." + mpUrl;
 

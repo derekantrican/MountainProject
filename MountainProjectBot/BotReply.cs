@@ -119,16 +119,20 @@ namespace MountainProjectBot
         {
             string result = "Popular routes:\n";
 
-            if (area.PopularRouteUrls.Count == 0)
-                return "";
-
-            foreach (string url in area.PopularRouteUrls)
+            List<Route> popularRoutes = new List<Route>();
+            if (area.PopularRouteUrls.Count == 0) //MountainProject doesn't list any popular routes. Figure out some ourselves
+                popularRoutes = MountainProjectDataSearch.GetPopularRoutes(area, 3);
+            else
             {
                 List<MPObject> itemsToSearch = new List<MPObject>();
                 itemsToSearch.AddRange(area.SubAreas);
                 itemsToSearch.AddRange(area.Routes);
 
-                Route popularRoute = MountainProjectDataSearch.GetItemWithMatchingUrl(url, itemsToSearch) as Route;
+                area.PopularRouteUrls.ForEach(p => popularRoutes.Add(MountainProjectDataSearch.GetItemWithMatchingUrl(p, itemsToSearch) as Route));
+            }
+
+            foreach (Route popularRoute in popularRoutes)
+            {
                 result += $"\n- {Markdown.Link(popularRoute.Name, popularRoute.URL)} [{popularRoute.GetRouteGrade(parameters)}";
                 if (!string.IsNullOrEmpty(popularRoute.AdditionalInfo))
                     result += $", {popularRoute.AdditionalInfo}";

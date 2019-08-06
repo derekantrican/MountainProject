@@ -146,6 +146,13 @@ namespace MountainProjectAPI
             return new Tuple<MPObject, List<MPObject>>(filteredResult, searchResults);
         }
 
+        public static List<Route> GetPopularRoutes(Area area, int numberToReturn)
+        {
+            List<Route> childRoutes = GetAllRoutes(area);
+            childRoutes = childRoutes.OrderByDescending(p => p.Popularity).ToList();
+            return childRoutes.Take(numberToReturn).ToList();
+        }
+
         private static List<MPObject> DeepSearch(string input, List<Area> destAreas, bool allowDestAreaMatch = false, SearchParameters parameters = null)
         {
             List<MPObject> matchedObjects = new List<MPObject>();
@@ -210,6 +217,16 @@ namespace MountainProjectAPI
             }
 
             return matchedObjects;
+        }
+
+        private static List<Route> GetAllRoutes(Area area)
+        {
+            List<Route> routes = new List<Route>();
+            routes.AddRange(area.Routes);
+            foreach (Area subArea in area.SubAreas)
+                routes.AddRange(GetAllRoutes(subArea));
+
+            return routes;
         }
 
         public static bool StringMatch(string inputString, string targetString, bool caseInsensitive = true)
