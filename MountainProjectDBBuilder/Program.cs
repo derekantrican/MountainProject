@@ -105,13 +105,11 @@ namespace MountainProjectDBBuilder
                 {
                     input = input.Replace("-all", "").Trim();
 
-                    input = Utilities.FilterStringForMatch(input);
-
-                    List<MPObject> results = MountainProjectDataSearch.SearchMountainProject(input, searchParameters);
+                    Tuple<MPObject, List<MPObject>> searchResults = MountainProjectDataSearch.ParseQueryWithLocation(input, searchParameters);
                     stopwatch.Stop();
-                    List<MPObject> matchedObjectsByPopularity = results.OrderByDescending(p => p.Popularity).ToList();
+                    List<MPObject> matchedObjectsByPopularity = searchResults.Item2.OrderByDescending(p => p.Popularity).ToList();
 
-                    if (results.Count == 0)
+                    if (searchResults.Item2.Count == 0)
                         Console.WriteLine("Nothing found matching \"" + input + "\"");
                     else
                     {
@@ -128,7 +126,7 @@ namespace MountainProjectDBBuilder
                 }
                 else
                 {
-                    MPObject result = MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(input, searchParameters));
+                    MPObject result = MountainProjectDataSearch.ParseQueryWithLocation(input, searchParameters).Item1;
                     stopwatch.Stop();
 
                     if (result == null)
@@ -145,13 +143,13 @@ namespace MountainProjectDBBuilder
                         Console.WriteLine("    " + resultStr);
                         Console.WriteLine($"    Location: {GetLocationString(result)}");
                         Console.WriteLine("\nOpen result? (y/n) ");
-                        if (Console.ReadKey().Key == ConsoleKey.Y)
+                        if (Console.ReadLine().ToLower() == "y")
                             Process.Start(result.URL);
                     }
                 }
 
                 Console.WriteLine("\nSearch something else? (y/n) ");
-                keepSearching = Console.ReadKey().Key == ConsoleKey.Y;
+                keepSearching = Console.ReadLine().ToLower() == "y";
             }
         }
 

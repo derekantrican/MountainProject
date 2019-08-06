@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Xml.Serialization;
 
 namespace MountainProjectAPI
@@ -86,7 +87,66 @@ namespace MountainProjectAPI
                 return null;
         }
 
-        public static List<MPObject> DeepSearch(string input, List<Area> destAreas, bool allowDestAreaMatch = false, SearchParameters parameters = null)
+        public static Tuple<MPObject, List<MPObject>> ParseQueryWithLocation(string queryText, SearchParameters searchParameters = null)
+        {
+            List<MPObject> searchResults = new List<MPObject>();
+            MPObject filteredResult = null;
+            if (!string.IsNullOrEmpty(searchParameters.SpecificLocation))
+            {
+                searchResults = SearchMountainProject(queryText, searchParameters);
+                filteredResult = FilterByPopularity(searchResults);
+            }
+            else
+            {
+                Regex locationWordsRegex = new Regex(@"(\s+of\s+)|(\s+on\s+)|(\s+at\s+)|(\s+in\s+)");
+                string possibleSearchText, possibleLocation;
+
+                if (queryText.Contains(",")) //Location by comma (eg "Send me on my way, Red River Gorge")
+                {
+                    possibleSearchText = queryText.Split(',')[0].Trim();
+                    possibleLocation = queryText.Split(',')[1].Trim();
+
+                    searchParameters.SpecificLocation = possibleLocation;
+
+                    searchResults = SearchMountainProject(possibleSearchText, searchParameters);
+                    filteredResult = FilterByPopularity(searchResults);
+                }
+                else if (locationWordsRegex.IsMatch(queryText)) //Location by "location word" (eg "Butterfly Blue in Red River Gorge")
+                {
+                    List<Tuple<List<MPObject>, MPObject, string>> possibleResults = new List<Tuple<List<MPObject>, MPObject, string>>();
+                    foreach (Match match in locationWordsRegex.Matches(queryText))
+                    {
+                        possibleSearchText = queryText.Split(new string[] { match.Value }, StringSplitOptions.None)[0].Trim();
+                        possibleLocation = queryText.Split(new string[] { match.Value }, StringSplitOptions.None)[1].Trim();
+
+                        searchParameters.SpecificLocation = possibleLocation;
+
+                        searchResults = SearchMountainProject(possibleSearchText, searchParameters);
+                        filteredResult = FilterByPopularity(searchResults);
+
+                        if (filteredResult != null)
+                            possibleResults.Add(new Tuple<List<MPObject>, MPObject, string>(searchResults, filteredResult, possibleLocation));
+                    }
+
+                    if (possibleResults.Count > 0)
+                    {
+                        Tuple<List<MPObject>, MPObject, string> selectedTuple = possibleResults.OrderByDescending(p => p.Item2.Popularity).First();
+                        searchResults = selectedTuple.Item1;
+                        filteredResult = selectedTuple.Item2;
+                    }
+                }
+
+                if (filteredResult == null) //If our "search by location based on attempt to parse a location" doesn't return anything, do a regular search
+                {
+                    searchResults = SearchMountainProject(queryText);
+                    filteredResult = FilterByPopularity(searchResults);
+                }
+            }
+
+            return new Tuple<MPObject, List<MPObject>>(filteredResult, searchResults);
+        }
+
+        private static List<MPObject> DeepSearch(string input, List<Area> destAreas, bool allowDestAreaMatch = false, SearchParameters parameters = null)
         {
             List<MPObject> matchedObjects = new List<MPObject>();
             foreach (Area destArea in destAreas)
