@@ -15,7 +15,7 @@ This is a reddit bot for connecting [MountainProject.com](https://mountainprojec
 
 ~~**[Stage 1:](https://github.com/derekantrican/MountainProject/milestone/1)** Implement the bot on [/r/climbing](https://reddit.com/r/climbing) with "popularity" filtering and partial matching (case-insensitive). *Popularity filtering:* if multiple routes/areas match a search term, we will attempt to return the intended one by using the "page views" value published on MountainProject. *Partial matching:* eg "Deception Crags" will match "Exit 38: Deception Crags"~~
 
-**[Stage 2:](https://github.com/derekantrican/MountainProject/milestone/2)** Upgrade the bot to allow matching based on [multiple input criteria](https://github.com/derekantrican/MountainProject/issues/8)
+~~**[Stage 2:](https://github.com/derekantrican/MountainProject/milestone/2)** Upgrade the bot to allow matching based on [multiple input criteria](https://github.com/derekantrican/MountainProject/issues/8)~~
 
 **[Stage 3:](https://github.com/derekantrican/MountainProject/milestone/3)** *(theoretical)* Upgrade the bot to use ["fuzzy string matching"](https://github.com/derekantrican/MountainProject/issues/7) to account for mispellings or missed/extra words
 
