@@ -100,52 +100,43 @@ namespace MountainProjectDBBuilder
                 SearchParameters searchParameters = SearchParameters.ParseParameters(ref input);
 
                 bool allResults = input.Contains("-all");
-                Stopwatch stopwatch = Stopwatch.StartNew();
                 if (allResults)
-                {
                     input = input.Replace("-all", "").Trim();
 
-                    Tuple<MPObject, List<MPObject>> searchResults = MountainProjectDataSearch.ParseQueryWithLocation(input, searchParameters);
-                    stopwatch.Stop();
-                    List<MPObject> matchedObjectsByPopularity = searchResults.Item2.OrderByDescending(p => p.Popularity).ToList();
+                Stopwatch stopwatch = Stopwatch.StartNew();
+                Tuple<MPObject, List<MPObject>> searchResults = MountainProjectDataSearch.ParseQueryWithLocation(input, searchParameters);
+                stopwatch.Stop();
+                List<MPObject> matchedObjectsByPopularity = searchResults.Item2.OrderByDescending(p => p.Popularity).ToList();
 
-                    if (searchResults.Item2.Count == 0)
-                        Console.WriteLine("Nothing found matching \"" + input + "\"");
-                    else
+                if (searchResults.Item1 == null)
+                    Console.WriteLine("Nothing found matching \"" + input + "\"");
+                else if (allResults)
+                {
+                    Console.WriteLine($"Found {matchedObjectsByPopularity.Count} items match that search query (found in {stopwatch.ElapsedMilliseconds} ms):");
+                    foreach (MPObject result in matchedObjectsByPopularity)
                     {
-                        Console.WriteLine($"Found {matchedObjectsByPopularity.Count} items match that search query (found in {stopwatch.ElapsedMilliseconds} ms):");
-                        foreach (MPObject result in matchedObjectsByPopularity)
-                        {
-                            string url = result.URL.Replace(Utilities.MPBASEURL, "");
-                            if (result is Route)
-                                Console.WriteLine($"    Route: {result.Name} (Pop: {result.Popularity}) | Location: {GetLocationString(result)} | {url}");
-                            else if (result is Area)
-                                Console.WriteLine($"    Area: {result.Name} (Pop: {result.Popularity}) | Location: {GetLocationString(result)} | {url}");
-                        }
+                        string url = result.URL.Replace(Utilities.MPBASEURL, "");
+                        if (result is Route)
+                            Console.WriteLine($"    Route: {result.Name} (Pop: {result.Popularity}) | Location: {GetLocationString(result)} | {url}");
+                        else if (result is Area)
+                            Console.WriteLine($"    Area: {result.Name} (Pop: {result.Popularity}) | Location: {GetLocationString(result)} | {url}");
                     }
                 }
                 else
                 {
-                    MPObject result = MountainProjectDataSearch.ParseQueryWithLocation(input, searchParameters).Item1;
-                    stopwatch.Stop();
+                    string resultStr = "";
+                    MPObject result = searchResults.Item1;
+                    if (result is Area)
+                        resultStr = (result as Area).ToString();
+                    else if (result is Route)
+                        resultStr = (result as Route).ToString();
 
-                    if (result == null)
-                        Console.WriteLine("Nothing found matching \"" + input + "\"");
-                    else
-                    {
-                        string resultStr = "";
-                        if (result is Area)
-                            resultStr = (result as Area).ToString();
-                        else if (result is Route)
-                            resultStr = (result as Route).ToString();
-
-                        Console.WriteLine($"The following was found (found in {stopwatch.ElapsedMilliseconds} ms):");
-                        Console.WriteLine("    " + resultStr);
-                        Console.WriteLine($"    Location: {GetLocationString(result)}");
-                        Console.WriteLine("\nOpen result? (y/n) ");
-                        if (Console.ReadLine().ToLower() == "y")
-                            Process.Start(result.URL);
-                    }
+                    Console.WriteLine($"The following was found (found in {stopwatch.ElapsedMilliseconds} ms):");
+                    Console.WriteLine("    " + resultStr);
+                    Console.WriteLine($"    Location: {GetLocationString(result)}");
+                    Console.WriteLine("\nOpen result? (y/n) ");
+                    if (Console.ReadLine().ToLower() == "y")
+                        Process.Start(result.URL);
                 }
 
                 Console.WriteLine("\nSearch something else? (y/n) ");
