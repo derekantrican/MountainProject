@@ -23,15 +23,9 @@ namespace MountainProjectBot
         static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
         static string repliedToPath = "RepliedTo.txt";
         static string blacklistedPath = "BlacklistedUsers.txt";
-        static Dictionary<string, int> subredditNamesAndCommentAmounts = new Dictionary<string, int>()
-        {
-            {"climbing", 1000 }, {"climbingporn", 30}, {"bouldering", 600}, {"socalclimbing", 50}, {"climbingvids", 30}, {"mountainprojectbot", 500},
-            {"climbergirls", 200 }, {"climbingcirclejerk", 500}, {"iceclimbing", 30 }, {"rockclimbing", 50}, {"tradclimbing", 100}
-        };
         const string BOTKEYWORDREGEX = @"(?i)!mountain\s*project";
 
-        static Reddit redditService;
-        static List<Subreddit> subreddits = new List<Subreddit>();
+        static RedditHelper redditHelper = new RedditHelper();
         static List<CommentMonitor> monitoredComments = new List<CommentMonitor>();
 
         static void Main(string[] args)
@@ -52,7 +46,7 @@ namespace MountainProjectBot
 
             CheckRequiredFiles();
             MountainProjectDataSearch.InitMountainProjectData(xmlPath);
-            AuthReddit().Wait();
+            redditHelper.Auth(credentialsPath).Wait();
             DoBotLoop().Wait();
         }
 
@@ -104,46 +98,20 @@ namespace MountainProjectBot
             Console.WriteLine("All required files present");
         }
 
-        private static async Task AuthReddit()
-        {
-            Console.WriteLine("Authorizing Reddit...");
-
-            WebAgent webAgent = GetWebAgentCredentialsFromFile();
-            redditService = new Reddit(webAgent, true);
-
-            foreach (string subRedditName in subredditNamesAndCommentAmounts.Keys)
-                subreddits.Add(await redditService.GetSubredditAsync(subRedditName));
-
-            Console.WriteLine("Reddit authed successfully");
-        }
-
-        private static WebAgent GetWebAgentCredentialsFromFile()
-        {
-            List<string> fileLines = File.ReadAllLines(credentialsPath).ToList();
-
-            string username = fileLines.FirstOrDefault(p => p.Contains("username")).Split(':')[1];
-            string password = fileLines.FirstOrDefault(p => p.Contains("password")).Split(':')[1];
-            string clientId = fileLines.FirstOrDefault(p => p.Contains("clientId")).Split(':')[1];
-            string clientSecret = fileLines.FirstOrDefault(p => p.Contains("clientSecret")).Split(':')[1];
-            string redirectUri = fileLines.FirstOrDefault(p => p.Contains("redirectUri")).Split(new[] { ':' }, 2)[1]; //Split on first occurence only because redirectUri also contains ':'
-
-            return new BotWebAgent(username, password, clientId, clientSecret, redirectUri);
-        }
-
         private static async Task DoBotLoop()
         {
             while (true)
             {
                 _ = Task.Run(() => PingStatus()); //Send the bot status (for Uptime Robot)
 
-                //Get the latest 1000 comments on the subreddit, the filter to the ones that have the keyword
-                //and have not already been replied to
                 Console.WriteLine("    Getting comments...");
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 long elapsed;
                 
                 try
                 {
+                    redditHelper.Actions = 0; //Reset number of actions
+
                     Console.WriteLine("    Checking monitored comments...");
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await CheckMonitoredComments();
@@ -151,13 +119,7 @@ namespace MountainProjectBot
 
                     Console.WriteLine("    Getting recent comments for each subreddit...");
                     elapsed = stopwatch.ElapsedMilliseconds;
-                    Dictionary<Subreddit, List<Comment>> subredditsAndRecentComments = new Dictionary<Subreddit, List<Comment>>();
-                    foreach (Subreddit subreddit in subreddits)
-                    {
-                        int amountOfCommentsToGet = subredditNamesAndCommentAmounts[subreddit.Name.ToLower()];
-                        subredditsAndRecentComments.Add(subreddit, await subreddit.GetComments(amountOfCommentsToGet, amountOfCommentsToGet).ToList());
-                    }
-
+                    Dictionary<Subreddit, List<Comment>> subredditsAndRecentComments = await redditHelper.GetRecentComments();
                     Console.WriteLine($"    Done getting recent comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
 
                     Console.WriteLine("    Checking for requests (comments with !MountainProject)...");
@@ -203,11 +165,11 @@ namespace MountainProjectBot
 
                 try
                 {
-                    Comment updatedParent = await redditService.GetCommentAsync(new Uri("https://reddit.com" + monitor.ParentComment.Permalink));
+                    Comment updatedParent = await redditHelper.GetComment(monitor.ParentComment.Permalink);
                     if (updatedParent.Body == "[deleted]" || 
                         (updatedParent.IsRemoved.HasValue && updatedParent.IsRemoved.Value)) //If comment is deleted or removed, delete the bot's response
                     {
-                        await monitor.BotResponseComment.DelAsync();
+                        await redditHelper.DeleteComment(monitor.BotResponseComment);
                         monitoredComments.Remove(monitor);
                     }
                     else if (updatedParent.Body != oldParentBody) //If the parent comment's request has changed, edit the bot's response
@@ -217,7 +179,7 @@ namespace MountainProjectBot
                             string reply = BotReply.GetReplyForRequest(updatedParent);
 
                             if (reply != oldResponseBody)
-                                await monitor.BotResponseComment.EditTextAsync(reply);
+                                await redditHelper.EditComment(monitor.BotResponseComment, reply);
 
                             monitor.ParentComment = updatedParent;
                         }
@@ -229,13 +191,13 @@ namespace MountainProjectBot
                                 reply = $"(FYI in the future you can call me by using {Markdown.InlineCode("!MountainProject")})" + Markdown.HRule + reply;
 
                             if (reply != oldResponseBody)
-                                await monitor.BotResponseComment.EditTextAsync(reply);
+                                await redditHelper.EditComment(monitor.BotResponseComment, reply);
 
                             monitor.ParentComment = updatedParent;
                         }
                         else  //If the parent comment is no longer a request or contains a MP url, delete the bot's response
                         {
-                            await monitor.BotResponseComment.DelAsync();
+                            await redditHelper.DeleteComment(monitor.BotResponseComment);
 
                             //We'll still monitor the comment (since it *used* to require a bot response) and it's possible that the user just misspelled
                             //"!MountainProject" during their edit (or something like that)
@@ -244,7 +206,7 @@ namespace MountainProjectBot
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"    Exception occured when checking monitor for comment https://reddit.com{monitor.ParentComment.Permalink}");
+                    Console.WriteLine($"    Exception occured when checking monitor for comment {RedditHelper.GetFullLink(monitor.ParentComment.Permalink)}");
                     Console.WriteLine($"    {e.Message}\n{e.StackTrace}");
                 }
             }
@@ -267,7 +229,7 @@ namespace MountainProjectBot
 
                     if (!Debugger.IsAttached)
                     {
-                        Comment botReplyComment = await comment.ReplyAsync(reply);
+                        Comment botReplyComment = await redditHelper.ReplyToComment(comment, reply);
                         Console.WriteLine($"    Replied to comment {comment.Id}");
                         monitoredComments.Add(new CommentMonitor() { ParentComment = comment, BotResponseComment = botReplyComment });
                     }
@@ -280,7 +242,7 @@ namespace MountainProjectBot
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"    Exception occurred with comment https://reddit.com{comment.Permalink}");
+                    Console.WriteLine($"    Exception occurred with comment {RedditHelper.GetFullLink(comment.Permalink)}");
                     Console.WriteLine($"    {e.Message}\n{e.StackTrace}");
                 }
             }
@@ -316,7 +278,7 @@ namespace MountainProjectBot
 
                     if (!Debugger.IsAttached)
                     {
-                        Comment botReplyComment = await comment.ReplyAsync(reply);
+                        Comment botReplyComment = await redditHelper.ReplyToComment(comment, reply);
                         Console.WriteLine($"    Replied to comment {comment.Id}");
                         monitoredComments.Add(new CommentMonitor() { ParentComment = comment, BotResponseComment = botReplyComment });
                     }
@@ -329,7 +291,7 @@ namespace MountainProjectBot
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"    Exception occurred with comment https://reddit.com{comment.Permalink}");
+                    Console.WriteLine($"    Exception occurred with comment {RedditHelper.GetFullLink(comment.Permalink)}");
                     Console.WriteLine($"    {e.Message}\n{e.StackTrace}");
                 }
             }
@@ -393,12 +355,12 @@ namespace MountainProjectBot
             if (comments.Count == 0)
                 return result;
 
-            List<Post> subredditPosts = await subreddit.GetPosts(100).ToList();
+            List<Post> subredditPosts = await redditHelper.GetPosts(subreddit);
             subredditPosts.RemoveAll(p => p.IsSelfPost);
 
             foreach (Comment comment in comments)
             {
-                string postLink = comment.Permalink.ToString().Replace(comment.Id + "/", "");
+                string postLink = RedditHelper.GetPostLinkFromComment(comment);
                 Post parentPost = subredditPosts.Find(p => p.Permalink.ToString() == postLink);
                 if (parentPost != null)
                     result.Add(comment);
