@@ -89,5 +89,18 @@ namespace MountainProjectAPI
 
             return result;
         }
+
+        public string ToString(ResultParameters resultParameters)
+        {
+            string result = "";
+            result += $"{this.Name} [{this.TypeString} {this.GetRouteGrade(resultParameters)}";
+
+            if (!string.IsNullOrEmpty(this.AdditionalInfo))
+                result += ", " + this.AdditionalInfo;
+
+            result += "]";
+
+            return result;
+        }
     }
 }

@@ -98,6 +98,7 @@ namespace MountainProjectDBBuilder
                 string input = Console.ReadLine();
 
                 SearchParameters searchParameters = SearchParameters.ParseParameters(ref input);
+                ResultParameters resultParameters = ResultParameters.ParseParameters(ref input);
 
                 bool allResults = input.Contains("-all");
                 if (allResults)
@@ -129,7 +130,7 @@ namespace MountainProjectDBBuilder
                     if (result is Area)
                         resultStr = (result as Area).ToString();
                     else if (result is Route)
-                        resultStr = (result as Route).ToString();
+                        resultStr = (result as Route).ToString(resultParameters);
 
                     Console.WriteLine($"The following was found (found in {stopwatch.ElapsedMilliseconds} ms):");
                     Console.WriteLine("    " + resultStr);
