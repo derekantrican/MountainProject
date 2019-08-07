@@ -211,23 +211,23 @@ namespace MountainProjectBot
 
         public static string GetBotLinks(Comment relatedComment = null)
         {
-            string botLinks = "";
+            List<string> botLinks = new List<string>();
 
             if (relatedComment != null)
             {
                 string commentLink = WebUtility.HtmlEncode(RedditHelper.GetFullLink(relatedComment.Permalink));
-                botLinks += Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink) + " | ";
+                botLinks.Add(Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink));
             }
             else
-                botLinks += Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url") + " | ";
+                botLinks.Add(Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url"));
 
-            botLinks += Markdown.Link("FAQ", "https://github.com/derekantrican/MountainProject/wiki/Bot-FAQ") + " | ";
-            botLinks += Markdown.Link("Syntax", "https://github.com/derekantrican/MountainProject/wiki/Bot-Syntax") + " | ";
-            botLinks += Markdown.Link("Grade Conversion", "https://www.mountainproject.com/international-climbing-grades") + " | ";
-            botLinks += Markdown.Link("GitHub", "https://github.com/derekantrican/MountainProject") + " | ";
-            botLinks += Markdown.Link("Donate", "https://www.paypal.me/derekantrican");
+            botLinks.Add(Markdown.Link("FAQ", "https://github.com/derekantrican/MountainProject/wiki/Bot-FAQ"));
+            botLinks.Add(Markdown.Link("Syntax", "https://github.com/derekantrican/MountainProject/wiki/Bot-Syntax"));
+            botLinks.Add(Markdown.Link("Grade Conversion", "https://www.mountainproject.com/international-climbing-grades"));
+            botLinks.Add(Markdown.Link("GitHub", "https://github.com/derekantrican/MountainProject"));
+            botLinks.Add(Markdown.Link("Donate", "https://www.paypal.me/derekantrican"));
 
-            return botLinks;
+            return string.Join(" | ", botLinks);
         }
     }
 }
