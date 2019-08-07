@@ -146,6 +146,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="BotReply.cs" />
+    <Compile Include="CommentMonitor.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="Markdown.cs" />
     <Compile Include="Program.cs" />

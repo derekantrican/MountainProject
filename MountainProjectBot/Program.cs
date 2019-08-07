@@ -32,6 +32,7 @@ namespace MountainProjectBot
 
         static Reddit redditService;
         static List<Subreddit> subreddits = new List<Subreddit>();
+        static List<CommentMonitor> monitoredComments = new List<CommentMonitor>();
 
         static void Main(string[] args)
         {
@@ -143,7 +144,12 @@ namespace MountainProjectBot
                 
                 try
                 {
-                    Console.WriteLine("    Getting recent comments for each subreddit");
+                    Console.WriteLine("    Checking monitored comments...");
+                    elapsed = stopwatch.ElapsedMilliseconds;
+                    await CheckMonitoredComments();
+                    Console.WriteLine($"    Done checking monitored comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+
+                    Console.WriteLine("    Getting recent comments for each subreddit...");
                     elapsed = stopwatch.ElapsedMilliseconds;
                     Dictionary<Subreddit, List<Comment>> subredditsAndRecentComments = new Dictionary<Subreddit, List<Comment>>();
                     foreach (Subreddit subreddit in subreddits)
@@ -154,12 +160,12 @@ namespace MountainProjectBot
 
                     Console.WriteLine($"    Done getting recent comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
 
-                    Console.WriteLine("    Checking for requests (comments with !MountainProject)");
+                    Console.WriteLine("    Checking for requests (comments with !MountainProject)...");
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await RespondToRequests(subredditsAndRecentComments.SelectMany(p => p.Value).ToList());
                     Console.WriteLine($"    Done with requests ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
 
-                    Console.WriteLine("    Checking for MP links");
+                    Console.WriteLine("    Checking for MP links...");
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await RespondToMPUrls(subredditsAndRecentComments);
                     Console.WriteLine($"    Done with MP links ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
@@ -184,6 +190,66 @@ namespace MountainProjectBot
             }
         }
 
+        private static async Task CheckMonitoredComments()
+        {
+            monitoredComments.RemoveAll(c => (DateTime.Now - c.Created).TotalHours > 1); //Remove any old monitors
+
+            for (int i = monitoredComments.Count - 1; i >= 0; i--)
+            {
+                CommentMonitor monitor = monitoredComments[i];
+
+                string oldParentBody = monitor.ParentComment.Body;
+                string oldResponseBody = monitor.BotResponseComment.Body;
+
+                try
+                {
+                    Comment updatedParent = await redditService.GetCommentAsync(new Uri("https://reddit.com" + monitor.ParentComment.Permalink));
+                    if (updatedParent.Body == "[deleted]" || 
+                        (updatedParent.IsRemoved.HasValue && updatedParent.IsRemoved.Value)) //If comment is deleted or removed, delete the bot's response
+                    {
+                        await monitor.BotResponseComment.DelAsync();
+                        monitoredComments.Remove(monitor);
+                    }
+                    else if (updatedParent.Body != oldParentBody) //If the parent comment's request has changed, edit the bot's response
+                    {
+                        if (Regex.IsMatch(updatedParent.Body, BOTKEYWORDREGEX))
+                        {
+                            string reply = BotReply.GetReplyForRequest(updatedParent);
+
+                            if (reply != oldResponseBody)
+                                await monitor.BotResponseComment.EditTextAsync(reply);
+
+                            monitor.ParentComment = updatedParent;
+                        }
+                        else if (updatedParent.Body.Contains("mountainproject.com")) //If the parent comment's MP url has changed, edit the bot's response
+                        {
+                            string reply = BotReply.GetReplyForMPLinks(updatedParent);
+
+                            if (GetBlacklistLevelForUser(updatedParent.AuthorName) != BlacklistLevel.NoFYI)
+                                reply = $"(FYI in the future you can call me by using {Markdown.InlineCode("!MountainProject")})" + Markdown.HRule + reply;
+
+                            if (reply != oldResponseBody)
+                                await monitor.BotResponseComment.EditTextAsync(reply);
+
+                            monitor.ParentComment = updatedParent;
+                        }
+                        else  //If the parent comment is no longer a request or contains a MP url, delete the bot's response
+                        {
+                            await monitor.BotResponseComment.DelAsync();
+
+                            //We'll still monitor the comment (since it *used* to require a bot response) and it's possible that the user just misspelled
+                            //"!MountainProject" during their edit (or something like that)
+                        }
+                    }
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"    Exception occured when checking monitor for comment https://reddit.com{monitor.ParentComment.Permalink}");
+                    Console.WriteLine($"    {e.Message}\n{e.StackTrace}");
+                }
+            }
+        }
+
         private static async Task RespondToRequests(List<Comment> recentComments) //Respond to comments that specifically called the bot (!MountainProject)
         {
             List<Comment> botRequestComments = recentComments.Where(c => Regex.IsMatch(c.Body, BOTKEYWORDREGEX)).ToList();
@@ -197,12 +263,13 @@ namespace MountainProjectBot
                 {
                     Console.WriteLine("    Getting reply for comment");
 
-                    string reply = BotReply.GetReplyForCommentBody(comment.Body);
+                    string reply = BotReply.GetReplyForRequest(comment);
 
                     if (!Debugger.IsAttached)
                     {
-                        await comment.ReplyAsync(reply);
+                        Comment botReplyComment = await comment.ReplyAsync(reply);
                         Console.WriteLine($"    Replied to comment {comment.Id}");
+                        monitoredComments.Add(new CommentMonitor() { ParentComment = comment, BotResponseComment = botReplyComment });
                     }
 
                     LogCommentBeenRepliedTo(comment);
@@ -236,51 +303,22 @@ namespace MountainProjectBot
             {
                 try
                 {
-                    List<MPObject> foundMPObjects = new List<MPObject>();
-                    Regex regex = new Regex(@"(https:\/\/)?(www.)?mountainproject\.com.*?(?=\)|\s|]|$)");
-                    foreach (Match match in regex.Matches(comment.Body))
-                    {
-                        string mpUrl = match.Value;
-                        if (!mpUrl.Contains("www."))
-                            mpUrl = "www." + mpUrl;
+                    string reply = BotReply.GetReplyForMPLinks(comment);
 
-                        if (!mpUrl.Contains("https://"))
-                            mpUrl = "https://" + mpUrl;
-
-                        List<MPObject> searchResults = new List<MPObject>();
-                        try
-                        {
-                            mpUrl = GetRedirectURL(mpUrl);
-                            MPObject mpObjectWithUrl = MountainProjectDataSearch.GetItemWithMatchingUrl(mpUrl, MountainProjectDataSearch.DestAreas.Cast<MPObject>().ToList());
-                            if (mpObjectWithUrl != null &&
-                                foundMPObjects.Find(p => p.URL == mpObjectWithUrl.URL) == null) //Make sure the item does not already exist in the list
-                            {
-                                foundMPObjects.Add(mpObjectWithUrl);
-                            }
-                        }
-                        catch //Something went wrong. We'll assume that it was because the url didn't match anything
-                        {
-                            continue;
-                        }
-                    }
-
-                    if (foundMPObjects.Count == 0)
+                    if (string.IsNullOrEmpty(reply))
                     {
                         LogCommentBeenRepliedTo(comment); //Don't check this comment again
                         continue;
                     }
 
-                    string reply = "";
                     if (GetBlacklistLevelForUser(comment.AuthorName) != BlacklistLevel.NoFYI)
-                        reply += $"(FYI in the future you can call me by using {Markdown.InlineCode("!MountainProject")})" + Markdown.HRule;
-
-                    foundMPObjects.ForEach(p => reply += BotReply.GetFormattedString(p, includeUrl: false) + Markdown.HRule);
-                    reply += BotReply.GetBotLinks(comment);
+                        reply = $"(FYI in the future you can call me by using {Markdown.InlineCode("!MountainProject")})" + Markdown.HRule + reply;
 
                     if (!Debugger.IsAttached)
                     {
-                        await comment.ReplyAsync(reply);
+                        Comment botReplyComment = await comment.ReplyAsync(reply);
                         Console.WriteLine($"    Replied to comment {comment.Id}");
+                        monitoredComments.Add(new CommentMonitor() { ParentComment = comment, BotResponseComment = botReplyComment });
                     }
 
                     LogCommentBeenRepliedTo(comment);
@@ -294,19 +332,6 @@ namespace MountainProjectBot
                     Console.WriteLine($"    Exception occurred with comment https://reddit.com{comment.Permalink}");
                     Console.WriteLine($"    {e.Message}\n{e.StackTrace}");
                 }
-            }
-        }
-
-        private static string GetRedirectURL(string url)
-        {
-            try
-            {
-                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
-                return ((HttpWebResponse)req.GetResponse()).ResponseUri.ToString();
-            }
-            catch
-            {
-                return "";
             }
         }
 

@@ -83,7 +83,7 @@ namespace UnitTests
             {
                 string commentBody = testCriteria_keyword[i, 0];
                 string expectedUrl = testCriteria_keyword[i, 1];
-                string resultReply = BotReply.GetReplyForCommentBody(commentBody);
+                string resultReply = BotReply.GetReplyForRequest(commentBody);
 
                 Assert.IsTrue(resultReply.Contains(expectedUrl), "Failed for " + commentBody);
             }

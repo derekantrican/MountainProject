@@ -115,5 +115,18 @@ namespace MountainProjectAPI
         {
             return Regex.Replace(input, @"\P{L}", "");
         }
+
+        public static string GetRedirectURL(string url)
+        {
+            try
+            {
+                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+                return ((HttpWebResponse)req.GetResponse()).ResponseUri.ToString();
+            }
+            catch
+            {
+                return "";
+            }
+        }
     }
 }

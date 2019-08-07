@@ -1,6 +1,5 @@
 ﻿using MountainProjectAPI;
 using RedditSharp.Things;
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -12,7 +11,16 @@ namespace MountainProjectBot
     {
         const string BOTKEYWORDREGEX = @"(?i)!mountain\s*project(.*)";
 
-        public static string GetReplyForCommentBody(string commentBody)
+        public static string GetReplyForRequest(Comment comment)
+        {
+            string response = GetReplyForRequest(comment.Body);
+            response += Markdown.HRule;
+            response += GetBotLinks(comment);
+
+            return response;
+        }
+
+        public static string GetReplyForRequest(string commentBody)
         {
             //Get everything AFTER the keyword, but on the same line
             string queryText = Regex.Match(commentBody, BOTKEYWORDREGEX).Groups[1].Value.Trim();
@@ -24,11 +32,55 @@ namespace MountainProjectBot
 
             SearchResult searchResult = MountainProjectDataSearch.Search(queryText, searchParameters);
 
-            string response = GetResponse(queryText, searchParameters.SpecificLocation, searchResult, resultParameters);
-            response += Markdown.HRule;
-            response += GetBotLinks();
+            return GetResponse(queryText, searchParameters.SpecificLocation, searchResult, resultParameters);
+        }
+
+        public static string GetReplyForMPLinks(Comment comment)
+        {
+            List<MPObject> foundMPObjects = new List<MPObject>();
+            foreach (string url in ExtractMPLinks(comment.Body))
+            {
+                MPObject mpObjectWithUrl = MountainProjectDataSearch.GetItemWithMatchingUrl(url, MountainProjectDataSearch.DestAreas.Cast<MPObject>().ToList());
+                if (mpObjectWithUrl != null)
+                    foundMPObjects.Add(mpObjectWithUrl);
+            }
+
+            string response = "";
+            if (foundMPObjects.Count == 0)
+                return null;
+
+            foundMPObjects.ForEach(p => response += GetFormattedString(p, includeUrl: false) + Markdown.HRule);
+            response += GetBotLinks(comment);
 
             return response;
+        }
+
+        private static List<string> ExtractMPLinks(string commentBody)
+        {
+            List<string> result = new List<string>();
+            Regex regex = new Regex(@"(https:\/\/)?(www.)?mountainproject\.com.*?(?=\)|\s|]|$)");
+            foreach (Match match in regex.Matches(commentBody))
+            {
+                string mpUrl = match.Value;
+                if (!mpUrl.Contains("www."))
+                    mpUrl = "www." + mpUrl;
+
+                if (!mpUrl.Contains("https://"))
+                    mpUrl = "https://" + mpUrl;
+
+                try
+                {
+                    mpUrl = Utilities.GetRedirectURL(mpUrl);
+                    if (!result.Contains(mpUrl))
+                        result.Add(mpUrl);
+                }
+                catch //Something went wrong. We'll assume that it was because the url didn't match anything
+                {
+                    continue;
+                }
+            }
+
+            return result;
         }
 
         private static string GetResponse(string queryText, string queryLocation, SearchResult searchResult, ResultParameters resultParameters)
