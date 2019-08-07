@@ -141,7 +141,7 @@ namespace MountainProjectAPI
                 int pop2 = matchedObjectsByPopularity[1].Popularity;
                 double popularityPercentDiff = Math.Round((double)(pop1 - pop2) / pop2 * 100, 2);
 
-                Console.WriteLine($"    Filtering based on priority (result has priority {popularityPercentDiff}% higher than next closest)");
+                Console.WriteLine($"    Filtering based on popularity (result has popularity {popularityPercentDiff}% higher than next closest)");
 
                 return matchedObjectsByPopularity.First(); //Return the most popular matched object (this may prioritize areas over routes. May want to check that later)
             }
