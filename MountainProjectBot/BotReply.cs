@@ -215,7 +215,7 @@ namespace MountainProjectBot
 
             if (relatedComment != null)
             {
-                string commentLink = WebUtility.HtmlEncode("https://reddit.com" + relatedComment.Permalink);
+                string commentLink = WebUtility.HtmlEncode(RedditHelper.GetFullLink(relatedComment.Permalink));
                 botLinks += Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink) + " | ";
             }
             else
