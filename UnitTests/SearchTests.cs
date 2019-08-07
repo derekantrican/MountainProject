@@ -26,9 +26,9 @@ namespace UnitTests
             {
                 string query = testCriteria_search[i, 0];
                 string expectedUrl = testCriteria_search[i, 1];
-                MPObject result = MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(query));
+                SearchResult result = MountainProjectDataSearch.Search(query);
 
-                Assert.AreEqual(Utilities.MPBASEURL + expectedUrl, result.URL);
+                Assert.AreEqual(Utilities.MPBASEURL + expectedUrl, result.FilteredResult.URL);
             }
         }
 
@@ -51,8 +51,8 @@ namespace UnitTests
             {
                 string query = testCriteria_location[i, 0];
                 string expectedLocation = testCriteria_location[i, 1];
-                MPObject searchResult = MountainProjectDataSearch.FilterByPopularity(MountainProjectDataSearch.SearchMountainProject(query));
-                string resultLocation = BotReply.GetLocationString(searchResult);
+                SearchResult searchResult = MountainProjectDataSearch.Search(query);
+                string resultLocation = BotReply.GetLocationString(searchResult.FilteredResult);
                 resultLocation = resultLocation.Replace(Markdown.NewLine, ""); //Remove markdown newline
                 resultLocation = resultLocation.Replace("Located in ", ""); //Simplify results for unit test
                 resultLocation = Regex.Replace(resultLocation, @"\[|\]|\(.*?\)", ""); //Remove markdown link formatting
@@ -64,6 +64,7 @@ namespace UnitTests
         string[,] testCriteria_keyword = new string[,]
         {
             { "!MountainProject deception crags", "/area/105791955/exit-38-deception-crags" },
+            { "!MountainProject derekantrican", "I could not find anything" }, //No results
             { "This is a test !MountainProject red river gorge", "/area/105841134/red-river-gorge" }, //Keyword not at beginning
             { "!MountainProject Royale with Cheese -location:Niagara Glen", "/route/114609759/royale-with-cheese" }, //Location operator
             { "!MountainProject Moonstone, Arizona -route", "/route/105960200/moonstone" }, //Location parse (via comma) - TODO: take out "-route" when we start prioritizing levenstein distance
@@ -82,7 +83,7 @@ namespace UnitTests
                 string expectedUrl = testCriteria_keyword[i, 1];
                 string resultReply = BotReply.GetReplyForCommentBody(commentBody);
 
-                Assert.IsTrue(resultReply.Contains(expectedUrl));
+                Assert.IsTrue(resultReply.Contains(expectedUrl), "Failed for " + commentBody);
             }
         }
     }

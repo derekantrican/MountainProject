@@ -31,5 +31,17 @@ namespace MountainProjectAPI
 
             return parameters;
         }
+
+        public SearchParameters Clone()
+        {
+            SearchParameters clone = new SearchParameters()
+            {
+                OnlyAreas = this.OnlyAreas,
+                OnlyRoutes = this.OnlyRoutes,
+                SpecificLocation = this.SpecificLocation
+            };
+
+            return clone;
+        }
     }
 }

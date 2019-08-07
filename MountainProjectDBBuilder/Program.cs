@@ -104,14 +104,14 @@ namespace MountainProjectDBBuilder
                     input = input.Replace("-all", "").Trim();
 
                 Stopwatch stopwatch = Stopwatch.StartNew();
-                Tuple<MPObject, List<MPObject>> searchResults = MountainProjectDataSearch.ParseQueryWithLocation(input, searchParameters);
+                SearchResult searchResult = MountainProjectDataSearch.Search(input, searchParameters);
                 stopwatch.Stop();
-                List<MPObject> matchedObjectsByPopularity = searchResults.Item2.OrderByDescending(p => p.Popularity).ToList();
 
-                if (searchResults.Item1 == null)
+                if (searchResult.IsEmpty())
                     Console.WriteLine("Nothing found matching \"" + input + "\"");
                 else if (allResults)
                 {
+                    List<MPObject> matchedObjectsByPopularity = searchResult.AllResults.OrderByDescending(p => p.Popularity).ToList();
                     Console.WriteLine($"Found {matchedObjectsByPopularity.Count} items match that search query (found in {stopwatch.ElapsedMilliseconds} ms):");
                     foreach (MPObject result in matchedObjectsByPopularity)
                     {
@@ -125,7 +125,7 @@ namespace MountainProjectDBBuilder
                 else
                 {
                     string resultStr = "";
-                    MPObject result = searchResults.Item1;
+                    MPObject result = searchResult.FilteredResult;
                     if (result is Area)
                         resultStr = (result as Area).ToString();
                     else if (result is Route)

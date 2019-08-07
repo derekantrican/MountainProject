@@ -22,45 +22,54 @@ namespace MountainProjectBot
             ResultParameters resultParameters = ResultParameters.ParseParameters(ref queryText);
             SearchParameters searchParameters = SearchParameters.ParseParameters(ref queryText);
 
-            Tuple<MPObject, List<MPObject>> searchResult = MountainProjectDataSearch.ParseQueryWithLocation(queryText, searchParameters);
+            SearchResult searchResult = MountainProjectDataSearch.Search(queryText, searchParameters);
 
-            return GetResponse(queryText, searchResult.Item1, searchResult.Item2.Count, searchParameters.SpecificLocation, resultParameters);
+            string response = GetResponse(queryText, searchParameters.SpecificLocation, searchResult, resultParameters);
+            response += Markdown.HRule;
+            response += GetBotLinks();
+
+            return response;
         }
 
-        private static string GetResponse(string queryText, MPObject finalResult, int totalResults, string location, ResultParameters resultParameters)
+        private static string GetResponse(string queryText, string queryLocation, SearchResult searchResult, ResultParameters resultParameters)
         {
-            if (finalResult == null)
+            if (searchResult.IsEmpty())
             {
-                if (!string.IsNullOrEmpty(location))
-                    return $"I could not find anything for \"{queryText}\" in \"{location}\". Please use the Feedback button below if you think this is a bug";
+                if (!string.IsNullOrEmpty(queryLocation))
+                    return $"I could not find anything for \"{queryText}\" in \"{queryLocation}\". Please use the Feedback button below if you think this is a bug";
                 else
                     return $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
             }
-            else if (totalResults > 1)
-                return $"I found the following info (out of {totalResults} total results):" + Markdown.HRule + GetFormattedString(finalResult, resultParameters);
+            else if (searchResult.AllResults.Count > 1)
+                return $"I found the following info (out of {searchResult.AllResults.Count} total results):" + Markdown.HRule + GetFormattedString(searchResult, resultParameters);
             else
-                return $"I found the following info:" + Markdown.HRule + GetFormattedString(finalResult, resultParameters);
+                return $"I found the following info:" + Markdown.HRule + GetFormattedString(searchResult, resultParameters);
         }
 
         public static string GetFormattedString(MPObject finalResult, ResultParameters parameters = null, bool includeUrl = true)
         {
-            if (finalResult == null)
+            return GetFormattedString(new SearchResult() { FilteredResult = finalResult }, parameters, includeUrl);
+        }
+
+        public static string GetFormattedString(SearchResult searchResult, ResultParameters parameters = null, bool includeUrl = true)
+        {
+            if (searchResult.IsEmpty())
                 return null;
 
             string result = "";
-            if (finalResult is Area)
+            if (searchResult.FilteredResult is Area)
             {
-                Area inputArea = finalResult as Area;
+                Area inputArea = searchResult.FilteredResult as Area;
                 result += $"{Markdown.Bold(inputArea.Name)} [{inputArea.Statistics}]" + Markdown.NewLine;
-                result += GetLocationString(inputArea);
+                result += GetLocationString(inputArea, searchResult.RelatedLocation);
                 result += GetPopularRoutes(inputArea, parameters);
 
                 if (includeUrl)
                     result += inputArea.URL;
             }
-            else if (finalResult is Route)
+            else if (searchResult.FilteredResult is Route)
             {
-                Route inputRoute = finalResult as Route;
+                Route inputRoute = searchResult.FilteredResult as Route;
                 result += $"{Markdown.Bold(inputRoute.Name)}";
                 if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
                     result += $" [{inputRoute.AdditionalInfo}]";
@@ -70,7 +79,7 @@ namespace MountainProjectBot
                 result += $"Type: {string.Join(", ", inputRoute.Types)}" + Markdown.NewLine;
                 result += $"Grade: {inputRoute.GetRouteGrade(parameters)}" + Markdown.NewLine;
                 result += $"Rating: {inputRoute.Rating}/4" + Markdown.NewLine;
-                result += GetLocationString(inputRoute);
+                result += GetLocationString(inputRoute, searchResult.RelatedLocation);
 
                 if (includeUrl)
                     result += inputRoute.URL;
@@ -79,7 +88,7 @@ namespace MountainProjectBot
             return result;
         }
 
-        public static string GetLocationString(MPObject child)
+        public static string GetLocationString(MPObject child, Area referenceLocation = null)
         {
             MPObject innerParent, outerParent;
             innerParent = null;
@@ -106,6 +115,9 @@ namespace MountainProjectBot
                     return ""; //Return a blank string if we are in an area like "China" (so we don't return a string like "China is located in Asia")
             }
 
+            if (referenceLocation != null) //Override the "innerParent" in situations where we want the location string to include the "insisted" location
+                innerParent = referenceLocation;
+
             string locationString = $"Located in {Markdown.Link(innerParent.Name, innerParent.URL)}";
             if (outerParent != null && outerParent.URL != innerParent.URL)
                 locationString += $", {Markdown.Link(outerParent.Name, outerParent.URL)}";
@@ -121,7 +133,7 @@ namespace MountainProjectBot
 
             List<Route> popularRoutes = new List<Route>();
             if (area.PopularRouteUrls.Count == 0) //MountainProject doesn't list any popular routes. Figure out some ourselves
-                popularRoutes = MountainProjectDataSearch.GetPopularRoutes(area, 3);
+                popularRoutes = area.GetPopularRoutes(3);
             else
             {
                 List<MPObject> itemsToSearch = new List<MPObject>();

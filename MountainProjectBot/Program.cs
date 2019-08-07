@@ -198,8 +198,6 @@ namespace MountainProjectBot
                     Console.WriteLine("    Getting reply for comment");
 
                     string reply = BotReply.GetReplyForCommentBody(comment.Body);
-                    reply += Markdown.HRule;
-                    reply += BotReply.GetBotLinks(comment);
 
                     if (!Debugger.IsAttached)
                     {

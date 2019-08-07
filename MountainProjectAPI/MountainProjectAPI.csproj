@@ -54,6 +54,7 @@
     <Compile Include="Models\AreaStats.cs" />
     <Compile Include="Functions\MountainProjectDataSearch.cs" />
     <Compile Include="Functions\Parsers.cs" />
+    <Compile Include="Models\SearchResult.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Models\Route.cs" />
     <Compile Include="Models\MPObject.cs" />
