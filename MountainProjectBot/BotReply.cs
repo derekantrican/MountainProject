@@ -170,7 +170,7 @@ namespace MountainProjectBot
                 botLinks += Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url") + " | ";
 
             botLinks += Markdown.Link("FAQ", "https://github.com/derekantrican/MountainProject/wiki/Bot-FAQ") + " | ";
-            botLinks += Markdown.Link("Operators", "https://github.com/derekantrican/MountainProject/wiki/Bot-%22Operators%22") + " | ";
+            botLinks += Markdown.Link("Syntax", "https://github.com/derekantrican/MountainProject/wiki/Bot-Syntax") + " | ";
             botLinks += Markdown.Link("Grade Conversion", "https://www.mountainproject.com/international-climbing-grades") + " | ";
             botLinks += Markdown.Link("GitHub", "https://github.com/derekantrican/MountainProject") + " | ";
             botLinks += Markdown.Link("Donate", "https://www.paypal.me/derekantrican");
