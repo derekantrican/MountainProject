@@ -44,7 +44,9 @@ namespace MountainProjectAPI
                 string query = Utilities.FilterStringForMatch(group.Item1);
                 string location = Utilities.FilterStringForMatch(group.Item2);
 
-                Area foundLocation = FilterByPopularity(DeepSearch(location, DestAreas, true)) as Area;
+                List<MPObject> locationMatches = DeepSearch(location, DestAreas, true);
+                locationMatches.RemoveAll(p => !(p is Area));
+                Area foundLocation = FilterByPopularity(locationMatches) as Area;
                 if (foundLocation == null)
                     continue;
 
