@@ -69,7 +69,9 @@ namespace UnitTests
             { "!MountainProject Royale with Cheese -location:Niagara Glen", "/route/114609759/royale-with-cheese" }, //Location operator
             { "!MountainProject Moonstone, Arizona -route", "/route/105960200/moonstone" }, //Location parse (via comma) - TODO: take out "-route" when we start prioritizing levenstein distance
             { "!MountainProject West Ridge of Prusik Peak", "/route/105808527/west-ridge" }, //Location parse (via word)
-            { "!MountainProject Send me on my Way at Red River Gorge", "/route/106085043/send-me-on-my-way" } //Location parse (via word WITH multiple location words: on, at)
+            { "!MountainProject Send me on my Way at Red River Gorge", "/route/106085043/send-me-on-my-way" }, //Location parse (via word WITH multiple location words: on, at)
+            { "!MountainProject Send me on my Way -location:Exit 38", "I could not find anything" }, //Wrong location
+            { "!MountainProject Send me on my Way at derekantrican", "I could not find anything" } //Non-existent location
         };
 
         [TestMethod]

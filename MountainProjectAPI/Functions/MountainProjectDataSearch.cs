@@ -65,6 +65,12 @@ namespace MountainProjectAPI
 
             if (possibleResults.Count > 0)
                 searchResult = possibleResults.OrderByDescending(p => p.FilteredResult.Popularity).First();
+            else if (searchParameters != null && !string.IsNullOrEmpty(searchParameters.SpecificLocation))
+            {
+                //If we used searchParameters to find a specific location, but couldn't find a match at that location,
+                //we should return an empty result
+                searchResult = new SearchResult();
+            }
             else
             {
                 queryText = Utilities.FilterStringForMatch(queryText);
