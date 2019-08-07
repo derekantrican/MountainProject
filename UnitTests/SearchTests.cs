@@ -39,7 +39,8 @@ namespace UnitTests
             { "Deception Crags", "Exit 38, Washington" },
             { "no-rang-na-rang", "South Korea" }, //International
             { "Sweet Dreams", "Blue Mountains, Australia"}, //Australia route (special case for Australia)
-            { "Grab Your Balls", "Breakneck, Pennsylvania" } //https://github.com/derekantrican/MountainProject/issues/12
+            { "Grab Your Balls", "Breakneck, Pennsylvania" }, //https://github.com/derekantrican/MountainProject/issues/12
+            { "Highball aka Pocket Problem", "Grand Ledge, Michigan" } //Parent is 1 less than state (ie Michigan -> Grand Ledge -> Pocket Problem)
         };
 
         [TestMethod]

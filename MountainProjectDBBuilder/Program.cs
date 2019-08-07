@@ -134,7 +134,7 @@ namespace MountainProjectDBBuilder
 
                     Console.WriteLine($"The following was found (found in {stopwatch.ElapsedMilliseconds} ms):");
                     Console.WriteLine("    " + resultStr);
-                    Console.WriteLine($"    Location: {GetLocationString(result)}");
+                    Console.WriteLine($"    Location: {GetLocationString(result, searchResult.RelatedLocation)}");
                     Console.WriteLine("\nOpen result? (y/n) ");
                     if (Console.ReadLine().ToLower() == "y")
                         Process.Start(result.URL);
@@ -145,12 +145,18 @@ namespace MountainProjectDBBuilder
             }
         }
 
-        private static string GetLocationString(MPObject child)
+        public static string GetLocationString(MPObject child, Area referenceLocation = null)
         {
             MPObject innerParent, outerParent;
             innerParent = null;
+            outerParent = MountainProjectDataSearch.GetParent(child, 1); //Get state that route/area is in
             if (child is Route)
+            {
                 innerParent = MountainProjectDataSearch.GetParent(child, -2); //Get the "second to last" parent https://github.com/derekantrican/MountainProject/issues/12
+
+                if (innerParent.URL == outerParent.URL)
+                    innerParent = MountainProjectDataSearch.GetParent(child, -1);
+            }
             else if (child is Area)
                 innerParent = MountainProjectDataSearch.GetParent(child, -1); //Get immediate parent
 
@@ -158,7 +164,6 @@ namespace MountainProjectDBBuilder
                 innerParent.URL == Utilities.INTERNATIONALURL) //If "child" is an area like "Europe"
                 return "";
 
-            outerParent = MountainProjectDataSearch.GetParent(child, 1); //Get state that route/area is in
             if (outerParent.URL == Utilities.INTERNATIONALURL) //If this is international, get the country instead of the state (eg "China")
             {
                 if (child.ParentUrls.Count > 3)
@@ -171,6 +176,9 @@ namespace MountainProjectDBBuilder
                 else
                     return ""; //Return a blank string if we are in an area like "China" (so we don't return a string like "China is located in Asia")
             }
+
+            if (referenceLocation != null) //Override the "innerParent" in situations where we want the location string to include the "insisted" location
+                innerParent = referenceLocation;
 
             string locationString = $"Located in {innerParent.Name}";
             if (outerParent != null && outerParent.URL != innerParent.URL)

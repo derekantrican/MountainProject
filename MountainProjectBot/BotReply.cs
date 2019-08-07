@@ -144,8 +144,14 @@ namespace MountainProjectBot
         {
             MPObject innerParent, outerParent;
             innerParent = null;
+            outerParent = MountainProjectDataSearch.GetParent(child, 1); //Get state that route/area is in
             if (child is Route)
+            {
                 innerParent = MountainProjectDataSearch.GetParent(child, -2); //Get the "second to last" parent https://github.com/derekantrican/MountainProject/issues/12
+
+                if (innerParent.URL == outerParent.URL)
+                    innerParent = MountainProjectDataSearch.GetParent(child, -1);
+            }
             else if (child is Area)
                 innerParent = MountainProjectDataSearch.GetParent(child, -1); //Get immediate parent
 
@@ -153,7 +159,6 @@ namespace MountainProjectBot
                 innerParent.URL == Utilities.INTERNATIONALURL) //If "child" is an area like "Europe"
                 return "";
 
-            outerParent = MountainProjectDataSearch.GetParent(child, 1); //Get state that route/area is in
             if (outerParent.URL == Utilities.INTERNATIONALURL) //If this is international, get the country instead of the state (eg "China")
             {
                 if (child.ParentUrls.Count > 3)
