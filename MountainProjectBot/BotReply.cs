@@ -13,7 +13,7 @@ namespace MountainProjectBot
 
         public static string GetReplyForRequest(Comment comment)
         {
-            string response = GetReplyForRequest(comment.Body);
+            string response = GetReplyForRequest(WebUtility.HtmlDecode(comment.Body));
             response += Markdown.HRule;
             response += GetBotLinks(comment);
 
@@ -38,7 +38,7 @@ namespace MountainProjectBot
         public static string GetReplyForMPLinks(Comment comment)
         {
             List<MPObject> foundMPObjects = new List<MPObject>();
-            foreach (string url in ExtractMPLinks(comment.Body))
+            foreach (string url in ExtractMPLinks(WebUtility.HtmlDecode(comment.Body)))
             {
                 MPObject mpObjectWithUrl = MountainProjectDataSearch.GetItemWithMatchingUrl(url);
                 if (mpObjectWithUrl != null)
