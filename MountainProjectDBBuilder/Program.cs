@@ -192,7 +192,7 @@ namespace MountainProjectDBBuilder
             try
             {
                 totalTimer.Start();
-                Log("Starting DB Build...");
+                Console.WriteLine("Starting DB Build...");
 
                 List<Area> destAreas = Parsers.GetDestAreas();
                 List<Task> areaTasks = new List<Task>();
@@ -204,19 +204,19 @@ namespace MountainProjectDBBuilder
                 Task.WaitAll(areaTasks.ToArray());
 
                 totalTimer.Stop();
-                Log(outputCapture.Captured.ToString());
-                Log($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
+                Console.WriteLine(outputCapture.Captured.ToString());
+                Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
                 SerializeResults(destAreas);
                 SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed}", "");
             }
             catch (Exception ex)
             {
-                Log(outputCapture.Captured.ToString());
-                Log(Environment.NewLine + Environment.NewLine);
-                Log("!!!-------------EXCEPTION ENCOUNTERED-------------!!!");
-                Log($"EXCEPTION MESSAGE: {ex?.Message}\n");
-                Log($"INNER EXCEPTION: {ex?.InnerException}\n");
-                Log($"STACK TRACE: {ex?.StackTrace}\n");
+                Console.WriteLine(outputCapture.Captured.ToString());
+                Console.WriteLine(Environment.NewLine + Environment.NewLine);
+                Console.WriteLine("!!!-------------EXCEPTION ENCOUNTERED-------------!!!");
+                Console.WriteLine($"EXCEPTION MESSAGE: {ex?.Message}\n");
+                Console.WriteLine($"INNER EXCEPTION: {ex?.InnerException}\n");
+                Console.WriteLine($"STACK TRACE: {ex?.StackTrace}\n");
                 SendReport($"MountainProjectDBBuilder completed WITH ERRORS in {totalTimer.Elapsed}",
                     $"{ex?.Message}\n{ex.InnerException}\n{ex?.StackTrace}");
             }
@@ -229,17 +229,11 @@ namespace MountainProjectDBBuilder
 
         private static void SerializeResults(List<Area> inputAreas)
         {
-            Log("[SerializeResults] Serializing areas to file");
+            Console.WriteLine("[SerializeResults] Serializing areas to file");
             TextWriter writer = new StreamWriter(serializationPath);
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<Area>));
             xmlSerializer.Serialize(writer, inputAreas);
             writer.Close();
-        }
-
-        public static void Log(string itemToLog)
-        {
-            logString += itemToLog + "\n";
-            //Console.WriteLine(itemToLog);
         }
 
         public static void SaveLogToFile()
@@ -251,7 +245,7 @@ namespace MountainProjectDBBuilder
         {
             try
             {
-                Log("[SendReport] Sending report");
+                Console.WriteLine("[SendReport] Sending report");
                 string url = @"https://script.google.com/macros/s/AKfycbzSbnYebCUPam1CkMgkD65LzTF_EQIbxFAGBeSZpqS4Shg36m8/exec?";
                 url += $"subjectonly={Uri.EscapeDataString(subject)}&messageonly={Uri.EscapeDataString(message)}";
 
@@ -267,7 +261,7 @@ namespace MountainProjectDBBuilder
             }
             catch (Exception ex)
             {
-                Log("[SendReport] Could not send email: " + ex.Message);
+                Console.WriteLine("[SendReport] Could not send email: " + ex.Message);
             }
         }
     }
