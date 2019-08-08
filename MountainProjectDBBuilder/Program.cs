@@ -22,7 +22,6 @@ namespace MountainProjectDBBuilder
     {
         static string serializationPath;
         static string logPath;
-        static string logString = "";
         static OutputCapture outputCapture = new OutputCapture();
         static Stopwatch totalTimer = new Stopwatch();
         static Mode programMode = Mode.None;
@@ -206,12 +205,13 @@ namespace MountainProjectDBBuilder
                 totalTimer.Stop();
                 Console.WriteLine(outputCapture.Captured.ToString());
                 Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
+                Console.WriteLine();
+                Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
                 SerializeResults(destAreas);
-                SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed}", "");
+                SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
             }
             catch (Exception ex)
             {
-                Console.WriteLine(outputCapture.Captured.ToString());
                 Console.WriteLine(Environment.NewLine + Environment.NewLine);
                 Console.WriteLine("!!!-------------EXCEPTION ENCOUNTERED-------------!!!");
                 Console.WriteLine($"EXCEPTION MESSAGE: {ex?.Message}\n");
@@ -222,7 +222,7 @@ namespace MountainProjectDBBuilder
             }
             finally
             {
-                SaveLogToFile();
+                File.AppendAllText(logPath, outputCapture.Captured.ToString());
                 outputCapture.Dispose();
             }
         }
@@ -234,11 +234,6 @@ namespace MountainProjectDBBuilder
             XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<Area>));
             xmlSerializer.Serialize(writer, inputAreas);
             writer.Close();
-        }
-
-        public static void SaveLogToFile()
-        {
-            File.AppendAllText(logPath, logString);
         }
 
         private static void SendReport(string subject, string message)

@@ -13,6 +13,9 @@ namespace MountainProjectAPI
 {
     public static class Parsers
     {
+        public static int TotalAreas = 0;
+        public static int TotalRoutes = 0;
+
         public static List<Area> GetDestAreas()
         {
             List<Area> destAreas = new List<Area>();
@@ -40,6 +43,7 @@ namespace MountainProjectAPI
                 };
 
                 destAreas.Add(destArea);
+                TotalAreas++;
             }
 
             doc.Dispose();
@@ -81,6 +85,8 @@ namespace MountainProjectAPI
             {
                 Route route = new Route(routeElement.TextContent, routeElement.Attributes["href"].Value);
                 inputArea.Routes.Add(route);
+                TotalRoutes++;
+
                 await ParseRouteAsync(route); //Parse route
             }
 
@@ -89,6 +95,7 @@ namespace MountainProjectAPI
             {
                 Area subArea = new Area() { Name = areaElement.TextContent, URL = areaElement.Attributes["href"].Value };
                 inputArea.SubAreas.Add(subArea);
+                TotalAreas++;
 
                 if (recursive)
                     await ParseAreaAsync(subArea); //Parse sub area
