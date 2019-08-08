@@ -12,6 +12,7 @@ namespace MountainProjectAPI
     {
         public static List<Area> DestAreas = new List<Area>();
 
+        #region Public Methods
         public static void InitMountainProjectData(string xmlPath)
         {
             Console.WriteLine("Deserializing info from MountainProject");
@@ -63,7 +64,7 @@ namespace MountainProjectAPI
             }
 
             if (possibleResults.Count > 0)
-                searchResult = possibleResults.OrderByDescending(p => p.FilteredResult.Popularity).First();
+                searchResult = FilterByPopularity(possibleResults);
             else if (searchParameters != null && !string.IsNullOrEmpty(searchParameters.SpecificLocation))
             {
                 //If we used searchParameters to find a specific location, but couldn't find a match at that location,
@@ -123,19 +124,63 @@ namespace MountainProjectAPI
             return result;
         }
 
-        private static Dictionary<MPObject, Area> GetMatchingResultLocationPairs(List<MPObject> listToFilter, string location)
+        public static MPObject GetItemWithMatchingUrl(string url)
         {
-            Dictionary<MPObject, Area> results = new Dictionary<MPObject, Area>();
-            foreach (MPObject result in listToFilter)
-            {
-                Area matchingParent = result.Parents.FirstOrDefault(p => StringMatch(location, p.NameForMatch)) as Area;
-                if (matchingParent != null)
-                    results.Add(result, matchingParent);
-            }
-
-            return results;
+            return GetItemWithMatchingUrl(url, DestAreas);
         }
 
+        public static MPObject GetItemWithMatchingUrl(string url, List<Area> listToSearch)
+        {
+            return GetItemWithMatchingUrl(url, listToSearch.Cast<MPObject>().ToList());
+        }
+
+        public static MPObject GetItemWithMatchingUrl(string url, List<MPObject> listToSearch)
+        {
+            foreach (MPObject item in listToSearch)
+            {
+                if (item.URL == url)
+                    return item;
+                else
+                {
+                    if (item is Area)
+                    {
+                        MPObject matchingRoute = (item as Area).Routes.Find(p => p.URL == url);
+                        if (matchingRoute != null)
+                            return matchingRoute;
+                        else
+                        {
+                            MPObject matchingSubArea = GetItemWithMatchingUrl(url, (item as Area).SubAreas);
+                            if (matchingSubArea != null)
+                                return matchingSubArea;
+                        }
+                    }
+                }
+            }
+
+            return null;
+        }
+
+        /// <summary>
+        /// Gets the parent for the child (ie Area that contains the object)
+        /// </summary>
+        /// <param name="child">The object of which to get the parent</param>
+        /// <param name="parentLevel">The parent level. "0" is the highest parent, "1" is the next parent down, etc. "-1" will return the immediate parent</param>
+        /// <returns>The parent object to the child. Will return null if the child has no parents or if the parentLevel is invalid</returns>
+        public static MPObject GetParent(MPObject child, int parentLevel)
+        {
+            string url;
+            if (parentLevel < 0 && Math.Abs(parentLevel) <= child.ParentUrls.Count) //"Negative indicies"
+                url = child.ParentUrls[child.ParentUrls.Count + parentLevel];
+            else if (parentLevel <= child.ParentUrls.Count - 1) //Positive indicies (check for "within range")
+                url = child.ParentUrls[parentLevel];
+            else //Out of range
+                return null;
+
+            return GetItemWithMatchingUrl(url);
+        }
+        #endregion Public Methods
+
+        #region Filter Methods
         private static List<MPObject> FilterBySearchParameters(List<MPObject> listToFilter, SearchParameters searchParameters)
         {
             List<MPObject> result = listToFilter.ToList();
@@ -149,7 +194,7 @@ namespace MountainProjectAPI
             if (searchParameters.OnlyAreas)
                 result.RemoveAll(p => !(p is Area));
 
-            //Note: searchParameters.SpecificLocation is handled by the Search function
+            //Note: searchParameters.SpecificLocation is handled by the GetPossibleQueryAndLocationGroups function
 
             return result;
         }
@@ -173,6 +218,29 @@ namespace MountainProjectAPI
             else
                 return null;
         }
+
+        private static SearchResult FilterByPopularity(List<SearchResult> listToFilter)
+        {
+            if (listToFilter.Count == 1)
+                return listToFilter.First();
+            if (listToFilter.Count >= 2)
+            {
+                List<SearchResult> resultsByPopularity = listToFilter.OrderByDescending(p => p.FilteredResult.Popularity).ToList();
+
+                int pop1 = resultsByPopularity[0].FilteredResult.Popularity;
+                int pop2 = resultsByPopularity[1].FilteredResult.Popularity;
+                double popularityPercentDiff = Math.Round((double)(pop1 - pop2) / pop2 * 100, 2);
+
+                Console.WriteLine($"    Filtering based on popularity (result has popularity {popularityPercentDiff}% higher than next closest)");
+
+                return resultsByPopularity.First(); //Return the most popular matched object (this may prioritize areas over routes. May want to check that later)
+            }
+            else
+                return new SearchResult(); //Return empty SearchResult as default
+        }
+        #endregion Filter Methods
+
+        #region Private Search (Recursive)
 
         private static List<MPObject> DeepSearch(string input, List<Area> destAreas, bool allowDestAreaMatch = false)
         {
@@ -232,6 +300,21 @@ namespace MountainProjectAPI
 
             return matchedObjects;
         }
+        #endregion Private Search (Recursive)
+
+        #region Helper Methods
+        private static Dictionary<MPObject, Area> GetMatchingResultLocationPairs(List<MPObject> listToFilter, string location)
+        {
+            Dictionary<MPObject, Area> results = new Dictionary<MPObject, Area>();
+            foreach (MPObject result in listToFilter)
+            {
+                Area matchingParent = result.Parents.FirstOrDefault(p => StringMatch(location, p.NameForMatch)) as Area;
+                if (matchingParent != null)
+                    results.Add(result, matchingParent);
+            }
+
+            return results;
+        }
 
         private static bool StringMatch(string inputString, string targetString, bool caseInsensitive = true)
         {
@@ -246,50 +329,6 @@ namespace MountainProjectAPI
 
             return target.Contains(input);
         }
-
-        public static MPObject GetItemWithMatchingUrl(string url, List<MPObject> listToSearch)
-        {
-            foreach (MPObject item in listToSearch)
-            {
-                if (item.URL == url)
-                    return item;
-                else
-                {
-                    if (item is Area)
-                    {
-                        MPObject matchingRoute = (item as Area).Routes.Find(p => p.URL == url);
-                        if (matchingRoute != null)
-                            return matchingRoute;
-                        else
-                        {
-                            MPObject matchingSubArea = GetItemWithMatchingUrl(url, (item as Area).SubAreas.Cast<MPObject>().ToList());
-                            if (matchingSubArea != null)
-                                return matchingSubArea;
-                        }
-                    }
-                }
-            }
-
-            return null;
-        }
-
-        /// <summary>
-        /// Gets the parent for the child (ie Area that contains the object)
-        /// </summary>
-        /// <param name="child">The object of which to get the parent</param>
-        /// <param name="parentLevel">The parent level. "0" is the highest parent, "1" is the next parent down, etc. "-1" will return the immediate parent</param>
-        /// <returns>The parent object to the child. Will return null if the child has no parents or if the parentLevel is invalid</returns>
-        public static MPObject GetParent(MPObject child, int parentLevel)
-        {
-            string url;
-            if (parentLevel < 0 && Math.Abs(parentLevel) <= child.ParentUrls.Count) //"Negative indicies"
-                url = child.ParentUrls[child.ParentUrls.Count + parentLevel];
-            else if (parentLevel <= child.ParentUrls.Count - 1) //Positive indicies (check for "within range")
-                url = child.ParentUrls[parentLevel];
-            else //Out of range
-                return null;
-
-            return GetItemWithMatchingUrl(url, DestAreas.Cast<MPObject>().ToList());
-        }
+        #endregion Helper Methods
     }
 }

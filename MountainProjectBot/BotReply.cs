@@ -40,7 +40,7 @@ namespace MountainProjectBot
             List<MPObject> foundMPObjects = new List<MPObject>();
             foreach (string url in ExtractMPLinks(comment.Body))
             {
-                MPObject mpObjectWithUrl = MountainProjectDataSearch.GetItemWithMatchingUrl(url, MountainProjectDataSearch.DestAreas.Cast<MPObject>().ToList());
+                MPObject mpObjectWithUrl = MountainProjectDataSearch.GetItemWithMatchingUrl(url);
                 if (mpObjectWithUrl != null)
                     foundMPObjects.Add(mpObjectWithUrl);
             }
