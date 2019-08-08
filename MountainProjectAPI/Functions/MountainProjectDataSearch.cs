@@ -36,7 +36,7 @@ namespace MountainProjectAPI
         {
             Console.WriteLine($"    Getting info from MountainProject for \"{queryText}\"");
             Stopwatch searchStopwatch = Stopwatch.StartNew();
-            SearchResult searchResult = new SearchResult();
+            SearchResult searchResult;
 
             List<Tuple<string, string>> possibleQueryAndLocationGroups = GetPossibleQueryAndLocationGroups(queryText, searchParameters);
             List<SearchResult> possibleResults = new List<SearchResult>();
