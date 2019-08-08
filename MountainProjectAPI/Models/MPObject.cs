@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Net;
 using System.Text.RegularExpressions;
+using System.Xml.Serialization;
 
 namespace MountainProjectAPI
 {
@@ -11,11 +12,13 @@ namespace MountainProjectAPI
             this.Name = WebUtility.HtmlDecode(name);
             this.URL = url;
             this.ParentUrls = new List<string>();
+            this.Parents = new List<MPObject>();
         }
 
         public MPObject()
         {
             this.ParentUrls = new List<string>();
+            this.Parents = new List<MPObject>();
         }
 
         private string name { get; set; }
@@ -46,7 +49,9 @@ namespace MountainProjectAPI
 
         public string URL { get; set; }
         public int Popularity { get; set; }
-        public List<string> ParentUrls = new List<string>();
+        public List<string> ParentUrls { get; set; }
+        [XmlIgnore]
+        public List<MPObject> Parents { get; set; }
 
         public override string ToString()
         {

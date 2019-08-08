@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 
 namespace MountainProjectAPI
 {
@@ -12,6 +13,7 @@ namespace MountainProjectAPI
         public MPObject FilteredResult { get; set; }
         public List<MPObject> AllResults { get; set; }
         public Area RelatedLocation { get; set; }
+        public TimeSpan TimeTaken { get; set; }
 
         public bool IsEmpty()
         {
