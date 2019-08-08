@@ -100,7 +100,7 @@ namespace MountainProjectBot
 
         public static string GetFormattedString(MPObject finalResult, ResultParameters parameters = null, bool includeUrl = true)
         {
-            return GetFormattedString(new SearchResult() { FilteredResult = finalResult }, parameters, includeUrl);
+            return GetFormattedString(new SearchResult(finalResult), parameters, includeUrl);
         }
 
         public static string GetFormattedString(SearchResult searchResult, ResultParameters parameters = null, bool includeUrl = true)
