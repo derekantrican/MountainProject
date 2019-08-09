@@ -176,7 +176,10 @@ namespace MountainProjectAPI
             else //Out of range
                 return null;
 
-            return GetItemWithMatchingUrl(url);
+            if (child.Parents.Count == 0)
+                return GetItemWithMatchingUrl(url);
+            else
+                return child.Parents.Find(p => p.URL == url);
         }
         #endregion Public Methods
 

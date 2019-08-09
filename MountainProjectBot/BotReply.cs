@@ -173,7 +173,14 @@ namespace MountainProjectBot
             }
 
             if (referenceLocation != null) //Override the "innerParent" in situations where we want the location string to include the "insisted" location
-                innerParent = referenceLocation;
+            {
+                //Only override if the location is not already present
+                if (innerParent.URL != referenceLocation.URL &&
+                    outerParent.URL != referenceLocation.URL)
+                {
+                    innerParent = referenceLocation;
+                }
+            }
 
             string locationString = $"Located in {Markdown.Link(innerParent.Name, innerParent.URL)}";
             if (outerParent != null && outerParent.URL != innerParent.URL)
