@@ -54,7 +54,7 @@ namespace MountainProjectAPI
 
                 SearchResult possibleResult = new SearchResult()
                 {
-                    AllResults = possibleMatches,
+                    AllResults = resultsWithLocations.Keys.ToList(),
                     FilteredResult = filteredResult,
                     RelatedLocation = resultsWithLocations[filteredResult]
                 };
