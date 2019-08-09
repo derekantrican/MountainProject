@@ -198,9 +198,7 @@ namespace MountainProjectBot
                         else  //If the parent comment is no longer a request or contains a MP url, delete the bot's response
                         {
                             await redditHelper.DeleteComment(monitor.BotResponseComment);
-
-                            //We'll still monitor the comment (since it *used* to require a bot response) and it's possible that the user just misspelled
-                            //"!MountainProject" during their edit (or something like that)
+                            monitoredComments.Remove(monitor);
                         }
                     }
                 }
