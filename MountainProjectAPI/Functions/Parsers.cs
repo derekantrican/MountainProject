@@ -171,7 +171,9 @@ namespace MountainProjectAPI
             inputRoute.Popularity = ParsePopularity(doc);
             inputRoute.Rating = ParseRouteRating(doc);
             inputRoute.Grades = ParseRouteGrades(doc);
-            inputRoute.AdditionalInfo = ParseAdditionalRouteInfo(doc);
+            string additionalInfo = ParseAdditionalRouteInfo(doc);
+            inputRoute.Height = ParseRouteHeight(ref additionalInfo);
+            inputRoute.AdditionalInfo = additionalInfo;
             inputRoute.ParentUrls = GetParentUrls(doc);
 
             doc.Dispose();
@@ -314,15 +316,26 @@ namespace MountainProjectAPI
             typeString = Regex.Replace(typeString, "TRAD|TR|SPORT|BOULDER|MIXED|ICE|ALPINE|AID|SNOW", "", RegexOptions.IgnoreCase);
             if (!string.IsNullOrEmpty(Regex.Replace(typeString, "[^a-zA-Z0-9]", "")))
             {
-                typeString = Regex.Replace(typeString, @"\s+", " "); //Replace multiple spaces (more than one in a row) with a single space
-                typeString = Regex.Replace(typeString, @"\s+,", ","); //Remove any spaces before commas
-                typeString = Regex.Replace(typeString, "^,+|,+$|,{2,}", ""); //Remove any commas at the beginning/end of string (or multiple commas in a row)
-                typeString = typeString.Trim(); //Trim any extra whitespace from the beginning/end of string
+                typeString = Regex.Replace(typeString, @"(, *){2,}|^, *", "").Trim(); //Clean string
 
                 return typeString;
             }
 
             return "";
+        }
+
+        public static Dimension ParseRouteHeight(ref string additionalInfo)
+        {
+            string regexMatch = Regex.Match(additionalInfo, @"\d+\s?ft", RegexOptions.IgnoreCase).Value;
+            if (!string.IsNullOrEmpty(regexMatch))
+            {
+                additionalInfo = additionalInfo.Replace(regexMatch, "").Trim();
+                additionalInfo = Regex.Replace(additionalInfo, @"(, *){2,}|^, *", "").Trim(); //Clean string
+
+                return new Dimension(Convert.ToDouble(Regex.Match(regexMatch, @"\d*").Value), Dimension.Units.Feet);
+            }
+            else
+                return null;
         }
         #endregion Parse Route
 

@@ -1,5 +1,6 @@
 ﻿using MountainProjectAPI;
 using RedditSharp.Things;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -122,14 +123,16 @@ namespace MountainProjectBot
             else if (searchResult.FilteredResult is Route)
             {
                 Route inputRoute = searchResult.FilteredResult as Route;
-                result += $"{Markdown.Bold(inputRoute.Name)}";
-                if (!string.IsNullOrEmpty(inputRoute.AdditionalInfo))
-                    result += $" [{inputRoute.AdditionalInfo}]";
+                result += $"{Markdown.Bold(inputRoute.Name)} {GetRouteAdditionalInfo(inputRoute, parameters, showGrade: false, showHeight: false)}";
 
                 result += Markdown.NewLine;
 
                 result += $"Type: {string.Join(", ", inputRoute.Types)}" + Markdown.NewLine;
                 result += $"Grade: {inputRoute.GetRouteGrade(parameters)}" + Markdown.NewLine;
+
+                if (inputRoute.Height.Value != 0)
+                    result += $"Height: {Math.Round(inputRoute.Height.GetValue(Dimension.Units.Feet), 1)} ft/{Math.Round(inputRoute.Height.GetValue(Dimension.Units.Meters), 1)} m";
+
                 result += $"Rating: {inputRoute.Rating}/4" + Markdown.NewLine;
                 result += GetLocationString(inputRoute, searchResult.RelatedLocation);
 
@@ -208,20 +211,30 @@ namespace MountainProjectBot
             }
 
             foreach (Route popularRoute in popularRoutes)
-            {
-                result += $"\n- {Markdown.Link(popularRoute.Name, popularRoute.URL)} [{popularRoute.GetRouteGrade(parameters)}";
-                if (!string.IsNullOrEmpty(popularRoute.AdditionalInfo))
-                    result += $", {popularRoute.AdditionalInfo}";
-
-                result += "]";
-            }
+                result += $"\n- {Markdown.Link(popularRoute.Name, popularRoute.URL)} {GetRouteAdditionalInfo(popularRoute, parameters)}";
 
             result += Markdown.NewLine;
 
             return result;
         }
 
-        public static string GetBotLinks(Comment relatedComment = null)
+        private static string GetRouteAdditionalInfo(Route route, ResultParameters parameters, bool showGrade = true, bool showHeight = true)
+        {
+            List<string> parts = new List<string>();
+
+            if (showGrade)
+                parts.Add(route.GetRouteGrade(parameters));
+
+            if (showHeight && route.Height.Value != 0)
+                parts.Add($"{Math.Round(route.Height.GetValue(Dimension.Units.Feet), 1)} ft/{Math.Round(route.Height.GetValue(Dimension.Units.Meters), 1)} m");
+
+            if (!string.IsNullOrEmpty(route.AdditionalInfo))
+                parts.Add(route.AdditionalInfo);
+
+            return $"[{string.Join(", ", parts)}]";
+        }
+
+        private static string GetBotLinks(Comment relatedComment = null)
         {
             List<string> botLinks = new List<string>();
 

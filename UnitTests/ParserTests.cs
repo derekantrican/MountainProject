@@ -141,16 +141,16 @@ namespace UnitTests
         }
 
         [DataTestMethod]
-        [DataRow("/route/111859673/side-dish", new[] { Route.RouteType.Sport })]
-        [DataRow("/route/109063052/geflugelfrikadelle", new[] { Route.RouteType.Trad, Route.RouteType.Aid })]
-        [DataRow("/route/116181996/13-above-the-night", new[] { Route.RouteType.Trad, Route.RouteType.Mixed, Route.RouteType.Ice, Route.RouteType.Alpine })] //Many Types
-        [DataRow("/route/110425910/birds-of-a-feather", new[] { Route.RouteType.Sport, Route.RouteType.TopRope })] //Top Rope
-        public void TestRouteTypeParse(string url, Route.RouteType[] expectedTypes)
+        [DataRow("/route/111859673/side-dish", new[] { RouteType.Sport })]
+        [DataRow("/route/109063052/geflugelfrikadelle", new[] { RouteType.Trad, RouteType.Aid })]
+        [DataRow("/route/116181996/13-above-the-night", new[] { RouteType.Trad, RouteType.Mixed, RouteType.Ice, RouteType.Alpine })] //Many Types
+        [DataRow("/route/110425910/birds-of-a-feather", new[] { RouteType.Sport, RouteType.TopRope })] //Top Rope
+        public void TestRouteTypeParse(string url, RouteType[] expectedTypes)
         {
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            List<Route.RouteType> routeTypes = Parsers.ParseRouteTypes(Utilities.GetHtmlDoc(url));
+            List<RouteType> routeTypes = Parsers.ParseRouteTypes(Utilities.GetHtmlDoc(url));
 
             CollectionAssert.AreEquivalent(expectedTypes, routeTypes); //Compare collections WITHOUT order
         }
@@ -183,17 +183,24 @@ namespace UnitTests
         }
 
         [DataTestMethod]
-        [DataRow("/route/109063052/geflugelfrikadelle", "40 ft")]
-        [DataRow("/route/116181996/13-above-the-night", "1000 ft, 5 pitches, Grade IV")] //Lots of additional info
-        [DataRow("/route/110425910/birds-of-a-feather", "50 ft")] //Had a weird (multiple comma) parsing issue before
-        public void TestRouteAdditionalInfoParse(string url, string expectedAdditionalInfo)
+        [DataRow("/route/109063052/geflugelfrikadelle", "", 40)]
+        [DataRow("/route/116181996/13-above-the-night", "5 pitches, Grade IV", 1000)] //Lots of additional info
+        [DataRow("/route/110425910/birds-of-a-feather", "", 50)] //Had a weird (multiple comma) parsing issue before
+        [DataRow("/route/107530893/a-new-beginning", "", null)] //No additional info
+        public void TestRouteAdditionalInfoParse(string url, string expectedAdditionalInfo, double? expectedHeightInFeet)
         {
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
             string additionalInfo = Parsers.ParseAdditionalRouteInfo(Utilities.GetHtmlDoc(url));
+            Dimension height = Parsers.ParseRouteHeight(ref additionalInfo);
 
             Assert.AreEqual(expectedAdditionalInfo, additionalInfo);
+
+            if (!expectedHeightInFeet.HasValue)
+                Assert.IsNull(height);
+            else
+                Assert.AreEqual(expectedHeightInFeet.Value, height.GetValue(Dimension.Units.Feet));
         }
 
         [DataTestMethod] //https://stackoverflow.com/a/54296734/2246411

@@ -47,6 +47,7 @@ namespace MountainProjectAPI
         public List<RouteType> Types { get; set; }
         public string TypeString { get { return string.Join(", ", Types); } }
         public string AdditionalInfo { get; set; }
+        public Dimension Height { get; set; }
 
         public string GetRouteGrade(ResultParameters parameters)
         {
