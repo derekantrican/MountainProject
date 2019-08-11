@@ -82,9 +82,10 @@ namespace UnitTests
 
         string[,] testCriteria_keyword = new string[,]
         {
-            { "!MountainProject deception crags", "/area/105791955/exit-38-deception-crags" },
-            { "!MountainProject derekantrican", "I could not find anything" }, //No results
-            { "This is a test !MountainProject red river gorge", "/area/105841134/red-river-gorge" }, //Keyword not at beginning
+            //{ "!MountainProject deception crags", "/area/105791955/exit-38-deception-crags" },
+            //{ "!MountainProject derekantrican", "I could not find anything" }, //No results
+            //{ "This is a test !MountainProject red river gorge", "/area/105841134/red-river-gorge" }, //Keyword not at beginning
+            { "!MountainProject Earth Wind & Fire", "/route/106293533/earth-wind-fire" } //Ampersand
         };
 
         [TestMethod]
