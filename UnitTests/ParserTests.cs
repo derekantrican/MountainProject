@@ -183,9 +183,9 @@ namespace UnitTests
         }
 
         [DataTestMethod]
-        [DataRow("/route/109063052/geflugelfrikadelle", "", 40)]
-        [DataRow("/route/116181996/13-above-the-night", "5 pitches, Grade IV", 1000)] //Lots of additional info
-        [DataRow("/route/110425910/birds-of-a-feather", "", 50)] //Had a weird (multiple comma) parsing issue before
+        [DataRow("/route/109063052/geflugelfrikadelle", "", 40.0)]
+        [DataRow("/route/116181996/13-above-the-night", "5 pitches, Grade IV", 1000.0)] //Lots of additional info
+        [DataRow("/route/110425910/birds-of-a-feather", "", 50.0)] //Had a weird (multiple comma) parsing issue before
         [DataRow("/route/107530893/a-new-beginning", "", null)] //No additional info
         public void TestRouteAdditionalInfoParse(string url, string expectedAdditionalInfo, double? expectedHeightInFeet)
         {

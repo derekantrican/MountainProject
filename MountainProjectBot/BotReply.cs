@@ -130,7 +130,7 @@ namespace MountainProjectBot
                 result += $"Type: {string.Join(", ", inputRoute.Types)}" + Markdown.NewLine;
                 result += $"Grade: {inputRoute.GetRouteGrade(parameters)}" + Markdown.NewLine;
 
-                if (inputRoute.Height.Value != 0)
+                if (inputRoute.Height != null && inputRoute.Height.Value != 0)
                     result += $"Height: {Math.Round(inputRoute.Height.GetValue(Dimension.Units.Feet), 1)} ft/{Math.Round(inputRoute.Height.GetValue(Dimension.Units.Meters), 1)} m";
 
                 result += $"Rating: {inputRoute.Rating}/4" + Markdown.NewLine;
@@ -225,7 +225,7 @@ namespace MountainProjectBot
             if (showGrade)
                 parts.Add(route.GetRouteGrade(parameters));
 
-            if (showHeight && route.Height.Value != 0)
+            if (showHeight && route.Height != null && route.Height.Value != 0)
                 parts.Add($"{Math.Round(route.Height.GetValue(Dimension.Units.Feet), 1)} ft/{Math.Round(route.Height.GetValue(Dimension.Units.Meters), 1)} m");
 
             if (!string.IsNullOrEmpty(route.AdditionalInfo))
