@@ -38,8 +38,8 @@ namespace MountainProjectAPI
             Stopwatch searchStopwatch = Stopwatch.StartNew();
             SearchResult searchResult;
 
-            List<Tuple<string, string>> possibleQueryAndLocationGroups = GetPossibleQueryAndLocationGroups(queryText, searchParameters);
             List<SearchResult> possibleResults = new List<SearchResult>();
+            List<Tuple<string, string>> possibleQueryAndLocationGroups = GetPossibleQueryAndLocationGroups(queryText, searchParameters);
             foreach (Tuple<string, string> group in possibleQueryAndLocationGroups)
             {
                 string query = Utilities.FilterStringForMatch(group.Item1);
@@ -100,6 +100,8 @@ namespace MountainProjectAPI
             }
             else
             {
+                result.Add(new Tuple<string, string>(queryText, "")); //Add the full query as a possible match
+
                 Regex locationWordsRegex = new Regex(@"(\s+of\s+)|(\s+on\s+)|(\s+at\s+)|(\s+in\s+)");
                 string possibleSearchText, possibleLocation;
 

@@ -19,6 +19,7 @@ namespace UnitTests
             { "Moonstone, Arizona -route", "/route/105960200/moonstone" }, //Location parse (via comma) - TODO: take out "-route" when we start prioritizing levenshtein distance
             { "West Ridge of Prusik Peak", "/route/105808527/west-ridge" }, //Location parse (via word)
             { "Send me on my Way at Red River Gorge", "/route/106085043/send-me-on-my-way" }, //Location parse (via word WITH multiple location words: on, at)
+            { "Edge of Time", "/route/105756826/edge-of-time" }, //Location parse possibly matches "Edge of Space" in a place that contains "CochiTI MEsa" (TIME)
             { "Send me on my Way -location:Exit 38", null }, //Wrong location
             { "Send me on my Way at derekantrican", null }, //Non-existent location
             { "Lifeline, Portland", "/route/113696621/lifeline" } //Location that will likely match something else first ("Portland" should be UK but more likely matches Oregon)
