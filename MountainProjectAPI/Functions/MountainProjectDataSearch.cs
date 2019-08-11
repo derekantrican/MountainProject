@@ -48,7 +48,7 @@ namespace MountainProjectAPI
                 List<MPObject> possibleMatches = DeepSearch(query, DestAreas);
                 possibleMatches = FilterBySearchParameters(possibleMatches, searchParameters);
                 Dictionary<MPObject, Area> resultsWithLocations = GetMatchingResultLocationPairs(possibleMatches, location);
-                MPObject filteredResult = FilterByPopularity(resultsWithLocations.Keys.ToList());
+                MPObject filteredResult = DetermineBestMatch(resultsWithLocations.Keys.ToList(), queryText, searchParameters);
                 if (filteredResult == null)
                     continue;
 
@@ -64,7 +64,7 @@ namespace MountainProjectAPI
             }
 
             if (possibleResults.Count > 0)
-                searchResult = FilterByPopularity(possibleResults);
+                searchResult = DetermineBestMatch(possibleResults, queryText, searchParameters);
             else if (searchParameters != null && !string.IsNullOrEmpty(searchParameters.SpecificLocation))
             {
                 //If we used searchParameters to find a specific location, but couldn't find a match at that location,
@@ -73,9 +73,9 @@ namespace MountainProjectAPI
             }
             else
             {
-                queryText = Utilities.FilterStringForMatch(queryText);
-                List<MPObject> results = FilterBySearchParameters(DeepSearch(queryText, DestAreas), searchParameters);
-                MPObject filteredResult = FilterByPopularity(results);
+                string filteredQuery = Utilities.FilterStringForMatch(queryText);
+                List<MPObject> results = FilterBySearchParameters(DeepSearch(filteredQuery, DestAreas), searchParameters);
+                MPObject filteredResult = DetermineBestMatch(results, queryText, searchParameters);
                 searchResult = new SearchResult()
                 {
                     AllResults = results,
@@ -186,6 +186,42 @@ namespace MountainProjectAPI
         #endregion Public Methods
 
         #region Filter Methods
+        private static SearchResult DetermineBestMatch(List<SearchResult> searchResults, string searchQuery, SearchParameters searchParameters = null)
+        {
+            MPObject bestMatch = DetermineBestMatch(searchResults.Select(p => p.FilteredResult).ToList(), searchQuery, searchParameters);
+            return searchResults.Find(p => p.FilteredResult == bestMatch);
+        }
+
+        private static MPObject DetermineBestMatch(List<MPObject> allMatches, string searchQuery, SearchParameters searchParameters = null)
+        {
+            allMatches = FilterBySearchParameters(allMatches, searchParameters);
+
+            //First priority: items where the name matches the search query exactly (but still case-insensitive)
+            List<MPObject> matchingItems = allMatches.Where(p => p.Name.ToLower() == searchQuery.ToLower()).ToList();
+            if (matchingItems.Count > 0)
+                return FilterByPopularity(matchingItems);
+
+            //Second priority: items where the name matches the FILTERED (no symbols or spaces, case insensitive) search query exactly
+            matchingItems = allMatches.Where(p => p.NameForMatch == Utilities.FilterStringForMatch(searchQuery)).ToList();
+            if (matchingItems.Count > 0)
+                return FilterByPopularity(matchingItems);
+
+            //[IN THE FUTURE]Third priority: items with a levenshtein distance less than 3
+
+            //Fourth priority: items where the name contains the search query (still case-insensitive)
+            matchingItems = allMatches.Where(p => p.Name.ToLower().Contains(searchQuery.ToLower())).ToList();
+            if (matchingItems.Count > 0)
+                return FilterByPopularity(matchingItems);
+
+            //Fifth priority: items where the name contains the FITLERED search query (still case-insensitive)
+            matchingItems = allMatches.Where(p => p.NameForMatch.Contains(Utilities.FilterStringForMatch(searchQuery))).ToList();
+            if (matchingItems.Count > 0)
+                return FilterByPopularity(matchingItems);
+
+            //Finally, if we haven't matched anything above, just filter by priority
+            return FilterByPopularity(allMatches);
+        }
+
         private static List<MPObject> FilterBySearchParameters(List<MPObject> listToFilter, SearchParameters searchParameters)
         {
             List<MPObject> result = listToFilter.ToList();

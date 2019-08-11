@@ -22,7 +22,8 @@ namespace UnitTests
             { "Edge of Time", "/route/105756826/edge-of-time" }, //Location parse possibly matches "Edge of Space" in a place that contains "CochiTI MEsa" (TIME)
             { "Send me on my Way -location:Exit 38", null }, //Wrong location
             { "Send me on my Way at derekantrican", null }, //Non-existent location
-            { "Lifeline, Portland", "/route/113696621/lifeline" } //Location that will likely match something else first ("Portland" should be UK but more likely matches Oregon)
+            { "Lifeline, Portland", "/route/113696621/lifeline" }, //Location that will likely match something else first ("Portland" should be UK but more likely matches Oregon)
+            { "Sin Gaz", "/route/108244424/sin-gaz" } //The text "singaz" is contained by a higher popularity route. This is more a test for "DetermineBestMatch"
         };
 
         [TestMethod]
