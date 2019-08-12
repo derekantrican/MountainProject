@@ -7,8 +7,8 @@
     <ProjectGuid>{BA6405D4-00B4-4945-BC5D-5FBC214B91E1}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>MountainProjectModels</RootNamespace>
-    <AssemblyName>MountainProjectModels</AssemblyName>
+    <RootNamespace>MountainProjectAPI</RootNamespace>
+    <AssemblyName>MountainProjectAPI</AssemblyName>
     <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
