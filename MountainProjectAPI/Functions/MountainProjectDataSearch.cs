@@ -47,17 +47,37 @@ namespace MountainProjectAPI
 
                 List<MPObject> possibleMatches = DeepSearch(query, DestAreas);
                 possibleMatches = FilterBySearchParameters(possibleMatches, searchParameters);
-                Dictionary<MPObject, Area> resultsWithLocations = GetMatchingResultLocationPairs(possibleMatches, location);
-                MPObject filteredResult = DetermineBestMatch(resultsWithLocations.Keys.ToList(), group.Item1, searchParameters);
-                if (filteredResult == null)
-                    continue;
 
-                SearchResult possibleResult = new SearchResult()
+                MPObject filteredResult = null;
+                SearchResult possibleResult = new SearchResult();
+                if (!string.IsNullOrEmpty(location))
                 {
-                    AllResults = resultsWithLocations.Keys.ToList(),
-                    FilteredResult = filteredResult,
-                    RelatedLocation = resultsWithLocations[filteredResult]
-                };
+                    Dictionary<MPObject, Area> resultsWithLocations = GetMatchingResultLocationPairs(possibleMatches, location);
+                    filteredResult = DetermineBestMatch(resultsWithLocations.Keys.ToList(), group.Item1, searchParameters);
+
+                    if (filteredResult == null)
+                        continue;
+
+                    possibleResult = new SearchResult()
+                    {
+                        AllResults = resultsWithLocations.Keys.ToList(),
+                        FilteredResult = filteredResult,
+                        RelatedLocation = resultsWithLocations[filteredResult]
+                    };
+                }
+                else
+                {
+                    filteredResult = DetermineBestMatch(possibleMatches, group.Item1, searchParameters);
+
+                    if (filteredResult == null)
+                        continue;
+
+                    possibleResult = new SearchResult()
+                    {
+                        AllResults = possibleMatches,
+                        FilteredResult = filteredResult
+                    };
+                }
 
                 if (!possibleResult.IsEmpty())
                     possibleResults.Add(possibleResult);

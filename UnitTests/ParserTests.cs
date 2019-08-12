@@ -130,7 +130,8 @@ namespace UnitTests
         [DataRow("/route/111859673/side-dish", "Side Dish")]
         [DataRow("/route/109063052/geflugelfrikadelle", "Geflügelfrikadelle")] //Special characters
         [DataRow("/route/112177605/no-rang-na-rang", "너랑나랑 (no-rang-na-rang)")] //Special characters
-        public void TestRouteNameParse(string url, string expectedName)
+        [DataRow("/area/115968522/huu-lung", "Hữu Lũng Rock Climbing")] //Special characters
+        public void TestNameParse(string url, string expectedName)
         {
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
