@@ -116,6 +116,20 @@ namespace MountainProjectAPI
             return Regex.Replace(input, @"\P{L}", "");
         }
 
+        public static bool StringMatch(string inputString, string targetString, bool caseInsensitive = true)
+        {
+            string input = inputString;
+            string target = targetString;
+
+            if (caseInsensitive)
+            {
+                input = input.ToLower();
+                target = target.ToLower();
+            }
+
+            return target.Contains(input);
+        }
+
         public static string GetRedirectURL(string url)
         {
             try

@@ -289,7 +289,7 @@ namespace MountainProjectAPI
             foreach (Area destArea in destAreas)
             {
                 //Controls whether dest area names should be matched (should the keyword "Alabama" match the state or a route named "Sweet Home Alabama")
-                if (allowDestAreaMatch && StringMatch(input, destArea.NameForMatch))
+                if (allowDestAreaMatch && Utilities.StringMatch(input, destArea.NameForMatch))
                     matchedObjects.Add(destArea);
 
                 List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, destArea.SubAreas);
@@ -306,7 +306,7 @@ namespace MountainProjectAPI
 
             foreach (Area subDestArea in subAreas)
             {
-                if (StringMatch(input, subDestArea.NameForMatch))
+                if (Utilities.StringMatch(input, subDestArea.NameForMatch))
                     matchedObjects.Add(subDestArea);
 
                 if (subDestArea.SubAreas != null &&
@@ -335,7 +335,7 @@ namespace MountainProjectAPI
 
             foreach (Route route in routes)
             {
-                if (StringMatch(input, route.NameForMatch))
+                if (Utilities.StringMatch(input, route.NameForMatch))
                     matchedObjects.Add(route);
             }
 
@@ -349,26 +349,12 @@ namespace MountainProjectAPI
             Dictionary<MPObject, Area> results = new Dictionary<MPObject, Area>();
             foreach (MPObject result in listToFilter)
             {
-                Area matchingParent = result.Parents.FirstOrDefault(p => StringMatch(location, p.NameForMatch)) as Area;
+                Area matchingParent = result.Parents.FirstOrDefault(p => Utilities.StringMatch(location, p.NameForMatch)) as Area;
                 if (matchingParent != null)
                     results.Add(result, matchingParent);
             }
 
             return results;
-        }
-
-        private static bool StringMatch(string inputString, string targetString, bool caseInsensitive = true)
-        {
-            string input = inputString;
-            string target = targetString;
-
-            if (caseInsensitive)
-            {
-                input = input.ToLower();
-                target = target.ToLower();
-            }
-
-            return target.Contains(input);
         }
         #endregion Helper Methods
     }
