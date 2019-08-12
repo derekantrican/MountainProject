@@ -131,7 +131,11 @@ namespace MountainProjectBot
                 result += $"Grade: {inputRoute.GetRouteGrade(parameters)}" + Markdown.NewLine;
 
                 if (inputRoute.Height != null && inputRoute.Height.Value != 0)
-                    result += $"Height: {Math.Round(inputRoute.Height.GetValue(Dimension.Units.Feet), 1)} ft/{Math.Round(inputRoute.Height.GetValue(Dimension.Units.Meters), 1)} m";
+                {
+                    result += $"Height: {Math.Round(inputRoute.Height.GetValue(Dimension.Units.Feet), 1)} ft/" +
+                              $"{Math.Round(inputRoute.Height.GetValue(Dimension.Units.Meters), 1)} m" +
+                              Markdown.NewLine;
+                }
 
                 result += $"Rating: {inputRoute.Rating}/4" + Markdown.NewLine;
                 result += GetLocationString(inputRoute, searchResult.RelatedLocation);
@@ -226,12 +230,18 @@ namespace MountainProjectBot
                 parts.Add(route.GetRouteGrade(parameters));
 
             if (showHeight && route.Height != null && route.Height.Value != 0)
-                parts.Add($"{Math.Round(route.Height.GetValue(Dimension.Units.Feet), 1)} ft/{Math.Round(route.Height.GetValue(Dimension.Units.Meters), 1)} m");
+            {
+                parts.Add($"{Math.Round(route.Height.GetValue(Dimension.Units.Feet), 1)} ft/" +
+                          $"{Math.Round(route.Height.GetValue(Dimension.Units.Meters), 1)} m");
+            }
 
             if (!string.IsNullOrEmpty(route.AdditionalInfo))
                 parts.Add(route.AdditionalInfo);
 
-            return $"[{string.Join(", ", parts)}]";
+            if (parts.Count > 0)
+                return $"[{string.Join(", ", parts)}]";
+            else
+                return "";
         }
 
         private static string GetBotLinks(Comment relatedComment = null)
