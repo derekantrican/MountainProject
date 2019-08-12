@@ -22,12 +22,15 @@ namespace MountainProjectDBBuilder
     {
         static string serializationPath;
         static string logPath;
-        static OutputCapture outputCapture = new OutputCapture();
+        static OutputCapture outputCapture;
         static Stopwatch totalTimer = new Stopwatch();
         static Mode programMode = Mode.None;
 
         static void Main(string[] args)
         {
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+            outputCapture = new OutputCapture();
+
             logPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss") + " Log.txt");
             serializationPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), "MountainProjectAreas.xml");
 

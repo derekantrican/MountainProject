@@ -30,6 +30,8 @@ namespace MountainProjectBot
 
         static void Main(string[] args)
         {
+            Console.OutputEncoding = System.Text.Encoding.UTF8;
+
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
             if (args.FirstOrDefault(p => p.Contains("xmlpath=")) != null)
