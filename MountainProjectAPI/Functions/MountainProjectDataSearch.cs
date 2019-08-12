@@ -48,7 +48,7 @@ namespace MountainProjectAPI
                 List<MPObject> possibleMatches = DeepSearch(query, DestAreas);
                 possibleMatches = FilterBySearchParameters(possibleMatches, searchParameters);
                 Dictionary<MPObject, Area> resultsWithLocations = GetMatchingResultLocationPairs(possibleMatches, location);
-                MPObject filteredResult = DetermineBestMatch(resultsWithLocations.Keys.ToList(), queryText, searchParameters);
+                MPObject filteredResult = DetermineBestMatch(resultsWithLocations.Keys.ToList(), group.Item1, searchParameters);
                 if (filteredResult == null)
                     continue;
 

@@ -16,14 +16,16 @@ namespace UnitTests
             { "Helm's Deep", "/route/106887440/helms-deep" }, //Special character (apostrophe)
             { "Helm’s Deep", "/route/106887440/helms-deep" },  //Special character (single quotation mark)
             { "Royale with Cheese -location:Niagara Glen", "/route/114609759/royale-with-cheese" }, //Location operator
-            { "Moonstone, Arizona -route", "/route/105960200/moonstone" }, //Location parse (via comma) - TODO: take out "-route" when we start prioritizing levenshtein distance
+            { "Moonstone, Arizona", "/route/105960200/moonstone" }, //Location parse (via comma)
             { "West Ridge of Prusik Peak", "/route/105808527/west-ridge" }, //Location parse (via word)
             { "Send me on my Way at Red River Gorge", "/route/106085043/send-me-on-my-way" }, //Location parse (via word WITH multiple location words: on, at)
             { "Edge of Time", "/route/105756826/edge-of-time" }, //Location parse possibly matches "Edge of Space" in a place that contains "CochiTI MEsa" (TIME)
             { "Send me on my Way -location:Exit 38", null }, //Wrong location
             { "Send me on my Way at derekantrican", null }, //Non-existent location
             { "Lifeline, Portland", "/route/113696621/lifeline" }, //Location that will likely match something else first ("Portland" should be UK but more likely matches Oregon)
-            { "Sin Gaz", "/route/108244424/sin-gaz" } //The text "singaz" is contained by a higher popularity route. This is more a test for "DetermineBestMatch"
+            { "Sin Gaz", "/route/108244424/sin-gaz" }, //The text "singaz" is contained by a higher popularity route. This is more a test for "DetermineBestMatch"
+            { "East Ridge", "/route/105848762/east-ridge" }, //"East Ridge" is contained in the text "Northeast Ridges and Valleys"
+            { "East Ridge, Mt Temple", "/route/106997654/east-ridge" } //Todo: in the future support "Mt" vs "Mount"
         };
 
         [TestMethod]
