@@ -222,7 +222,7 @@ namespace MountainProjectAPI
                 return FilterByPopularity(matchingItems);
 
             //Second priority: items where the name matches the FILTERED (no symbols or spaces, case insensitive) search query exactly
-            matchingItems = allMatches.Where(p => p.NameForMatch == Utilities.FilterStringForMatch(searchQuery)).ToList();
+            matchingItems = allMatches.Where(p => p.NameForMatch.ToLower() == Utilities.FilterStringForMatch(searchQuery).ToLower()).ToList();
             if (matchingItems.Count > 0)
                 return FilterByPopularity(matchingItems);
 
@@ -234,7 +234,7 @@ namespace MountainProjectAPI
                 return FilterByPopularity(matchingItems);
 
             //Fifth priority: items where the name contains the FITLERED search query (still case-insensitive)
-            matchingItems = allMatches.Where(p => p.NameForMatch.Contains(Utilities.FilterStringForMatch(searchQuery))).ToList();
+            matchingItems = allMatches.Where(p => p.NameForMatch.ToLower().Contains(Utilities.FilterStringForMatch(searchQuery).ToLower())).ToList();
             if (matchingItems.Count > 0)
                 return FilterByPopularity(matchingItems);
 
