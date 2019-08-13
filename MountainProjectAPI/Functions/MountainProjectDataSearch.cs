@@ -217,24 +217,24 @@ namespace MountainProjectAPI
             allMatches = FilterBySearchParameters(allMatches, searchParameters);
 
             //First priority: items where the name matches the search query exactly (but still case-insensitive)
-            List<MPObject> matchingItems = allMatches.Where(p => p.Name.ToLower() == searchQuery.ToLower()).ToList();
+            List<MPObject> matchingItems = allMatches.Where(p => Utilities.StringsEqual(p.Name, searchQuery)).ToList();
             if (matchingItems.Count > 0)
                 return FilterByPopularity(matchingItems);
 
             //Second priority: items where the name matches the FILTERED (no symbols or spaces, case insensitive) search query exactly
-            matchingItems = allMatches.Where(p => p.NameForMatch.ToLower() == Utilities.FilterStringForMatch(searchQuery).ToLower()).ToList();
+            matchingItems = allMatches.Where(p => Utilities.StringsEqual(p.NameForMatch, Utilities.FilterStringForMatch(searchQuery))).ToList();
             if (matchingItems.Count > 0)
                 return FilterByPopularity(matchingItems);
 
             //[IN THE FUTURE]Third priority: items with a levenshtein distance less than 3
 
             //Fourth priority: items where the name contains the search query (still case-insensitive)
-            matchingItems = allMatches.Where(p => p.Name.ToLower().Contains(searchQuery.ToLower())).ToList();
+            matchingItems = allMatches.Where(p => Utilities.StringsMatch(p.Name, searchQuery)).ToList();
             if (matchingItems.Count > 0)
                 return FilterByPopularity(matchingItems);
 
             //Fifth priority: items where the name contains the FITLERED search query (still case-insensitive)
-            matchingItems = allMatches.Where(p => p.NameForMatch.ToLower().Contains(Utilities.FilterStringForMatch(searchQuery).ToLower())).ToList();
+            matchingItems = allMatches.Where(p => Utilities.StringsMatch(p.NameForMatch, Utilities.FilterStringForMatch(searchQuery))).ToList();
             if (matchingItems.Count > 0)
                 return FilterByPopularity(matchingItems);
 
@@ -309,7 +309,7 @@ namespace MountainProjectAPI
             foreach (Area destArea in destAreas)
             {
                 //Controls whether dest area names should be matched (should the keyword "Alabama" match the state or a route named "Sweet Home Alabama")
-                if (allowDestAreaMatch && Utilities.StringMatch(input, destArea.NameForMatch))
+                if (allowDestAreaMatch && Utilities.StringsMatch(input, destArea.NameForMatch))
                     matchedObjects.Add(destArea);
 
                 List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, destArea.SubAreas);
@@ -326,7 +326,7 @@ namespace MountainProjectAPI
 
             foreach (Area subDestArea in subAreas)
             {
-                if (Utilities.StringMatch(input, subDestArea.NameForMatch))
+                if (Utilities.StringsMatch(input, subDestArea.NameForMatch))
                     matchedObjects.Add(subDestArea);
 
                 if (subDestArea.SubAreas != null &&
@@ -355,7 +355,7 @@ namespace MountainProjectAPI
 
             foreach (Route route in routes)
             {
-                if (Utilities.StringMatch(input, route.NameForMatch))
+                if (Utilities.StringsMatch(input, route.NameForMatch))
                     matchedObjects.Add(route);
             }
 
@@ -369,7 +369,7 @@ namespace MountainProjectAPI
             Dictionary<MPObject, Area> results = new Dictionary<MPObject, Area>();
             foreach (MPObject result in listToFilter)
             {
-                Area matchingParent = result.Parents.FirstOrDefault(p => Utilities.StringMatch(location, p.NameForMatch)) as Area;
+                Area matchingParent = result.Parents.FirstOrDefault(p => Utilities.StringsMatch(location, p.NameForMatch)) as Area;
                 if (matchingParent != null)
                     results.Add(result, matchingParent);
             }

@@ -116,7 +116,21 @@ namespace MountainProjectAPI
             return Regex.Replace(input, @"\P{L}", "");
         }
 
-        public static bool StringMatch(string inputString, string targetString, bool caseInsensitive = true)
+        public static bool StringsEqual(string inputString, string targetString, bool caseInsensitive = true)
+        {
+            string input = inputString;
+            string target = targetString;
+
+            if (caseInsensitive)
+            {
+                input = input.ToLower();
+                target = target.ToLower();
+            }
+
+            return target == input;
+        }
+
+        public static bool StringsMatch(string inputString, string targetString, bool caseInsensitive = true)
         {
             string input = inputString;
             string target = targetString;
