@@ -273,9 +273,6 @@ namespace MountainProjectBot
                         continue;
                     }
 
-                    if (GetBlacklistLevelForUser(comment.AuthorName) != BlacklistLevel.NoFYI)
-                        reply = $"(FYI in the future you can call me by using {Markdown.InlineCode("!MountainProject")})" + Markdown.HRule + reply;
-
                     if (!Debugger.IsAttached)
                     {
                         Comment botReplyComment = await redditHelper.ReplyToComment(comment, reply);
