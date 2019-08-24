@@ -114,7 +114,7 @@ namespace MountainProjectAPI
 
         public static string FilterStringForMatch(string input)
         {
-            return Regex.Replace(input, @"\P{L}", "");
+            return Regex.Replace(input, @"[^\p{L}0-9]", "");
         }
 
         public static bool StringsEqual(string inputString, string targetString, bool caseInsensitive = true)

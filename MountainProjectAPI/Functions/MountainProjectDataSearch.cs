@@ -306,6 +306,10 @@ namespace MountainProjectAPI
         private static List<MPObject> DeepSearch(string input, List<Area> destAreas, bool allowDestAreaMatch = false)
         {
             List<MPObject> matchedObjects = new List<MPObject>();
+
+            if (string.IsNullOrWhiteSpace(input)) //Don't allow a blank string search
+                return matchedObjects;
+
             foreach (Area destArea in destAreas)
             {
                 //Controls whether dest area names should be matched (should the keyword "Alabama" match the state or a route named "Sweet Home Alabama")
@@ -313,7 +317,11 @@ namespace MountainProjectAPI
                     matchedObjects.Add(destArea);
 
                 List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, destArea.SubAreas);
-                matchedSubAreas.ForEach(a => a.Parents.Add(destArea));
+                matchedSubAreas.ForEach(a =>
+                {
+                    if (!a.Parents.Contains(destArea))
+                        a.Parents.Add(destArea);
+                });
                 matchedObjects.AddRange(matchedSubAreas);
             }
 
@@ -333,7 +341,11 @@ namespace MountainProjectAPI
                     subDestArea.SubAreas.Count() > 0)
                 {
                     List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, subDestArea.SubAreas);
-                    matchedSubAreas.ForEach(a => a.Parents.Add(subDestArea));
+                    matchedSubAreas.ForEach(a =>
+                    {
+                        if (!a.Parents.Contains(subDestArea))
+                            a.Parents.Add(subDestArea);
+                    });
                     matchedObjects.AddRange(matchedSubAreas);
                 }
 
@@ -341,7 +353,11 @@ namespace MountainProjectAPI
                     subDestArea.Routes.Count() > 0)
                 {
                     List<MPObject> matchedRoutes = SearchRoutes(input, subDestArea.Routes);
-                    matchedRoutes.ForEach(r => r.Parents.Add(subDestArea));
+                    matchedRoutes.ForEach(r =>
+                    {
+                        if (!r.Parents.Contains(subDestArea))
+                            r.Parents.Add(subDestArea);
+                    });
                     matchedObjects.AddRange(matchedRoutes);
                 }
             }
@@ -369,7 +385,7 @@ namespace MountainProjectAPI
             Dictionary<MPObject, Area> results = new Dictionary<MPObject, Area>();
             foreach (MPObject result in listToFilter)
             {
-                Area matchingParent = result.Parents.FirstOrDefault(p => Utilities.StringsMatch(location, p.NameForMatch)) as Area;
+                Area matchingParent = result.Parents.ToList().FirstOrDefault(p => Utilities.StringsMatch(location, p.NameForMatch)) as Area;
                 if (matchingParent != null)
                     results.Add(result, matchingParent);
             }
