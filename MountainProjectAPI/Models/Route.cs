@@ -58,24 +58,47 @@ namespace MountainProjectAPI
             return GetRouteGrade(gradeSystem);
         }
 
-        public string GetRouteGrade(GradeSystem requestedSystem = GradeSystem.YDS)
+        public string GetRouteGrade(GradeSystem requestedSystem = GradeSystem.YDS, bool withSystem = true)
         {
-            if (this.Grades.ContainsKey(requestedSystem))
-                return $"{this.Grades[requestedSystem]} ({requestedSystem.ToString()})";
-            else if (requestedSystem == GradeSystem.Hueco && this.Grades.ContainsKey(GradeSystem.YDS)) //If the user wanted hueco, but we only have YDS
-                return $"{this.Grades[GradeSystem.YDS]} ({GradeSystem.YDS.ToString()})";
-            else if (requestedSystem == GradeSystem.YDS && this.Grades.ContainsKey(GradeSystem.Hueco)) //If the user wanted YDS, but we only have Hueco
-                return $"{this.Grades[GradeSystem.Hueco]} ({GradeSystem.Hueco.ToString()})";
-            else if (requestedSystem == GradeSystem.French && this.Grades.ContainsKey(GradeSystem.Fontainebleau)) //If the user wanted French, but we only have Fontainebleau
-                return $"{this.Grades[GradeSystem.Fontainebleau]} ({GradeSystem.Fontainebleau.ToString()})";
-            else if (requestedSystem == GradeSystem.Fontainebleau && this.Grades.ContainsKey(GradeSystem.French)) //If the user wanted Fontainebleau, but we only have French
-                return $"{this.Grades[GradeSystem.French]} ({GradeSystem.French.ToString()})";
-            else if (this.Grades.ContainsKey(GradeSystem.Unlabled))
-                return this.Grades[GradeSystem.Unlabled];
-            else if (this.Grades.ContainsKey(GradeSystem.YDS))
-                return $"{this.Grades[GradeSystem.YDS]} ({GradeSystem.YDS.ToString()})";
+            string grade = "";
 
-            return "";
+            if (this.Grades.ContainsKey(requestedSystem))
+                grade = this.Grades[requestedSystem];
+            else if (requestedSystem == GradeSystem.Hueco && this.Grades.ContainsKey(GradeSystem.YDS)) //If the user wanted hueco, but we only have YDS
+            {
+                grade = this.Grades[GradeSystem.YDS];
+                requestedSystem = GradeSystem.YDS;
+            }
+            else if (requestedSystem == GradeSystem.YDS && this.Grades.ContainsKey(GradeSystem.Hueco)) //If the user wanted YDS, but we only have Hueco
+            {
+                grade = this.Grades[GradeSystem.Hueco];
+                requestedSystem = GradeSystem.Hueco;
+            }
+            else if (requestedSystem == GradeSystem.French && this.Grades.ContainsKey(GradeSystem.Fontainebleau)) //If the user wanted French, but we only have Fontainebleau
+            {
+                grade = this.Grades[GradeSystem.Fontainebleau];
+                requestedSystem = GradeSystem.Fontainebleau;
+            }
+            else if (requestedSystem == GradeSystem.Fontainebleau && this.Grades.ContainsKey(GradeSystem.French)) //If the user wanted Fontainebleau, but we only have French
+            {
+                grade = this.Grades[GradeSystem.French];
+                requestedSystem = GradeSystem.French;
+            }
+            else if (this.Grades.ContainsKey(GradeSystem.Unlabled))
+            {
+                grade = this.Grades[GradeSystem.Unlabled];
+                requestedSystem = GradeSystem.Unlabled;
+            }
+            else if (this.Grades.ContainsKey(GradeSystem.YDS))
+            {
+                grade = this.Grades[GradeSystem.YDS];
+                requestedSystem = GradeSystem.YDS;
+            }
+
+            if (withSystem && requestedSystem != GradeSystem.Unlabled)
+                grade += $" ({requestedSystem.ToString()})";
+
+            return grade;
         }
 
         public override string ToString()

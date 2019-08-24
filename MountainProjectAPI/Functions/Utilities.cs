@@ -1,6 +1,8 @@
 ﻿using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -113,7 +115,7 @@ namespace MountainProjectAPI
 
         public static string FilterStringForMatch(string input)
         {
-            return Regex.Replace(input, @"\P{L}", "");
+            return Regex.Replace(input, @"[^\p{L}0-9]", "");
         }
 
         public static bool StringsEqual(string inputString, string targetString, bool caseInsensitive = true)
@@ -154,6 +156,44 @@ namespace MountainProjectAPI
             catch
             {
                 return "";
+            }
+        }
+
+        public static bool IsNumber(string inputString)
+        {
+            return int.TryParse(inputString, out _);
+        }
+
+        public static string TrimWords(string input, string[] wordsToTrim)
+        {
+            var result = string.Join(" ", input.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries)
+                .SkipWhile(x => wordsToTrim.Contains(x.ToLower()))
+                .Reverse()
+                .SkipWhile(x => wordsToTrim.Contains(x.ToLower()))
+                .Reverse());
+
+            return result;
+        }
+
+        public static List<string> GetWordGroups(string phrase)
+        {
+            return findWords(phrase.Split(' ')).ToList();
+        }
+
+        private static string[] findWords(params string[] args)
+        {
+
+            if (args.Length == 0)
+            {
+                return new string[] { "" };
+            }
+            else
+            {
+                string[] oldWords = findWords(args.Skip(1).ToArray());
+                string[] newWords = oldWords.Where(word => word == "" || word.Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries)[0] == args[1])
+                                            .Select(word => (args[0] + " " + word).Trim()).ToArray();
+
+                return oldWords.Union(newWords).ToArray();
             }
         }
     }

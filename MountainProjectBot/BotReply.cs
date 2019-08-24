@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
+using static MountainProjectAPI.Route;
 
 namespace MountainProjectBot
 {
@@ -244,13 +245,18 @@ namespace MountainProjectBot
                 return "";
         }
 
-        private static string GetBotLinks(Comment relatedComment = null)
+        public static string GetBotLinks(VotableThing relatedThing = null)
+        {
+            return GetBotLinks(relatedThing.Permalink);
+        }
+
+        private static string GetBotLinks(Uri relatedPermalink = null)
         {
             List<string> botLinks = new List<string>();
 
-            if (relatedComment != null)
+            if (relatedPermalink != null)
             {
-                string commentLink = WebUtility.HtmlEncode(RedditHelper.GetFullLink(relatedComment.Permalink));
+                string commentLink = WebUtility.HtmlEncode(RedditHelper.GetFullLink(relatedPermalink));
                 botLinks.Add(Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink));
             }
             else
@@ -264,5 +270,168 @@ namespace MountainProjectBot
 
             return string.Join(" | ", botLinks);
         }
+
+        #region Post Title Parsing
+        public static Route ParsePostTitleToRoute(string postTitle) //Todo: create a unit test for this method using the 1000 post titles
+        {
+            Route finalResult = null; //Todo: in the future support returning multiple routes (but only if there are multiple grades in the title? Maybe only if all of the routes' full names are in the title?)
+
+            List<Tuple<GradeSystem, string>> postGrades = GetPossibleGrades(postTitle);
+            if (postGrades.Count > 0)
+            {
+                List<Route> possibleResults = new List<Route>();
+                List<string> possibleRouteNames = GetPossibleRouteNames(postTitle);
+                foreach (string possibleRouteName in possibleRouteNames)
+                {
+                    SearchResult searchResult = MountainProjectDataSearch.Search(possibleRouteName, new SearchParameters() { OnlyRoutes = true });
+                    if (!searchResult.IsEmpty() && searchResult.AllResults.Count < 150) //If the number of matching results is greater than 150, it was probably a very generic word for a search (eg "There") //Todo: once I unit test this, experiment with dropping this value to 100
+                    {
+                        foreach (Route route in searchResult.AllResults.Cast<Route>())
+                        {
+                            if (postGrades.Find(p => MountainProjectDataSearch.IsRouteGradeEqual(p.Item1, p.Item2, route, true, true)) != null)
+                                possibleResults.Add(route);
+                        }
+                    }
+                }
+
+                if (possibleResults.Count > 0)
+                {
+                    //Prioritize routes where the full name is in the post title
+                    //(Additionally, we could also prioritize how close - within the post title - the name is to the rating)
+                    List<Route> filteredResults = possibleResults.Where(p => Utilities.StringsMatch(Utilities.FilterStringForMatch(p.Name), Utilities.FilterStringForMatch(postTitle))).ToList();
+
+                    if (filteredResults.Count == 1)
+                        finalResult = filteredResults.First();
+                    else if (filteredResults.Count > 1)
+                    {
+                        //Prioritize routes where one of the parents (locations) is also in the post title
+                        List<Route> routesWithMatchingLocations = filteredResults.Where(r => r.Parents.Find(p => postTitle.ToLower().Contains(p.Name.ToLower())) != null).ToList();
+                        if (routesWithMatchingLocations.Count > 0)
+                            filteredResults = routesWithMatchingLocations;
+                    }
+                    else
+                    {
+                        //Prioritize routes where one of the parents (locations) is also in the post title
+                        List<Route> routesWithMatchingLocations = possibleResults.Where(r => r.Parents.Find(p => postTitle.ToLower().Contains(p.Name.ToLower())) != null).ToList();
+                        if (routesWithMatchingLocations.Count > 0)
+                            filteredResults = routesWithMatchingLocations;
+                    }
+
+                    if (filteredResults.Count == 1)
+                        finalResult = filteredResults.First();
+                    else if (filteredResults.Count > 1)
+                        finalResult = filteredResults.OrderByDescending(p => p.Popularity).First();
+                    else
+                        finalResult = possibleResults.OrderByDescending(p => p.Popularity).First();
+                }
+            }
+
+            return finalResult;
+        }
+
+        public static List<Tuple<GradeSystem, string>> GetPossibleGrades(string postTitle)
+        {
+            List<Tuple<GradeSystem, string>> result = new List<Tuple<GradeSystem, string>>();
+
+            //FIRST, attempt to match grades with a "5." or "V" prefix
+            Regex ratingRegex = new Regex(@"((5\.)\d+[+-]?[a-dA-D]?([\/\\\-][a-dA-D])?)|([vV]\d+([\/\\\-]\d+)?)");
+            foreach (Match possibleGrade in ratingRegex.Matches(postTitle))
+            {
+                string matchedGrade = possibleGrade.Value;
+
+                if (matchedGrade.ToLower().Contains("v"))
+                {
+                    if (result.Find(p => p.Item1 == GradeSystem.Hueco && p.Item2 == matchedGrade) == null)
+                        result.Add(new Tuple<GradeSystem, string>(GradeSystem.Hueco, matchedGrade));
+                }
+                else
+                {
+                    if (result.Find(p => p.Item1 == GradeSystem.YDS && p.Item2 == matchedGrade) == null)
+                        result.Add(new Tuple<GradeSystem, string>(GradeSystem.YDS, matchedGrade));
+                }
+            }
+
+            //SECOND, attempt to match YDS grades with no prefix, but with a subgrade (eg 10b or 9+)
+            ratingRegex = new Regex(@"\d+([+-]|[a-dA-D])([\/\\\-][a-dA-D])?(?!\d)");
+            foreach (Match possibleGrade in ratingRegex.Matches(postTitle))
+            {
+                string matchedGrade = possibleGrade.Value;
+
+                if (!matchedGrade.Contains("5."))
+                    matchedGrade = "5." + matchedGrade;
+
+                if (result.Find(p => p.Item1 == GradeSystem.YDS && p.Item2 == matchedGrade) == null)
+                    result.Add(new Tuple<GradeSystem, string>(GradeSystem.YDS, matchedGrade));
+            }
+
+            //THIRD, attempt to match any remaining numbers as a grade (eg 10)
+            if (result.Count == 0)
+            {
+                ratingRegex = new Regex(@"(?<=\s|^)\d+(?=\s|$)");
+                foreach (Match possibleGrade in ratingRegex.Matches(postTitle))
+                {
+                    string matchedGrade = possibleGrade.Value;
+
+                    if (!matchedGrade.Contains("5."))
+                        matchedGrade = "5." + matchedGrade;
+
+                    if (result.Find(p => p.Item1 == GradeSystem.YDS && p.Item2 == matchedGrade) == null)
+                        result.Add(new Tuple<GradeSystem, string>(GradeSystem.YDS, matchedGrade));
+                }
+            }
+
+            return result;
+        }
+
+        public static List<string> GetPossibleRouteNames(string postTitle)
+        {
+            List<string> result = new List<string>();
+
+            Regex routeGradeRegex = new Regex(@"((5\.)\d+[+-]?[a-dA-D]?([\/\\\-][a-dA-D])?)|([vV]\d+([\/\\\-]\d+)?)");
+            postTitle = routeGradeRegex.Replace(postTitle, "");
+
+            string[] connectingWords = new string[] { "and", "the", "to", "or", "a", "an", "was", "but" };
+            string[] locationWords = new string[] { "of", "on", "at", "in" };
+            connectingWords = connectingWords.Concat(locationWords).ToArray();
+
+            string possibleRouteName = "";
+            foreach (string word in Regex.Split(postTitle, @"[^\p{L}0-9'’]"))
+            {
+                if ((!string.IsNullOrWhiteSpace(word) && char.IsUpper(word[0]) && word.Length > 1) ||
+                    (connectingWords.Contains(word.ToLower()) && !string.IsNullOrWhiteSpace(possibleRouteName)) || Utilities.IsNumber(word))
+                    possibleRouteName += word + " ";
+                else if (!string.IsNullOrWhiteSpace(possibleRouteName))
+                {
+                    possibleRouteName = possibleRouteName.Trim();
+                    //possibleRouteName = Utilities.TrimWords(possibleRouteName, connectingWords); //Todo: currently this causes 3 more failures. Need to investigate
+                    result.Add(possibleRouteName);
+
+                    //If there is a "location word" in the possibleRouteName, add the separate parts to the result as well
+                    Regex locationWordsRegex = new Regex(@"(\s+" + string.Join(@"\s+)|(\s+", locationWords) + @"\s+)");
+                    if (locationWordsRegex.IsMatch(possibleRouteName))
+                        locationWordsRegex.Split(possibleRouteName).ToList().ForEach(p => result.Add(Utilities.TrimWords(p, connectingWords)));
+
+                    possibleRouteName = "";
+                }
+            }
+
+            //Add any "remaining" names
+            if (!string.IsNullOrWhiteSpace(possibleRouteName) && possibleRouteName != "V")
+                result.Add(possibleRouteName.Trim());
+
+            result = result.Distinct().ToList();
+            result.RemoveAll(p => p.Length < 4); //Remove any short "names" (eg "My" or "One")
+            result.RemoveAll(p => connectingWords.Contains(p.ToLower())); //Remove any "possible names" that are only a connecting word (eg "the")
+            result.RemoveAll(p => Utilities.IsNumber(p));
+
+            //Todo: experiment with using all "word combinations". IE once we have parsed our list of "possibleRouteNames", expand the list to
+            //be all combinations of those words (respecting order and not "cross-contaminating groups"). EG "Climbed Matthes Crest"
+            //possibleRouteName should be expanded to "Climbed Matthes Crest", "Climbed", "Matthes", "Crest", "Climbed Matthes", "Matthes Crest".
+            //See if this actually improves results or hurts it. (After this, we should probably run the "RemoveAll" lines again and remove the 
+            //"locationWordsRegex.Split" section above)
+
+            return result;
+        }
+        #endregion Post Title Parsing
     }
 }

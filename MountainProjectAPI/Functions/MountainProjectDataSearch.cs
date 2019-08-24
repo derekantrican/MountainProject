@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
+using static MountainProjectAPI.Route;
 
 namespace MountainProjectAPI
 {
@@ -203,6 +204,58 @@ namespace MountainProjectAPI
             else
                 return child.Parents.Find(p => p.URL == url);
         }
+
+        public static bool IsRouteGradeEqual(GradeSystem requestedSystem, string requestedGrade, Route route, bool allowRange = false, bool allowBaseOnlyMatch = false)
+        {
+            if (!route.Grades.ContainsKey(requestedSystem))
+                return false;
+
+            //On MountainProject, boulders take the form of "V7-8" and others take the form "5.11c/d"
+            if (requestedSystem == GradeSystem.Hueco)
+            {
+                requestedGrade = Regex.Replace(requestedGrade, @"\\|\/", "-"); //Replace slashes with hyphens
+                requestedGrade = requestedGrade.ToUpper();
+
+                if (!requestedGrade.Contains("V"))
+                    requestedGrade = "V" + requestedGrade;
+            }
+            else if (requestedSystem == GradeSystem.YDS)
+            {
+                requestedGrade = Regex.Replace(requestedGrade, @"((\-)|(\\))(?=[a-dA-D])", "/"); //Replace hyphens and backslashes with forward slashes (but not instances like 5.9-)
+                requestedGrade = requestedGrade.ToLower();
+
+                if (!requestedGrade.Contains("5."))
+                    requestedGrade = "5." + requestedGrade;
+            }
+
+            if (route.Grades[requestedSystem] == requestedGrade)
+                return true;
+
+            //Do range matching (eg 5.11a/b or 5.11a-c should both match 5.11b)
+            if (Regex.IsMatch(requestedGrade, @"[a-d][\/\\\-][a-d]|\d+[\/\\\-]\d+") && allowRange) //Match hyphens and slashes (but not instances like 5.9-)
+            {
+                string baseGrade = Regex.Replace(requestedGrade, @"[a-d][\/\\\-][a-d]|\d+[\/\\\-]\d+", "");
+                char firstSubGrade = Convert.ToChar(Regex.Match(requestedGrade, @"[a-d\d+](?=[\/\\\-])").Value);
+                char lastSubGrade = Convert.ToChar(Regex.Match(requestedGrade, @"(?<=[\/\\\-])[a-d\d+]").Value);
+                for (char c = firstSubGrade; c <= lastSubGrade; c++)
+                {
+                    if (route.Grades[requestedSystem] == baseGrade + c)
+                        return true;
+                }
+
+                //Todo: another valid range should be "V6-/+" meaning "V6-, V6, V6+". Only when the "-/+" or "-\+" string is present
+            }
+
+            //Do base-only matching (eg 5.10, 5.10a, 5.10+, 5.10b/c should all match "5.10")
+            if (allowBaseOnlyMatch)
+            {
+                string baseGrade = Regex.Replace(requestedGrade, @"[a-d][\/\\\-][a-d]|\d+[\/\\\-]\d+", "");
+                if (route.Grades[requestedSystem].Contains(baseGrade))
+                    return true;
+            }
+
+            return false;
+        }
         #endregion Public Methods
 
         #region Filter Methods
@@ -306,6 +359,10 @@ namespace MountainProjectAPI
         private static List<MPObject> DeepSearch(string input, List<Area> destAreas, bool allowDestAreaMatch = false)
         {
             List<MPObject> matchedObjects = new List<MPObject>();
+
+            if (string.IsNullOrWhiteSpace(input)) //Don't allow a blank string search
+                return matchedObjects;
+
             foreach (Area destArea in destAreas)
             {
                 //Controls whether dest area names should be matched (should the keyword "Alabama" match the state or a route named "Sweet Home Alabama")
@@ -313,7 +370,11 @@ namespace MountainProjectAPI
                     matchedObjects.Add(destArea);
 
                 List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, destArea.SubAreas);
-                matchedSubAreas.ForEach(a => a.Parents.Add(destArea));
+                matchedSubAreas.ForEach(a =>
+                {
+                    if (!a.Parents.Contains(destArea))
+                        a.Parents.Add(destArea);
+                });
                 matchedObjects.AddRange(matchedSubAreas);
             }
 
@@ -333,7 +394,11 @@ namespace MountainProjectAPI
                     subDestArea.SubAreas.Count() > 0)
                 {
                     List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, subDestArea.SubAreas);
-                    matchedSubAreas.ForEach(a => a.Parents.Add(subDestArea));
+                    matchedSubAreas.ForEach(a =>
+                    {
+                        if (!a.Parents.Contains(subDestArea))
+                            a.Parents.Add(subDestArea);
+                    });
                     matchedObjects.AddRange(matchedSubAreas);
                 }
 
@@ -341,7 +406,11 @@ namespace MountainProjectAPI
                     subDestArea.Routes.Count() > 0)
                 {
                     List<MPObject> matchedRoutes = SearchRoutes(input, subDestArea.Routes);
-                    matchedRoutes.ForEach(r => r.Parents.Add(subDestArea));
+                    matchedRoutes.ForEach(r => 
+                    {
+                        if (!r.Parents.Contains(subDestArea))
+                            r.Parents.Add(subDestArea);
+                    });
                     matchedObjects.AddRange(matchedRoutes);
                 }
             }
@@ -369,7 +438,7 @@ namespace MountainProjectAPI
             Dictionary<MPObject, Area> results = new Dictionary<MPObject, Area>();
             foreach (MPObject result in listToFilter)
             {
-                Area matchingParent = result.Parents.FirstOrDefault(p => Utilities.StringsMatch(location, p.NameForMatch)) as Area;
+                Area matchingParent = result.Parents.ToList().FirstOrDefault(p => Utilities.StringsMatch(location, p.NameForMatch)) as Area;
                 if (matchingParent != null)
                     results.Add(result, matchingParent);
             }
