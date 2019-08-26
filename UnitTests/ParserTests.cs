@@ -2,6 +2,7 @@
 using System.Linq;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MountainProjectAPI;
+using static MountainProjectAPI.Grade;
 using static MountainProjectAPI.Route;
 
 namespace UnitTests
@@ -157,17 +158,18 @@ namespace UnitTests
         }
 
         [DataTestMethod]
-        [DataRow("/route/111859673/side-dish", GradeSystem.YDS , "5.10c")]
+        [DataRow("/route/111859673/side-dish", GradeSystem.YDS, "5.10c")]
         [DataRow("/route/109063052/geflugelfrikadelle", GradeSystem.YDS, "5.12b/c")] //Has a slash
         [DataRow("/route/116181996/13-above-the-night", GradeSystem.Unlabled, "WI4 M5")] //No YDS/Heuco present
-        public void TestRouteGradeParse(string url, GradeSystem gradeSystem, string expectedGrade)
+        public void TestRouteGradeParse(string url, GradeSystem gradeSystem, string expectedValue)
         {
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            string ydsGrade = Parsers.ParseRouteGrades(Utilities.GetHtmlDoc(url))[gradeSystem];
+            Grade expectedGrade = new Grade(gradeSystem, expectedValue);
+            Grade routeGrade = Parsers.ParseRouteGrades(Utilities.GetHtmlDoc(url)).Find(p => p.System == gradeSystem);
 
-            Assert.AreEqual(expectedGrade, ydsGrade);
+            Assert.AreEqual(expectedGrade, routeGrade);
         }
 
         [DataTestMethod]

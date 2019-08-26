@@ -227,7 +227,7 @@ namespace MountainProjectBot
             List<string> parts = new List<string>();
 
             if (showGrade)
-                parts.Add(route.GetRouteGrade(parameters));
+                parts.Add(route.GetRouteGrade(parameters).ToString());
 
             if (showHeight && route.Height != null && route.Height.Value != 0)
             {

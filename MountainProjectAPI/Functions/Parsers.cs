@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
+using static MountainProjectAPI.Grade;
 using static MountainProjectAPI.Route;
 
 namespace MountainProjectAPI
@@ -191,9 +192,9 @@ namespace MountainProjectAPI
             return rating;
         }
 
-        public static SerializableDictionary<GradeSystem, string> ParseRouteGrades(IHtmlDocument doc)
+        public static List<Grade> ParseRouteGrades(IHtmlDocument doc)
         {
-            SerializableDictionary<GradeSystem, string> gradeDict = new SerializableDictionary<GradeSystem, string>();
+            List<Grade> grades = new List<Grade>();
             foreach (IElement spanElement in doc.GetElementsByTagName("span"))
             {
                 if (spanElement.Attributes["class"] == null ||
@@ -203,45 +204,45 @@ namespace MountainProjectAPI
                 string gradeValue = HttpUtility.HtmlDecode(spanElement.TextContent.Replace(spanElement.GetElementsByTagName("a").FirstOrDefault().TextContent, "")).Trim();
                 switch (spanElement.Attributes["class"].Value)
                 {
-                    case "rateYDS": 
+                    case "rateYDS":
                         //I think there's an issue with the MountainProject website where Hueco grades are listed as YDS (eg /route/111259770/three-pipe-problem).
                         //I've reported this to them (I think) but for now I'm "coding around it".
                         if (gradeValue.Contains("5."))
-                            gradeDict.Add(GradeSystem.YDS, gradeValue);
+                            grades.Add(new Grade(GradeSystem.YDS, gradeValue, false));
                         else if (gradeValue.Contains("V"))
-                            gradeDict.Add(GradeSystem.Hueco, gradeValue);
+                            grades.Add(new Grade(GradeSystem.Hueco, gradeValue, false));
                         break;
                     case "rateFrench":
-                        gradeDict.Add(GradeSystem.French, gradeValue);
+                        grades.Add(new Grade(GradeSystem.French, gradeValue, false));
                         break;
                     case "rateEwbanks":
-                        gradeDict.Add(GradeSystem.Ewbanks, gradeValue);
+                        grades.Add(new Grade(GradeSystem.Ewbanks, gradeValue, false));
                         break;
                     case "rateUIAA":
-                        gradeDict.Add(GradeSystem.UIAA, gradeValue);
+                        grades.Add(new Grade(GradeSystem.UIAA, gradeValue, false));
                         break;
                     case "rateZA":
-                        gradeDict.Add(GradeSystem.SouthAfrica, gradeValue);
+                        grades.Add(new Grade(GradeSystem.SouthAfrica, gradeValue, false));
                         break;
                     case "rateBritish":
-                        gradeDict.Add(GradeSystem.Britsh, gradeValue);
+                        grades.Add(new Grade(GradeSystem.Britsh, gradeValue, false));
                         break;
                     case "rateHueco":
-                        gradeDict.Add(GradeSystem.Hueco, gradeValue);
+                        grades.Add(new Grade(GradeSystem.Hueco, gradeValue, false));
                         break;
                     case "rateFont":
-                        gradeDict.Add(GradeSystem.Fontainebleau, gradeValue);
+                        grades.Add(new Grade(GradeSystem.Fontainebleau, gradeValue, false));
                         break;
                 }
             }
 
-            if (gradeDict.Count == 0)
+            if (grades.Count == 0)
             {
                 IElement gradesSection = doc.GetElementsByTagName("h2").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "inline-block mr-2");
-                gradeDict.Add(GradeSystem.Unlabled, HttpUtility.HtmlDecode(gradesSection.TextContent));
+                grades.Add(new Grade(GradeSystem.Unlabled, HttpUtility.HtmlDecode(gradesSection.TextContent)));
             }
 
-            return gradeDict;
+            return grades;
         }
 
         public static List<RouteType> ParseRouteTypes(IHtmlDocument doc)
