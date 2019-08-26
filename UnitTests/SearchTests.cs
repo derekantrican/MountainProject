@@ -6,6 +6,7 @@ using System.IO;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
+using static MountainProjectAPI.Grade;
 using static MountainProjectAPI.Route;
 
 namespace UnitTests
@@ -118,12 +119,12 @@ namespace UnitTests
         [DataRow("Hanging out at the second belay station of my first multipitch climb! The Trough 5.4 6 pitches, Taquitz Rock, Idyllwild, CA", GradeSystem.YDS, "5.4")]
         [DataRow("Battling up a Squamish offwidth - Split Beaver 10b", GradeSystem.YDS, "5.10b")]
         [DataRow("Checkerboard V7/8, Buttermilks - Near Bishop, CA", GradeSystem.Hueco, "V7/8")]
-        public void TestRouteGradeParse(string inputGrade, GradeSystem expectedSystem, string expectedGrade)
+        public void TestRouteGradeParse(string inputGrade, GradeSystem expectedSystem, string expectedValue)
         {
-            Tuple<GradeSystem, string> parsedGrade = BotReply.GetPossibleGrades(inputGrade)[0]; //Todo: expand test for multiple grades found
+            Grade expectedGrade = new Grade(expectedSystem, expectedValue);
+            Grade parsedGrade = BotReply.GetPossibleGrades(inputGrade)[0]; //Todo: expand test for multiple grades found
 
-            Assert.AreEqual(expectedSystem, parsedGrade.Item1);
-            Assert.AreEqual(expectedGrade, parsedGrade.Item2);
+            Assert.AreEqual(expectedGrade, parsedGrade);
         }
 
         object[,] testCriteria_gradeEquality = new object[,]
@@ -162,7 +163,10 @@ namespace UnitTests
                 string inputGrade = testCriteria_gradeEquality[i, 2].ToString();
 
                 Route route = MountainProjectDataSearch.GetItemWithMatchingUrl(Utilities.MPBASEURL + inputUrl) as Route;
-                Assert.IsTrue(MountainProjectDataSearch.IsRouteGradeEqual(gradeSystem, inputGrade, route, true, true));
+                Grade routeGrade = route.Grades.Find(p => p.System == gradeSystem);
+
+                Assert.IsNotNull(routeGrade);
+                Assert.IsTrue(routeGrade.Equals(new Grade(gradeSystem, inputGrade), true, true));
             }
         }
 
@@ -172,29 +176,35 @@ namespace UnitTests
             int linkPasses = 0; //Passes where a MP link was expected
             int totalPasses = 0;
             int totalFailures = 0;
-            string resultMsg = "";
 
-            Console.SetOut(new StringWriter()); //"Turn off" the Console.WriteLine calls
+            StringWriter writer = new StringWriter();
+            Console.SetOut(writer);
+
             MountainProjectDataSearch.InitMountainProjectData(@"..\..\MountainProjectDBBuilder\bin\MountainProjectAreas.xml");
             string[] testCriteria = File.ReadAllLines(@"..\PostTitleTest.txt");
 
-            Parallel.For(0, testCriteria.Length, i =>
-            //for (int i = 0; i < testCriteria.Length; i++)
+            //Parallel.For(0, testCriteria.Length, i =>
+            for (int i = 0; i < testCriteria.Length; i++)
             {
                 string[] lineParts = testCriteria[i].Split('\t');
                 string inputPostTitle = lineParts[0];
                 string expectedMPLink = lineParts[1] == "null" ? null : lineParts[1];
+
+                writer.WriteLine($"POST TITLE: {inputPostTitle}");
 
                 Route result = BotReply.ParsePostTitleToRoute(WebUtility.HtmlDecode(inputPostTitle));
 
                 if (expectedMPLink == null)
                 {
                     if (result == null)
+                    {
+                        writer.WriteLine("PASS");
                         totalPasses++;
+                    }
                     else
                     {
-                        resultMsg += $"FAILED FOR: {inputPostTitle}\n";
-                        resultMsg += $"EXPECTED: {expectedMPLink}, ACTUAL: {result?.URL}\n";
+                        writer.WriteLine($"FAILED FOR: {inputPostTitle}");
+                        writer.WriteLine($"EXPECTED: {expectedMPLink}, ACTUAL: {result?.URL}");
                         totalFailures++;
                     }
                 }
@@ -202,20 +212,23 @@ namespace UnitTests
                 {
                     if (result == null || result.URL != expectedMPLink)
                     {
-                        resultMsg += $"FAILED FOR: {inputPostTitle}\n";
-                        resultMsg += $"EXPECTED: {expectedMPLink}, ACTUAL: {result?.URL}\n";
+                        writer.WriteLine($"FAILED FOR: {inputPostTitle}");
+                        writer.WriteLine($"EXPECTED: {expectedMPLink}, ACTUAL: {result?.URL}");
                         totalFailures++;
                     }
                     else
                     {
+                        writer.WriteLine("PASS");
                         linkPasses++;
                         totalPasses++;
                     }
                 }
-            });
+            }/*);*/
 
             System.Diagnostics.Debug.WriteLine($"Passes: {totalPasses}, Failures: {totalFailures}, Pass percentage: {Math.Round((double)totalPasses / (totalPasses + totalFailures) * 100, 2)}%\n");
-            System.Diagnostics.Debug.WriteLine(resultMsg);
+            System.Diagnostics.Debug.WriteLine(writer.ToString());
+
+            writer.Dispose();
             Assert.IsTrue(totalFailures <= 48);
         }
     }

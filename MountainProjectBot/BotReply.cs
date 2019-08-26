@@ -5,7 +5,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
-using static MountainProjectAPI.Route;
+using static MountainProjectAPI.Grade;
 
 namespace MountainProjectBot
 {
@@ -228,7 +228,7 @@ namespace MountainProjectBot
             List<string> parts = new List<string>();
 
             if (showGrade)
-                parts.Add(route.GetRouteGrade(parameters));
+                parts.Add(route.GetRouteGrade(parameters).ToString());
 
             if (showHeight && route.Height != null && route.Height.Value != 0)
             {
@@ -276,11 +276,13 @@ namespace MountainProjectBot
         {
             Route finalResult = null; //Todo: in the future support returning multiple routes (but only if there are multiple grades in the title? Maybe only if all of the routes' full names are in the title?)
 
-            List<Tuple<GradeSystem, string>> postGrades = GetPossibleGrades(postTitle);
+            List<Grade> postGrades = GetPossibleGrades(postTitle);
             if (postGrades.Count > 0)
             {
+                Console.WriteLine($"    Recognized grade(s): {string.Join(" | ", postGrades.Select(p => p.Value))}");
                 List<Route> possibleResults = new List<Route>();
                 List<string> possibleRouteNames = GetPossibleRouteNames(postTitle);
+                Console.WriteLine($"    Recognized name(s): {string.Join(" | ", possibleRouteNames)}");
                 foreach (string possibleRouteName in possibleRouteNames)
                 {
                     SearchResult searchResult = MountainProjectDataSearch.Search(possibleRouteName, new SearchParameters() { OnlyRoutes = true });
@@ -288,7 +290,7 @@ namespace MountainProjectBot
                     {
                         foreach (Route route in searchResult.AllResults.Cast<Route>())
                         {
-                            if (postGrades.Find(p => MountainProjectDataSearch.IsRouteGradeEqual(p.Item1, p.Item2, route, true, true)) != null)
+                            if (route.Grades.Any(g => postGrades.Any(p => p.Equals(g, true, true))))
                                 possibleResults.Add(route);
                         }
                     }
@@ -329,9 +331,9 @@ namespace MountainProjectBot
             return finalResult;
         }
 
-        public static List<Tuple<GradeSystem, string>> GetPossibleGrades(string postTitle)
+        public static List<Grade> GetPossibleGrades(string postTitle)
         {
-            List<Tuple<GradeSystem, string>> result = new List<Tuple<GradeSystem, string>>();
+            List<Grade> result = new List<Grade>();
 
             //FIRST, attempt to match grades with a "5." or "V" prefix
             Regex ratingRegex = new Regex(@"((5\.)\d+[+-]?[a-dA-D]?([\/\\\-][a-dA-D])?)|([vV]\d+([\/\\\-]\d+)?)");
@@ -341,13 +343,13 @@ namespace MountainProjectBot
 
                 if (matchedGrade.ToLower().Contains("v"))
                 {
-                    if (result.Find(p => p.Item1 == GradeSystem.Hueco && p.Item2 == matchedGrade) == null)
-                        result.Add(new Tuple<GradeSystem, string>(GradeSystem.Hueco, matchedGrade));
+                    if (result.Find(p => p.System == GradeSystem.Hueco && p.Value == matchedGrade) == null)
+                        result.Add(new Grade(GradeSystem.Hueco, matchedGrade));
                 }
                 else
                 {
-                    if (result.Find(p => p.Item1 == GradeSystem.YDS && p.Item2 == matchedGrade) == null)
-                        result.Add(new Tuple<GradeSystem, string>(GradeSystem.YDS, matchedGrade));
+                    if (result.Find(p => p.System == GradeSystem.YDS && p.Value == matchedGrade) == null)
+                        result.Add(new Grade(GradeSystem.YDS, matchedGrade));
                 }
             }
 
@@ -356,12 +358,10 @@ namespace MountainProjectBot
             foreach (Match possibleGrade in ratingRegex.Matches(postTitle))
             {
                 string matchedGrade = possibleGrade.Value;
+                matchedGrade = Grade.RectifyGradeValue(GradeSystem.YDS, matchedGrade);
 
-                if (!matchedGrade.Contains("5."))
-                    matchedGrade = "5." + matchedGrade;
-
-                if (result.Find(p => p.Item1 == GradeSystem.YDS && p.Item2 == matchedGrade) == null)
-                    result.Add(new Tuple<GradeSystem, string>(GradeSystem.YDS, matchedGrade));
+                if (result.Find(p => p.System == GradeSystem.YDS && p.Value == matchedGrade) == null)
+                    result.Add(new Grade(GradeSystem.YDS, matchedGrade));
             }
 
             //THIRD, attempt to match any remaining numbers as a grade (eg 10)
@@ -371,12 +371,10 @@ namespace MountainProjectBot
                 foreach (Match possibleGrade in ratingRegex.Matches(postTitle))
                 {
                     string matchedGrade = possibleGrade.Value;
+                    matchedGrade = Grade.RectifyGradeValue(GradeSystem.YDS, matchedGrade);
 
-                    if (!matchedGrade.Contains("5."))
-                        matchedGrade = "5." + matchedGrade;
-
-                    if (result.Find(p => p.Item1 == GradeSystem.YDS && p.Item2 == matchedGrade) == null)
-                        result.Add(new Tuple<GradeSystem, string>(GradeSystem.YDS, matchedGrade));
+                    if (result.Find(p => p.System == GradeSystem.YDS && p.Value == matchedGrade) == null)
+                        result.Add(new Grade(GradeSystem.YDS, matchedGrade));
                 }
             }
 

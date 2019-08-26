@@ -164,36 +164,36 @@ namespace MountainProjectBot_AutoReply
                         Console.WriteLine($"\n\nI FOUND A RESULT!");
 
                         Console.Write("\n\tPOST: ");
-                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.ForegroundColor = ConsoleColor.Gray;
                         Console.WriteLine(postTitle);
 
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.Write("\tSUBREDDIT: ");
-                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.ForegroundColor = ConsoleColor.Gray;
                         Console.WriteLine($"/r/{post.SubredditName}");
 
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.Write("\t(Post is ");
-                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.ForegroundColor = ConsoleColor.Gray;
                         Console.Write(Math.Round((DateTime.UtcNow - post.CreatedUTC).TotalMinutes, 2).ToString());
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine(" min old)");
 
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.Write("\tRESULT: ");
-                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.ForegroundColor = ConsoleColor.Gray;
                         Console.WriteLine(finalResult.ToString());
 
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.Write("\tLOCATION: ");
-                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.ForegroundColor = ConsoleColor.Gray;
                         List<MPObject> reversedParents = finalResult.Parents.ToList();
                         reversedParents.Reverse();
                         Console.WriteLine(string.Join(" > ", reversedParents.Select(p => p.Name)));
 
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.Write("\nSHOULD I REPLY (y/n)? ");
-                        Console.ForegroundColor = ConsoleColor.White;
+                        Console.ForegroundColor = ConsoleColor.Gray;
 
                         if (Console.ReadLine() == "y")
                         {
