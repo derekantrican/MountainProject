@@ -62,6 +62,9 @@ namespace MountainProjectAPI
 
         public bool Equals(Grade otherGrade, bool allowRange = false, bool allowBaseOnlyMatch = false)
         {
+            if (this.System != otherGrade.System)
+                return false;
+
             if (this.Value == otherGrade.Value)
                 return true;
 
@@ -91,7 +94,7 @@ namespace MountainProjectAPI
             //Do base-only matching (eg 5.10, 5.10a, 5.10+, 5.10b/c should all match "5.10")
             if (allowBaseOnlyMatch)
             {
-                string baseGrade = Regex.Replace(otherGrade.Value, @"[a-d][\/\\\-][a-d]|\d+[\/\\\-]\d+", ""); //Todo: this regex is wrong
+                string baseGrade = Regex.Match(otherGrade.Value, @"5\.\d+|[vV]\d+").Value;
                 if (this.Value.Contains(baseGrade))
                     return true;
             }

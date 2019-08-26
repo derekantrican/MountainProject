@@ -164,23 +164,12 @@ namespace MountainProjectAPI
             return int.TryParse(inputString, out _);
         }
 
-        public static string TrimWords(string input, string[] wordsToTrim)
-        {
-            var result = string.Join(" ", input.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries)
-                .SkipWhile(x => wordsToTrim.Contains(x.ToLower()))
-                .Reverse()
-                .SkipWhile(x => wordsToTrim.Contains(x.ToLower()))
-                .Reverse());
-
-            return result;
-        }
-
         public static List<string> GetWordGroups(string phrase)
         {
-            return findWords(phrase.Split(' ')).ToList();
+            return FindWords(phrase.Split(' ')).ToList();
         }
 
-        private static string[] findWords(params string[] args)
+        private static string[] FindWords(params string[] args)
         {
 
             if (args.Length == 0)
@@ -189,12 +178,33 @@ namespace MountainProjectAPI
             }
             else
             {
-                string[] oldWords = findWords(args.Skip(1).ToArray());
+                string[] oldWords = FindWords(args.Skip(1).ToArray());
                 string[] newWords = oldWords.Where(word => word == "" || word.Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries)[0] == args[1])
                                             .Select(word => (args[0] + " " + word).Trim()).ToArray();
 
                 return oldWords.Union(newWords).ToArray();
             }
+        }
+
+        public static string TrimWords(string input, string[] wordsToTrim)
+        {
+            return TrimWordsStart(TrimWordsEnd(input, wordsToTrim), wordsToTrim);
+        }
+
+        public static string TrimWordsStart(string input, string[] wordsToTrim)
+        {
+            var result = string.Join(" ", input.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries)
+                    .SkipWhile(x => wordsToTrim.Contains(x.ToLower())));
+            return result;
+        }
+
+        public static string TrimWordsEnd(string input, string[] wordsToTrim)
+        {
+            var result = string.Join(" ", input.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries)
+                    .Reverse()
+                    .SkipWhile(x => wordsToTrim.Contains(x.ToLower()))
+                    .Reverse());
+            return result;
         }
     }
 }

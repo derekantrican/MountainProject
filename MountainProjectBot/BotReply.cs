@@ -286,7 +286,7 @@ namespace MountainProjectBot
                 foreach (string possibleRouteName in possibleRouteNames)
                 {
                     SearchResult searchResult = MountainProjectDataSearch.Search(possibleRouteName, new SearchParameters() { OnlyRoutes = true });
-                    if (!searchResult.IsEmpty() && searchResult.AllResults.Count < 150) //If the number of matching results is greater than 150, it was probably a very generic word for a search (eg "There") //Todo: once I unit test this, experiment with dropping this value to 100
+                    if (!searchResult.IsEmpty() && searchResult.AllResults.Count < 100) //If the number of matching results is greater than 100, it was probably a very generic word for a search (eg "There") //Todo: once I unit test this, experiment with dropping this value to 100
                     {
                         foreach (Route route in searchResult.AllResults.Cast<Route>())
                         {
@@ -400,14 +400,13 @@ namespace MountainProjectBot
                     possibleRouteName += word + " ";
                 else if (!string.IsNullOrWhiteSpace(possibleRouteName))
                 {
-                    possibleRouteName = possibleRouteName.Trim();
-                    //possibleRouteName = Utilities.TrimWords(possibleRouteName, connectingWords); //Todo: currently this causes 3 more failures. Need to investigate
+                    possibleRouteName = Utilities.TrimWordsEnd(possibleRouteName, connectingWords).Trim();
                     result.Add(possibleRouteName);
 
                     //If there is a "location word" in the possibleRouteName, add the separate parts to the result as well
                     Regex locationWordsRegex = new Regex(@"(\s+" + string.Join(@"\s+)|(\s+", locationWords) + @"\s+)");
                     if (locationWordsRegex.IsMatch(possibleRouteName))
-                        locationWordsRegex.Split(possibleRouteName).ToList().ForEach(p => result.Add(Utilities.TrimWords(p, connectingWords)));
+                        locationWordsRegex.Split(possibleRouteName).ToList().ForEach(p => result.Add(Utilities.TrimWords(p, connectingWords).Trim()));
 
                     possibleRouteName = "";
                 }
