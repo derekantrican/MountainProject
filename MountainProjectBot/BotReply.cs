@@ -290,7 +290,7 @@ namespace MountainProjectBot
                     {
                         foreach (Route route in searchResult.AllResults.Cast<Route>())
                         {
-                            if (route.Grades.Any(g => postGrades.Any(p => p.Equals(g, true, true))))
+                            if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
                                 possibleResults.Add(route);
                         }
                     }
@@ -400,7 +400,7 @@ namespace MountainProjectBot
                     possibleRouteName += word + " ";
                 else if (!string.IsNullOrWhiteSpace(possibleRouteName))
                 {
-                    possibleRouteName = Utilities.TrimWordsEnd(possibleRouteName, connectingWords).Trim();
+                    possibleRouteName = possibleRouteName.Trim();
                     result.Add(possibleRouteName);
 
                     //If there is a "location word" in the possibleRouteName, add the separate parts to the result as well

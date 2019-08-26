@@ -94,7 +94,8 @@ namespace MountainProjectAPI
             //Do base-only matching (eg 5.10, 5.10a, 5.10+, 5.10b/c should all match "5.10")
             if (allowBaseOnlyMatch)
             {
-                string baseGrade = Regex.Match(otherGrade.Value, @"5\.\d+|[vV]\d+").Value;
+                //string baseGrade = Regex.Match(otherGrade.Value, @"5\.\d+|[vV]\d+").Value; //Todo: this is correct, but fails for fontainbleau types
+                string baseGrade = Regex.Replace(otherGrade.Value, @"[a-d][\/\\\-][a-d]|\d+[\/\\\-]\d+", ""); //Todo: this is wrong
                 if (this.Value.Contains(baseGrade))
                     return true;
             }
