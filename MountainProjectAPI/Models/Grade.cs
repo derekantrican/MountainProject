@@ -1,5 +1,7 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using System.Xml.Serialization;
 
 namespace MountainProjectAPI
 {
@@ -13,10 +15,10 @@ namespace MountainProjectAPI
         public Grade(GradeSystem system, string value, bool rectify = true)
         {
             this.System = system;
-            this.Value = value;
+            this.OriginalValue = value;
 
             if (rectify)
-                this.Value = RectifyGradeValue(system, value);
+                this.OriginalValue = RectifyGradeValue(system, value);
         }
 
         public enum GradeSystem
@@ -33,7 +35,62 @@ namespace MountainProjectAPI
         }
 
         public GradeSystem System { get; set; }
-        public string Value { get; set; }
+        public string OriginalValue { get; set; }
+        public string BaseValue { get; set; }
+        public string RangeStart { get; set; }
+        public string RangeEnd { get; set; }
+        [XmlIgnore]
+        public bool IsRange { get { return !string.IsNullOrEmpty(RangeStart) || !string.IsNullOrEmpty(RangeEnd); } }
+
+        public static List<Grade> ParseString(string input)
+        {
+            List<Grade> result = new List<Grade>();
+
+            //FIRST, attempt to match grades with a "5." or "V" prefix (regex101 for testing: https://regex101.com/r/5ZS6EE/3)
+            Regex ratingRegex = new Regex(@"((5\.)\d+[+-]?[a-dA-D]?([\/\\\-][a-dA-D])?)|([vV]\d+[+-]?([\/\\\-]\d+)?)");
+            foreach (Match possibleGrade in ratingRegex.Matches(input))
+            {
+                string matchedGrade = possibleGrade.Value;
+
+                if (matchedGrade.ToLower().Contains("v"))
+                {
+                    if (result.Find(p => p.System == GradeSystem.Hueco && p.OriginalValue == matchedGrade) == null)
+                        result.Add(new Grade(GradeSystem.Hueco, matchedGrade));
+                }
+                else
+                {
+                    if (result.Find(p => p.System == GradeSystem.YDS && p.OriginalValue == matchedGrade) == null)
+                        result.Add(new Grade(GradeSystem.YDS, matchedGrade));
+                }
+            }
+
+            //SECOND, attempt to match YDS grades with no prefix, but with a subgrade (eg 10b or 9+)
+            ratingRegex = new Regex(@"\d+([+-]|[a-dA-D])([\/\\\-][a-dA-D])?(?!\d)");
+            foreach (Match possibleGrade in ratingRegex.Matches(input))
+            {
+                string matchedGrade = possibleGrade.Value;
+                matchedGrade = Grade.RectifyGradeValue(GradeSystem.YDS, matchedGrade);
+
+                if (result.Find(p => p.System == GradeSystem.YDS && p.OriginalValue == matchedGrade) == null)
+                    result.Add(new Grade(GradeSystem.YDS, matchedGrade));
+            }
+
+            //THIRD, attempt to match any remaining numbers as a grade (eg 10)
+            if (result.Count == 0)
+            {
+                ratingRegex = new Regex(@"(?<=\s|^)\d+(?=\s|$)");
+                foreach (Match possibleGrade in ratingRegex.Matches(input))
+                {
+                    string matchedGrade = possibleGrade.Value;
+                    matchedGrade = Grade.RectifyGradeValue(GradeSystem.YDS, matchedGrade);
+
+                    if (result.Find(p => p.System == GradeSystem.YDS && p.OriginalValue == matchedGrade) == null)
+                        result.Add(new Grade(GradeSystem.YDS, matchedGrade));
+                }
+            }
+
+            return result;
+        }
 
         public static string RectifyGradeValue(GradeSystem system, string gradeValue)
         {
@@ -65,29 +122,29 @@ namespace MountainProjectAPI
             if (this.System != otherGrade.System)
                 return false;
 
-            if (this.Value == otherGrade.Value)
+            if (this.OriginalValue == otherGrade.OriginalValue)
                 return true;
 
             //Do range matching (eg "5.11a/b" or "5.11a-c" should both match "5.11b")
             if (allowRange)
             {
-                if (Regex.IsMatch(otherGrade.Value, @"[a-d][\/\\\-][a-d]|\d+[\/\\\-]\d+")) //Range of "5.10a-c" is valid for "5.10a, 5.10b, 5.10c". (But don't match instances like 5.9-)
+                if (Regex.IsMatch(otherGrade.OriginalValue, @"[a-d][\/\\\-][a-d]|\d+[\/\\\-]\d+")) //Range of "5.10a-c" is valid for "5.10a, 5.10b, 5.10c". (But don't match instances like 5.9-)
                 {
-                    string baseGrade = Regex.Replace(otherGrade.Value, @"[a-d][\/\\\-][a-d]|\d+[\/\\\-]\d+", "");
-                    char firstSubGrade = Convert.ToChar(Regex.Match(otherGrade.Value, @"[a-d\d+](?=[\/\\\-])").Value);
-                    char lastSubGrade = Convert.ToChar(Regex.Match(otherGrade.Value, @"(?<=[\/\\\-])[a-d\d+]").Value);
+                    string baseGrade = Regex.Replace(otherGrade.OriginalValue, @"[a-d][\/\\\-][a-d]|\d+[\/\\\-]\d+", "");
+                    char firstSubGrade = Convert.ToChar(Regex.Match(otherGrade.OriginalValue, @"[a-d\d+](?=[\/\\\-])").Value);
+                    char lastSubGrade = Convert.ToChar(Regex.Match(otherGrade.OriginalValue, @"(?<=[\/\\\-])[a-d\d+]").Value);
                     for (char c = firstSubGrade; c <= lastSubGrade; c++)
                     {
-                        if (this.Value == baseGrade + c)
+                        if (this.OriginalValue == baseGrade + c)
                             return true;
                     }
                 }
-                else if (Regex.IsMatch(otherGrade.Value, @"(-\/\+)|(-\\\+)")) //Range of "V6-/+" is valid for "V6-, V6, V6+"
+                else if (Regex.IsMatch(otherGrade.OriginalValue, @"(-\/\+)|(-\\\+)")) //Range of "V6-/+" is valid for "V6-, V6, V6+"
                 {
-                    string baseGrade = Regex.Replace(otherGrade.Value, @"(-\/\+)|(-\\\+)", "");
+                    string baseGrade = Regex.Replace(otherGrade.OriginalValue, @"(-\/\+)|(-\\\+)", "");
                     string minusGrade = baseGrade + "-";
                     string plusGrade = baseGrade + "+";
-                    return this.Value == baseGrade || this.Value == minusGrade || this.Value == plusGrade;
+                    return this.OriginalValue == baseGrade || this.OriginalValue == minusGrade || this.OriginalValue == plusGrade;
                 }
             }
 
@@ -95,8 +152,8 @@ namespace MountainProjectAPI
             if (allowBaseOnlyMatch)
             {
                 //string baseGrade = Regex.Match(otherGrade.Value, @"5\.\d+|[vV]\d+").Value; //Todo: this is correct, but fails for fontainbleau types
-                string baseGrade = Regex.Replace(otherGrade.Value, @"[a-d][\/\\\-][a-d]|\d+[\/\\\-]\d+", ""); //Todo: this is wrong
-                if (this.Value.Contains(baseGrade))
+                string baseGrade = Regex.Replace(otherGrade.OriginalValue, @"[a-d][\/\\\-][a-d]|\d+[\/\\\-]\d+", ""); //Todo: this is wrong
+                if (this.OriginalValue.Contains(baseGrade))
                     return true;
             }
 
@@ -106,9 +163,9 @@ namespace MountainProjectAPI
         public string ToString(bool withSystem = true)
         {
             if (withSystem)
-                return $"{this.Value} ({this.System})";
+                return $"{this.OriginalValue} ({this.System})";
             else
-                return this.Value;
+                return this.OriginalValue;
         }
 
         #region Overrides

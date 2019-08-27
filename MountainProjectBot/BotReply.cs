@@ -276,10 +276,10 @@ namespace MountainProjectBot
         {
             Route finalResult = null; //Todo: in the future support returning multiple routes (but only if there are multiple grades in the title? Maybe only if all of the routes' full names are in the title?)
 
-            List<Grade> postGrades = GetPossibleGrades(postTitle);
+            List<Grade> postGrades = Grade.ParseString(postTitle);
             if (postGrades.Count > 0)
             {
-                Console.WriteLine($"    Recognized grade(s): {string.Join(" | ", postGrades.Select(p => p.Value))}");
+                Console.WriteLine($"    Recognized grade(s): {string.Join(" | ", postGrades.Select(p => p.OriginalValue))}");
                 List<Route> possibleResults = new List<Route>();
                 List<string> possibleRouteNames = GetPossibleRouteNames(postTitle);
                 Console.WriteLine($"    Recognized name(s): {string.Join(" | ", possibleRouteNames)}");
@@ -329,56 +329,6 @@ namespace MountainProjectBot
             }
 
             return finalResult;
-        }
-
-        public static List<Grade> GetPossibleGrades(string postTitle)
-        {
-            List<Grade> result = new List<Grade>();
-
-            //FIRST, attempt to match grades with a "5." or "V" prefix
-            Regex ratingRegex = new Regex(@"((5\.)\d+[+-]?[a-dA-D]?([\/\\\-][a-dA-D])?)|([vV]\d+([\/\\\-]\d+)?)");
-            foreach (Match possibleGrade in ratingRegex.Matches(postTitle))
-            {
-                string matchedGrade = possibleGrade.Value;
-
-                if (matchedGrade.ToLower().Contains("v"))
-                {
-                    if (result.Find(p => p.System == GradeSystem.Hueco && p.Value == matchedGrade) == null)
-                        result.Add(new Grade(GradeSystem.Hueco, matchedGrade));
-                }
-                else
-                {
-                    if (result.Find(p => p.System == GradeSystem.YDS && p.Value == matchedGrade) == null)
-                        result.Add(new Grade(GradeSystem.YDS, matchedGrade));
-                }
-            }
-
-            //SECOND, attempt to match YDS grades with no prefix, but with a subgrade (eg 10b or 9+)
-            ratingRegex = new Regex(@"\d+([+-]|[a-dA-D])([\/\\\-][a-dA-D])?(?!\d)");
-            foreach (Match possibleGrade in ratingRegex.Matches(postTitle))
-            {
-                string matchedGrade = possibleGrade.Value;
-                matchedGrade = Grade.RectifyGradeValue(GradeSystem.YDS, matchedGrade);
-
-                if (result.Find(p => p.System == GradeSystem.YDS && p.Value == matchedGrade) == null)
-                    result.Add(new Grade(GradeSystem.YDS, matchedGrade));
-            }
-
-            //THIRD, attempt to match any remaining numbers as a grade (eg 10)
-            if (result.Count == 0)
-            {
-                ratingRegex = new Regex(@"(?<=\s|^)\d+(?=\s|$)");
-                foreach (Match possibleGrade in ratingRegex.Matches(postTitle))
-                {
-                    string matchedGrade = possibleGrade.Value;
-                    matchedGrade = Grade.RectifyGradeValue(GradeSystem.YDS, matchedGrade);
-
-                    if (result.Find(p => p.System == GradeSystem.YDS && p.Value == matchedGrade) == null)
-                        result.Add(new Grade(GradeSystem.YDS, matchedGrade));
-                }
-            }
-
-            return result;
         }
 
         public static List<string> GetPossibleRouteNames(string postTitle)

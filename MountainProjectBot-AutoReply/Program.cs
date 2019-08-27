@@ -173,6 +173,11 @@ namespace MountainProjectBot_AutoReply
                         Console.WriteLine($"/r/{post.SubredditName}");
 
                         Console.ForegroundColor = ConsoleColor.Red;
+                        Console.Write("\tPOSTER: ");
+                        Console.ForegroundColor = ConsoleColor.Gray;
+                        Console.WriteLine($"{post.AuthorName}");
+
+                        Console.ForegroundColor = ConsoleColor.Red;
                         Console.Write("\t(Post is ");
                         Console.ForegroundColor = ConsoleColor.Gray;
                         Console.Write(Math.Round((DateTime.UtcNow - post.CreatedUTC).TotalMinutes, 2).ToString());
