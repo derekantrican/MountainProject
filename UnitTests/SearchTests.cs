@@ -115,16 +115,46 @@ namespace UnitTests
 
         [DataTestMethod]
         [DataRow("u/ReeseSeePoo: Psyched and thankful atop The Drifter boulder via High Plains Drifter (V7).", GradeSystem.Hueco, "V7")]
-        [DataRow("Public Hanging 5.11c/d Sport, Holcomb Valley Pinnacles - Big Bear Lake, CA", GradeSystem.YDS, "5.11c/d")]
+        [DataRow("Public Hanging 5.11c/d Sport, Holcomb Valley Pinnacles - Big Bear Lake, CA", GradeSystem.YDS, "5.11c-5.11d")]
         [DataRow("Hanging out at the second belay station of my first multipitch climb! The Trough 5.4 6 pitches, Taquitz Rock, Idyllwild, CA", GradeSystem.YDS, "5.4")]
         [DataRow("Battling up a Squamish offwidth - Split Beaver 10b", GradeSystem.YDS, "5.10b")]
-        [DataRow("Checkerboard V7/8, Buttermilks - Near Bishop, CA", GradeSystem.Hueco, "V7/8")]
+        [DataRow("Checkerboard V7/8, Buttermilks - Near Bishop, CA", GradeSystem.Hueco, "V7-V8")]
+        [DataRow("5.11a", GradeSystem.YDS, "5.11a")]
+        [DataRow("5.11-", GradeSystem.YDS, "5.11-")]
+        [DataRow("5.11+", GradeSystem.YDS, "5.11+")]
+        [DataRow("5.11-/+", GradeSystem.YDS, "5.11-/5.11+")]
+        [DataRow(@"5.11-\+", GradeSystem.YDS, "5.11-/5.11+")]
+        [DataRow("5.11+/-", GradeSystem.YDS, "5.11-/5.11+")]
+        [DataRow(@"5.11+\-", GradeSystem.YDS, "5.11-/5.11+")]
+        [DataRow("10b", GradeSystem.YDS, "5.10b")]
+        [DataRow("10B", GradeSystem.YDS, "5.10b")]
+        [DataRow("11c-d", GradeSystem.YDS, "5.11c-5.11d")]
+        [DataRow("11C-D", GradeSystem.YDS, "5.11c-5.11d")]
+        [DataRow("11c/d", GradeSystem.YDS, "5.11c-5.11d")]
+        [DataRow(@"11c\d", GradeSystem.YDS, "5.11c-5.11d")]
+        [DataRow("5.10-5.11", GradeSystem.YDS, "5.10-5.11")]
+        [DataRow("5.10/5.11", GradeSystem.YDS, "5.10-5.11")]
+        [DataRow(@"5.10\5.11", GradeSystem.YDS, "5.10-5.11")]
+        [DataRow("5.10a-5.10c", GradeSystem.YDS, "5.10a-5.10c")]
+        [DataRow("V1", GradeSystem.Hueco, "V1")]
+        [DataRow("v1", GradeSystem.Hueco, "V1")]
+        [DataRow("V1-2", GradeSystem.Hueco, "V1-V2")]
+        [DataRow("V1/2", GradeSystem.Hueco, "V1-V2")]
+        [DataRow(@"V1\2", GradeSystem.Hueco, "V1-V2")]
+        [DataRow("V2+", GradeSystem.Hueco, "V2+")]
+        [DataRow("V3-", GradeSystem.Hueco, "V3-")]
+        [DataRow("V2-V3", GradeSystem.Hueco, "V2-V3")]
+        [DataRow("V2-/+", GradeSystem.Hueco, "V2-/V2+")]
+        [DataRow(@"V2-\+", GradeSystem.Hueco, "V2-/V2+")]
+        [DataRow("V2+/-", GradeSystem.Hueco, "V2-/V2+")]
+        [DataRow(@"V2+\-", GradeSystem.Hueco, "V2-/V2+")]
         public void TestRouteGradeParse(string inputGrade, GradeSystem expectedSystem, string expectedValue)
         {
             Grade expectedGrade = new Grade(expectedSystem, expectedValue);
-            Grade parsedGrade = BotReply.GetPossibleGrades(inputGrade)[0]; //Todo: expand test for multiple grades found
+            Grade parsedGrade = Grade.ParseString(inputGrade)[0]; //Todo: expand test for multiple grades found
 
-            Assert.AreEqual(expectedGrade, parsedGrade);
+            Assert.AreEqual(expectedSystem, parsedGrade.System);
+            Assert.AreEqual(expectedValue, parsedGrade.ToString(false));
         }
 
         object[,] testCriteria_gradeEquality = new object[,]
@@ -148,7 +178,7 @@ namespace UnitTests
             {"/route/105734687/the-great-roof", GradeSystem.YDS, @"5.10a\c"}, //5.10a\c should equal 5.10b
             {"/route/105965166/public-hanging", GradeSystem.YDS, "5.11c/d"}, //5.11c/d should equal 5.11c/d
             {"/route/105965166/public-hanging", GradeSystem.YDS, @"5.11c\d"}, //5.11c\d should equal 5.11c/d
-            { "/route/105965166/public-hanging", GradeSystem.YDS, "5.11c-d"} //5.11c-d should equal 5.11c/d
+            {"/route/105965166/public-hanging", GradeSystem.YDS, "5.11c-d"} //5.11c-d should equal 5.11c/d
         };
 
         [TestMethod]

@@ -279,7 +279,7 @@ namespace MountainProjectBot
             List<Grade> postGrades = Grade.ParseString(postTitle);
             if (postGrades.Count > 0)
             {
-                Console.WriteLine($"    Recognized grade(s): {string.Join(" | ", postGrades.Select(p => p.OriginalValue))}");
+                Console.WriteLine($"    Recognized grade(s): {string.Join(" | ", postGrades)}");
                 List<Route> possibleResults = new List<Route>();
                 List<string> possibleRouteNames = GetPossibleRouteNames(postTitle);
                 Console.WriteLine($"    Recognized name(s): {string.Join(" | ", possibleRouteNames)}");
