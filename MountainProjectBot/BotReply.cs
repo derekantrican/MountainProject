@@ -333,6 +333,10 @@ namespace MountainProjectBot
 
         public static List<string> GetPossibleRouteNames(string postTitle)
         {
+            //Todo: this method should also filter out locations as possible route names (of the form ", POSSIBLENAME"). 
+            //For instance, in the postTitle "Evening session on Dasani 6-. Morrison, Colorado" Colorado should not be 
+            //a possible name. This may be difficult because there could also be "My first 12, Jade" (maybe that's ok, though)
+
             List<string> result = new List<string>();
 
             Regex routeGradeRegex = new Regex(@"((5\.)\d+[+-]?[a-dA-D]?([\/\\\-][a-dA-D])?)|([vV]\d+([\/\\\-]\d+)?)");
