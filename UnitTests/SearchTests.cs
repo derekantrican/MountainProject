@@ -3,11 +3,10 @@ using MountainProjectAPI;
 using MountainProjectBot;
 using System;
 using System.IO;
+using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
-using System.Threading.Tasks;
 using static MountainProjectAPI.Grade;
-using static MountainProjectAPI.Route;
 
 namespace UnitTests
 {
@@ -164,7 +163,7 @@ namespace UnitTests
             {"/route/106832048/swing-dance", GradeSystem.Hueco, "V6-8"}, //V6-8 should equal V7
             {"/route/106832048/swing-dance", GradeSystem.Hueco, "V6/8"}, //V6/8 should equal V7
             {"/route/106832048/swing-dance", GradeSystem.Hueco, @"V6\8"}, //V6\8 should equal V7
-            {"/route/107371613/pookie", GradeSystem.Hueco, @"V7"}, //V7 should equal V7-
+            {"/route/107371613/pookie", GradeSystem.Hueco, @"V7"}, //V7 should equal V7-8
             {"/route/107362365/chevy", GradeSystem.Hueco, @"V7"}, //V7 should equal V7+
             {"/route/106129151/checkerboard", GradeSystem.Hueco, "V7/8"}, //V7/8 should equal V7-8
             {"/route/106129151/checkerboard", GradeSystem.Hueco, @"V7\8"}, //V7\8 should equal V7-8
@@ -191,12 +190,14 @@ namespace UnitTests
                 string inputUrl = testCriteria_gradeEquality[i, 0].ToString();
                 GradeSystem gradeSystem = (GradeSystem)testCriteria_gradeEquality[i, 1];
                 string inputGrade = testCriteria_gradeEquality[i, 2].ToString();
+                Grade expectedGrade = Grade.ParseString(inputGrade)[0];
 
                 Route route = MountainProjectDataSearch.GetItemWithMatchingUrl(Utilities.MPBASEURL + inputUrl) as Route;
-                Grade routeGrade = route.Grades.Find(p => p.System == gradeSystem);
+                //Grade routeGrade = route.Grades.Find(p => p.System == gradeSystem);
 
-                Assert.IsNotNull(routeGrade);
-                Assert.IsTrue(routeGrade.Equals(new Grade(gradeSystem, inputGrade), true, true));
+                //Assert.IsNotNull(routeGrade);
+                //Assert.IsTrue(routeGrade.Equals(new Grade(gradeSystem, inputGrade), true, true));
+                Assert.IsTrue(route.Grades.Any(g => expectedGrade.Equals(g, true, true)));
             }
         }
 

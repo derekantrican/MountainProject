@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
@@ -185,11 +186,33 @@ namespace MountainProjectAPI
 
                 if (result.Count == 0)
                 {
-                    //FIFTH, attempt to match any remaining numbers as a grade (eg 10) that don't have "pitch" around
-                    ratingRegex = new Regex(@"(?<!pitch\s+)\d+(?!\s+pitch)");
-                    foreach (Match possibleGrade in ratingRegex.Matches(input))
+                    //FIFTH, attempt to match any remaining numbers as a grade (eg 10) that don't have certain words around
+                    string[] dontMatchBefore = { };                                                //Don't match these REGEX before
+                    string[] dontMatchAfter = { "st", "rd", "nd", "th", "m", "ft" };               //Don't match these REGEX after
+                    string[] dontMatchBeforeOrAfter = { "pitch", "hour", "day", "month", "year" }; //Don't match these WORDS before or after
+
+                    //Add month names and month abbreviations to the "dontMatchBefore" array
+                    string[] monthNames = new CultureInfo("en-US").DateTimeFormat.MonthGenitiveNames.Where(x => !string.IsNullOrEmpty(x)).ToArray();
+                    string[] monthAbbr = new CultureInfo("en-US").DateTimeFormat.AbbreviatedMonthNames.Where(x => !string.IsNullOrEmpty(x)).ToArray();
+                    dontMatchBefore = dontMatchBefore.Concat(monthNames.Select(m => { return m + @"\s+"; })).Concat(monthAbbr.Select(m => { return m + @"\s+"; })).ToArray();
+
+                    //Expand dontMatchBefore and dontMatchAfter arrays to include dontMatchBeforeOrAfter
+                    dontMatchBefore = dontMatchBefore.Concat(dontMatchBeforeOrAfter.Select(w => { return w + @"\s+"; })).ToArray();
+                    dontMatchAfter = dontMatchAfter.Concat(dontMatchBeforeOrAfter.Select(w => { return @"\s+" + w; })).ToArray();
+
+                    string regexString = $@"(?<!{string.Join(@"|", dontMatchBefore)})" + //Exclude matches with dontMatchWords BEFORE number
+                                          //@"(?<=\s)\d+(?=\s)(?![a-dA-D]" +                    //Match number as long as it is surrounded by spaces
+                                          @"(?<=\s)\d+" +                                //Match a number
+                                          @"(?![a-dA-D\/\\]" +                           //Exclude matches where it is immediately followed by some characters
+                                         $@"|{string.Join(@"|", dontMatchAfter)}" +      //Exclude matches with dontMatchWords AFTER number
+                                          @"|\d)";                                       //Make sure the match isn't part of an unmatched number (eg "30th" doesn't match "3")
+
+                    foreach (Match possibleGrade in Regex.Matches(input, regexString, RegexOptions.IgnoreCase))
                     {
-                        string matchedGrade = possibleGrade.Value;
+                        string matchedGrade = possibleGrade.Value; //Todo: need to remove values above 20
+                        if (Convert.ToInt32(matchedGrade) > 20) //Don't allow numbers above 20
+                            continue;
+
                         Grade parsedGrade = new Grade(GradeSystem.YDS, matchedGrade);
 
                         if (parsedGrade != null && !result.Any(g => g.Equals(parsedGrade)))
@@ -258,16 +281,45 @@ namespace MountainProjectAPI
 
                 string startSub = RangeStart.Replace(BaseValue, "");
                 string endSub = RangeEnd.Replace(BaseValue, "");
-                if (startSub == "-")
+
+                int rangeStart = Convert.ToInt32(Regex.Match(RangeStart, @"\d+").Value);
+                int rangeEnd = Convert.ToInt32(Regex.Match(RangeEnd, @"\d+").Value);
+                for (int i = rangeStart; i <= rangeEnd; i++)
                 {
-                    result.Add(RangeStart);
-                    result.Add(BaseValue);
-                    result.Add(RangeEnd);
-                }
-                else
-                {
-                    for (char c = Convert.ToChar(startSub); c <= Convert.ToChar(endSub); c++)
-                        result.Add(BaseValue + c);
+                    if (startSub == "" || endSub == "")
+                    {
+                        if (System == GradeSystem.Hueco)
+                            result.Add($"V{i}");
+                        else if (System == GradeSystem.YDS)
+                            result.Add($"5.{i}");
+                    }
+                    else if (startSub == "-")
+                    {
+                        if (System == GradeSystem.Hueco)
+                        {
+                            result.Add($"V{i}-");
+                            result.Add($"V{i}");
+                            result.Add($"V{i}+");
+                        }
+                        else if (System == GradeSystem.YDS)
+                        {
+                            result.Add($"5.{i}-");
+                            result.Add($"5.{i}");
+                            result.Add($"5.{i}+");
+                        }
+                    }
+                    else
+                    {
+                        char startChar = i == rangeStart ? startSub[0] : 'a';
+                        char endChar = i == rangeEnd ? endSub[0] : 'd';
+                        for (char c = startChar; c <= endChar; c++)
+                        {
+                            if (System == GradeSystem.Hueco)
+                                result.Add($"V{i}{c}");
+                            else if (System == GradeSystem.YDS)
+                                result.Add($"5.{i}{c}");
+                        }
+                    }
                 }
 
                 return result;
@@ -283,11 +335,11 @@ namespace MountainProjectAPI
                 return true;
 
             //Do range matching (eg "5.11a/b" or "5.11a-c" should both match "5.11b")
-            if (allowRange && this.GetRangeValues().Contains(otherGrade.Value))
+            if (allowRange && this.GetRangeValues().Intersect(otherGrade.GetRangeValues()).Any())
                 return true;
 
             //Do base-only matching (eg 5.10, 5.10a, 5.10+, 5.10b/c should all match "5.10")
-            if (allowBaseOnlyMatch && this.BaseValue == Regex.Replace(otherGrade.Value, @"[a-d][\/\\\-][a-d]|\d+[\/\\\-]\d+", ""))
+            if (allowBaseOnlyMatch && this.BaseValue == otherGrade.BaseValue)
                 return true;
             //{
             //    //string baseGrade = Regex.Match(otherGrade.Value, @"5\.\d+|[vV]\d+").Value; //Todo: this is correct, but fails for fontainbleau types

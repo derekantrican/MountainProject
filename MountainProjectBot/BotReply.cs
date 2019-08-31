@@ -367,7 +367,7 @@ namespace MountainProjectBot
                 result.Add(possibleRouteName.Trim());
 
             result = result.Distinct().ToList();
-            result.RemoveAll(p => p.Length < 4); //Remove any short "names" (eg "My" or "One")
+            result.RemoveAll(p => p.Length < 3); //Remove any short "names" (eg "My")
             result.RemoveAll(p => connectingWords.Contains(p.ToLower())); //Remove any "possible names" that are only a connecting word (eg "the")
             result.RemoveAll(p => Utilities.IsNumber(p));
 
