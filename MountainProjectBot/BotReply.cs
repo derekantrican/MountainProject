@@ -335,7 +335,12 @@ namespace MountainProjectBot
         {
             //Todo: this method should also filter out locations as possible route names (of the form ", POSSIBLENAME"). 
             //For instance, in the postTitle "Evening session on Dasani 6-. Morrison, Colorado" Colorado should not be 
-            //a possible name. This may be difficult because there could also be "My first 12, Jade" (maybe that's ok, though)
+            //a possible name. This may be difficult because there could also be "My first 12, Jade" (maybe that's ok, though).
+            //Maybe in a series of "POSSIBLE_NAME, POSSIBLE_NAME, POSSIBLE_NAME" (possible names separated by commas and optional
+            //spaces) we only take the first one in the list. For instance, in this:
+            //"Sex Cave Sector of the Daliwood Boulders, in Dali, Yunnan Province, China" we should only consider
+            //"Sex Cave Sector of the Daliwood Boulders" (and that even below will get broken into "Sex Cave Sector" and
+            //"Daliwood Boulders" for alternate matches
 
             List<string> result = new List<string>();
 
