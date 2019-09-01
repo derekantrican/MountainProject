@@ -286,7 +286,7 @@ namespace MountainProjectBot
                 foreach (string possibleRouteName in possibleRouteNames)
                 {
                     SearchResult searchResult = MountainProjectDataSearch.Search(possibleRouteName, new SearchParameters() { OnlyRoutes = true });
-                    if (!searchResult.IsEmpty() && searchResult.AllResults.Count < 100) //If the number of matching results is greater than 100, it was probably a very generic word for a search (eg "There") //Todo: once I unit test this, experiment with dropping this value to 100
+                    if (!searchResult.IsEmpty() && searchResult.AllResults.Count < 50) //If the number of matching results is greater than 50, it was probably a very generic word for a search (eg "There") //Todo: once I unit test this, experiment with dropping this value to 100
                     {
                         foreach (Route route in searchResult.AllResults.Cast<Route>())
                         {
@@ -307,14 +307,14 @@ namespace MountainProjectBot
                     else if (filteredResults.Count > 1)
                     {
                         //Prioritize routes where one of the parents (locations) is also in the post title
-                        List<Route> routesWithMatchingLocations = filteredResults.Where(r => r.Parents.Find(p => postTitle.ToLower().Contains(p.Name.ToLower())) != null).ToList();
+                        List<Route> routesWithMatchingLocations = filteredResults.Where(r => r.Parents.Any(p => postTitle.ToLower().Contains(p.Name.ToLower()))).ToList();
                         if (routesWithMatchingLocations.Count > 0)
                             filteredResults = routesWithMatchingLocations;
                     }
                     else
                     {
                         //Prioritize routes where one of the parents (locations) is also in the post title
-                        List<Route> routesWithMatchingLocations = possibleResults.Where(r => r.Parents.Find(p => postTitle.ToLower().Contains(p.Name.ToLower())) != null).ToList();
+                        List<Route> routesWithMatchingLocations = possibleResults.Where(r => r.Parents.Any(p => postTitle.ToLower().Contains(p.Name.ToLower()))).ToList();
                         if (routesWithMatchingLocations.Count > 0)
                             filteredResults = routesWithMatchingLocations;
                     }
@@ -340,7 +340,7 @@ namespace MountainProjectBot
             //spaces) we only take the first one in the list. For instance, in this:
             //"Sex Cave Sector of the Daliwood Boulders, in Dali, Yunnan Province, China" we should only consider
             //"Sex Cave Sector of the Daliwood Boulders" (and that even below will get broken into "Sex Cave Sector" and
-            //"Daliwood Boulders" for alternate matches
+            //"Daliwood Boulders" for alternate matches)
 
             List<string> result = new List<string>();
 

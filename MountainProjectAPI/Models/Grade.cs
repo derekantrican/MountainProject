@@ -155,7 +155,13 @@ namespace MountainProjectAPI
             {
                 //FOURTH, attempt to match YDS grades with no prefix, but with a subgrade (eg 10b or 9+)
                 //For numbers below 10, if it is followed by a letter grade we won't match it (likely a French grade)
-                ratingRegex = new Regex(@"\d+[\/\\\-]\d+|\d+[a-dA-D][\/\\\-][a-dA-D]|\d+(-[\/\\]\+|\+[\/\\]-)|\d{2,}[a-dA-D]|\d+[+-]");
+                string regexString = @"(?<!\\|\/|\d)\d+[\/\\\-]\d+(?!\\|\/|\d)|" + //First format option: 5/7 (where there isn't a date - other slashes or a partial date)
+                                     @"\d+[a-dA-D][\/\\\-][a-dA-D]|" +             //Second format option: 6d/7a
+                                     @"\d+(-[\/\\]\+|\+[\/\\]-)|" +                //Third format option: variations on 6-/+ or 6+/-
+                                     @"\d{2,}[a-dA-D]|" +                          //Fourth format option: 10a (but not single digits, as YDS uses -/+ below 10 but French uses a-d below 10)
+                                     @"\d+[+-]";                                   //Fifth format option: 9- or 9+
+
+                ratingRegex = new Regex(@"(?<!\\|\/|\d)\d+[\/\\\-]\d+(?!\\|\/|\d)|\d+[a-dA-D][\/\\\-][a-dA-D]|\d+(-[\/\\]\+|\+[\/\\]-)|\d{2,}[a-dA-D]|\d+[+-]");
                 foreach (Match possibleGrade in ratingRegex.Matches(input))
                 {
                     string matchedGrade = possibleGrade.Value;
@@ -200,12 +206,11 @@ namespace MountainProjectAPI
                     dontMatchBefore = dontMatchBefore.Concat(dontMatchBeforeOrAfter.Select(w => { return w + @"\s+"; })).ToArray();
                     dontMatchAfter = dontMatchAfter.Concat(dontMatchBeforeOrAfter.Select(w => { return @"\s+" + w; })).ToArray();
 
-                    string regexString = $@"(?<!{string.Join(@"|", dontMatchBefore)})" + //Exclude matches with dontMatchWords BEFORE number
-                                          //@"(?<=\s)\d+(?=\s)(?![a-dA-D]" +                    //Match number as long as it is surrounded by spaces
-                                          @"(?<=\s)\d+" +                                //Match a number
-                                          @"(?![a-dA-D\/\\]" +                           //Exclude matches where it is immediately followed by some characters
-                                         $@"|{string.Join(@"|", dontMatchAfter)}" +      //Exclude matches with dontMatchWords AFTER number
-                                          @"|\d)";                                       //Make sure the match isn't part of an unmatched number (eg "30th" doesn't match "3")
+                    regexString = $@"(?<!{string.Join(@"|", dontMatchBefore)})" + //Exclude matches with dontMatchWords BEFORE number
+                                   @"(?<=\s)\d+" +                                //Match a number
+                                   @"(?![a-dA-D\/\\]" +                           //Exclude matches where it is immediately followed by some characters
+                                  $@"|{string.Join(@"|", dontMatchAfter)}" +      //Exclude matches with dontMatchWords AFTER number
+                                   @"|\d)";                                       //Make sure the match isn't part of an unmatched number (eg "30th" doesn't match "3")
 
                     foreach (Match possibleGrade in Regex.Matches(input, regexString, RegexOptions.IgnoreCase))
                     {

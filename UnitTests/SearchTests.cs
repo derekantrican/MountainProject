@@ -193,10 +193,7 @@ namespace UnitTests
                 Grade expectedGrade = Grade.ParseString(inputGrade)[0];
 
                 Route route = MountainProjectDataSearch.GetItemWithMatchingUrl(Utilities.MPBASEURL + inputUrl) as Route;
-                //Grade routeGrade = route.Grades.Find(p => p.System == gradeSystem);
 
-                //Assert.IsNotNull(routeGrade);
-                //Assert.IsTrue(routeGrade.Equals(new Grade(gradeSystem, inputGrade), true, true));
                 Assert.IsTrue(route.Grades.Any(g => expectedGrade.Equals(g, true, true)));
             }
         }
