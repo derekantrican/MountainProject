@@ -286,7 +286,7 @@ namespace MountainProjectBot
                 foreach (string possibleRouteName in possibleRouteNames)
                 {
                     SearchResult searchResult = MountainProjectDataSearch.Search(possibleRouteName, new SearchParameters() { OnlyRoutes = true });
-                    if (!searchResult.IsEmpty() && searchResult.AllResults.Count < 50) //If the number of matching results is greater than 50, it was probably a very generic word for a search (eg "There") //Todo: once I unit test this, experiment with dropping this value to 100
+                    if (!searchResult.IsEmpty() && searchResult.AllResults.Count < 75) //If the number of matching results is greater than 75, it was probably a very generic word for a search (eg "There") //Todo: once I unit test this, experiment with dropping this value to 100
                     {
                         foreach (Route route in searchResult.AllResults.Cast<Route>())
                         {
@@ -298,6 +298,8 @@ namespace MountainProjectBot
 
                 if (possibleResults.Count > 0)
                 {
+                    //Todo: maybe we should prioritize "route full name in the title" or "location in the title" before we discard generic matches?
+
                     //Prioritize routes where the full name is in the post title
                     //(Additionally, we could also prioritize how close - within the post title - the name is to the rating)
                     List<Route> filteredResults = possibleResults.Where(p => Utilities.StringsMatch(Utilities.FilterStringForMatch(p.Name), Utilities.FilterStringForMatch(postTitle))).ToList();
