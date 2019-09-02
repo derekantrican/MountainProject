@@ -139,7 +139,7 @@ namespace MountainProjectBot_AutoReply
             {
                 List<Post> subredditPosts = await redditHelper.GetPosts(subreddit);
                 subredditPosts.RemoveAll(p => p.IsSelfPost);
-                subredditPosts.RemoveAll(p => (DateTime.UtcNow - p.CreatedUTC).TotalMinutes > 5); //Only check recent posts
+                subredditPosts.RemoveAll(p => (DateTime.UtcNow - p.CreatedUTC).TotalMinutes > 10); //Only check recent posts
                 //subredditPosts.RemoveAll(p => (DateTime.Now - p.Created).TotalMinutes < 5); //Wait till posts are 5 minutes old (gives poster time to add a comment with a MP link)
                 subredditPosts = RemoveTotallyBlacklisted(subredditPosts); //Remove posts from users who don't want the bot to automatically reply to them
                 subredditPosts = RemoveAlreadyRepliedTo(subredditPosts);
@@ -200,14 +200,23 @@ namespace MountainProjectBot_AutoReply
                         Console.Write("\nSHOULD I REPLY (y/n)? ");
                         Console.ForegroundColor = ConsoleColor.Gray;
 
-                        if (Console.ReadLine() == "y")
+                        string response = null;
+                        try
+                        {
+                            response = Reader.ReadLine(10 * 60 * 1000); //Try to get a response, but give up after 10 min (credit: https://stackoverflow.com/a/18342182/2246411)
+                        }
+                        catch (TimeoutException)
+                        {
+                        }
+
+                        if (response == "y")
                         {
                             string reply = BotReply.GetFormattedString(finalResult);
                             reply += Markdown.HRule;
                             reply += BotReply.GetBotLinks(post);
 
                             await post.CommentAsync(reply);
-                            Console.WriteLine($"    Auto-replied to post {post.Id}");
+                            Console.WriteLine($"\n    Auto-replied to post {post.Id}");
                         }
                     }
                     else
@@ -292,6 +301,43 @@ namespace MountainProjectBot_AutoReply
             Console.WriteLine("Press any key to exit");
             Console.Read();
             Environment.Exit(0);
+        }
+    }
+
+    public class Reader
+    {
+        private static Thread inputThread;
+        private static AutoResetEvent getInput, gotInput;
+        private static string input;
+
+        static Reader()
+        {
+            getInput = new AutoResetEvent(false);
+            gotInput = new AutoResetEvent(false);
+            inputThread = new Thread(reader);
+            inputThread.IsBackground = true;
+            inputThread.Start();
+        }
+
+        private static void reader()
+        {
+            while (true)
+            {
+                getInput.WaitOne();
+                input = Console.ReadLine();
+                gotInput.Set();
+            }
+        }
+
+        // omit the parameter to read a line without a timeout
+        public static string ReadLine(int timeOutMillisecs = Timeout.Infinite)
+        {
+            getInput.Set();
+            bool success = gotInput.WaitOne(timeOutMillisecs);
+            if (success)
+                return input;
+            else
+                throw new TimeoutException("User did not provide input within the timelimit.");
         }
     }
 
