@@ -129,7 +129,7 @@ namespace MountainProjectBot
                 result += Markdown.NewLine;
 
                 result += $"Type: {string.Join(", ", inputRoute.Types)}" + Markdown.NewLine;
-                result += $"Grade: {inputRoute.GetRouteGrade(parameters)}" + Markdown.NewLine;
+                result += $"Grade: {inputRoute.GetRouteGrade(parameters).ToString()}" + Markdown.NewLine;
 
                 if (inputRoute.Height != null && inputRoute.Height.Value != 0)
                 {

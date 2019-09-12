@@ -362,10 +362,15 @@ namespace MountainProjectAPI
             {
                 if (IsRange)
                 {
-                    if (RangeStart.Contains("-")) //5.9-/+
-                        return $"{RangeStart}/{RangeEnd} ({System})";
+                    string rangeStart = RangeStart;
+                    string rangeEnd = RangeEnd;
+                    if (rangeEnd.Contains(BaseValue))
+                        rangeEnd = rangeEnd.Replace(BaseValue, "");
+
+                    if (rangeStart.Contains("-")) //5.9-/+
+                        return $"{rangeStart}/{rangeEnd} ({System})";
                     else
-                        return $"{RangeStart}-{RangeEnd} ({System})";
+                        return $"{rangeStart}-{rangeEnd} ({System})";
                 }
                 else
                     return $"{Value} ({System})";
@@ -374,10 +379,15 @@ namespace MountainProjectAPI
             {
                 if (IsRange)
                 {
-                    if (RangeStart.Contains("-")) //5.9-/+
-                        return $"{RangeStart}/{RangeEnd}";
+                    string rangeStart = RangeStart;
+                    string rangeEnd = RangeEnd;
+                    if (rangeEnd.Contains(BaseValue))
+                        rangeEnd = rangeEnd.Replace(BaseValue, "");
+
+                    if (rangeStart.Contains("-")) //5.9-/+
+                        return $"{rangeStart}/{rangeEnd}";
                     else
-                        return $"{RangeStart}-{RangeEnd}";
+                        return $"{rangeStart}-{rangeEnd}";
                 }
                 else
                     return Value;

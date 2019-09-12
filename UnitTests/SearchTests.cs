@@ -30,7 +30,8 @@ namespace UnitTests
             { "Lifeline, Portland", "/route/113696621/lifeline" }, //Location that will likely match something else first ("Portland" should be UK but more likely matches Oregon)
             { "Sin Gaz", "/route/108244424/sin-gaz" }, //The text "singaz" is contained by a higher popularity route. This is more a test for "DetermineBestMatch"
             { "East Ridge", "/route/105848762/east-ridge" }, //"East Ridge" is contained in the text "Northeast Ridges and Valleys"
-            { "East Ridge, Mt Temple", "/route/106997654/east-ridge" } //Todo: in the future support "Mt" vs "Mount"
+            { "East Ridge, Mt Temple", "/route/106997654/east-ridge" }, //Todo: in the future support "Mt" vs "Mount"
+            { "East Face of Pingora", "/route/105827735/east-face-left-side-cracks" } //Location also has a route called "Northeast face" with a higher priority
         };
 
         [TestMethod]
@@ -114,27 +115,27 @@ namespace UnitTests
 
         [DataTestMethod]
         [DataRow("u/ReeseSeePoo: Psyched and thankful atop The Drifter boulder via High Plains Drifter (V7).", GradeSystem.Hueco, "V7")]
-        [DataRow("Public Hanging 5.11c/d Sport, Holcomb Valley Pinnacles - Big Bear Lake, CA", GradeSystem.YDS, "5.11c-5.11d")]
+        [DataRow("Public Hanging 5.11c/d Sport, Holcomb Valley Pinnacles - Big Bear Lake, CA", GradeSystem.YDS, "5.11c-d")]
         [DataRow("Hanging out at the second belay station of my first multipitch climb! The Trough 5.4 6 pitches, Taquitz Rock, Idyllwild, CA", GradeSystem.YDS, "5.4")]
         [DataRow("Battling up a Squamish offwidth - Split Beaver 10b", GradeSystem.YDS, "5.10b")]
         [DataRow("Checkerboard V7/8, Buttermilks - Near Bishop, CA", GradeSystem.Hueco, "V7-V8")]
         [DataRow("5.11a", GradeSystem.YDS, "5.11a")]
         [DataRow("5.11-", GradeSystem.YDS, "5.11-")]
         [DataRow("5.11+", GradeSystem.YDS, "5.11+")]
-        [DataRow("5.11-/+", GradeSystem.YDS, "5.11-/5.11+")]
-        [DataRow(@"5.11-\+", GradeSystem.YDS, "5.11-/5.11+")]
-        [DataRow("5.11+/-", GradeSystem.YDS, "5.11-/5.11+")]
-        [DataRow(@"5.11+\-", GradeSystem.YDS, "5.11-/5.11+")]
+        [DataRow("5.11-/+", GradeSystem.YDS, "5.11-/+")]
+        [DataRow(@"5.11-\+", GradeSystem.YDS, "5.11-/+")]
+        [DataRow("5.11+/-", GradeSystem.YDS, "5.11-/+")]
+        [DataRow(@"5.11+\-", GradeSystem.YDS, "5.11-/+")]
         [DataRow("10b", GradeSystem.YDS, "5.10b")]
         [DataRow("10B", GradeSystem.YDS, "5.10b")]
-        [DataRow("11c-d", GradeSystem.YDS, "5.11c-5.11d")]
-        [DataRow("11C-D", GradeSystem.YDS, "5.11c-5.11d")]
-        [DataRow("11c/d", GradeSystem.YDS, "5.11c-5.11d")]
-        [DataRow(@"11c\d", GradeSystem.YDS, "5.11c-5.11d")]
+        [DataRow("11c-d", GradeSystem.YDS, "5.11c-d")]
+        [DataRow("11C-D", GradeSystem.YDS, "5.11c-d")]
+        [DataRow("11c/d", GradeSystem.YDS, "5.11c-d")]
+        [DataRow(@"11c\d", GradeSystem.YDS, "5.11c-d")]
         [DataRow("5.10-5.11", GradeSystem.YDS, "5.10-5.11")]
         [DataRow("5.10/5.11", GradeSystem.YDS, "5.10-5.11")]
         [DataRow(@"5.10\5.11", GradeSystem.YDS, "5.10-5.11")]
-        [DataRow("5.10a-5.10c", GradeSystem.YDS, "5.10a-5.10c")]
+        [DataRow("5.10a-5.10c", GradeSystem.YDS, "5.10a-c")]
         [DataRow("V1", GradeSystem.Hueco, "V1")]
         [DataRow("v1", GradeSystem.Hueco, "V1")]
         [DataRow("V1-2", GradeSystem.Hueco, "V1-V2")]
@@ -143,10 +144,10 @@ namespace UnitTests
         [DataRow("V2+", GradeSystem.Hueco, "V2+")]
         [DataRow("V3-", GradeSystem.Hueco, "V3-")]
         [DataRow("V2-V3", GradeSystem.Hueco, "V2-V3")]
-        [DataRow("V2-/+", GradeSystem.Hueco, "V2-/V2+")]
-        [DataRow(@"V2-\+", GradeSystem.Hueco, "V2-/V2+")]
-        [DataRow("V2+/-", GradeSystem.Hueco, "V2-/V2+")]
-        [DataRow(@"V2+\-", GradeSystem.Hueco, "V2-/V2+")]
+        [DataRow("V2-/+", GradeSystem.Hueco, "V2-/+")]
+        [DataRow(@"V2-\+", GradeSystem.Hueco, "V2-/+")]
+        [DataRow("V2+/-", GradeSystem.Hueco, "V2-/+")]
+        [DataRow(@"V2+\-", GradeSystem.Hueco, "V2-/+")]
         public void TestRouteGradeParse(string inputGrade, GradeSystem expectedSystem, string expectedValue)
         {
             Grade expectedGrade = new Grade(expectedSystem, expectedValue);

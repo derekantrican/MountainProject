@@ -35,6 +35,7 @@ namespace MountainProjectBot_AutoReply
         static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
         static string repliedToPostsPath = @"RepliedToPosts.txt";
         static string blacklistedPath = @"..\..\MountainProjectBot\bin\BlacklistedUsers.txt";
+        static string sensedRepliesPath = @"SensedReplies.txt"; //TEMP
 
         static RedditHelper redditHelper = new RedditHelper();
 
@@ -184,12 +185,12 @@ namespace MountainProjectBot_AutoReply
                         Console.ForegroundColor = ConsoleColor.Red;
                         Console.WriteLine(" min old)");
 
-                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.ForegroundColor = ConsoleColor.Green;
                         Console.Write("\tRESULT: ");
                         Console.ForegroundColor = ConsoleColor.Gray;
                         Console.WriteLine(finalResult.ToString());
 
-                        Console.ForegroundColor = ConsoleColor.Red;
+                        Console.ForegroundColor = ConsoleColor.Green;
                         Console.Write("\tLOCATION: ");
                         Console.ForegroundColor = ConsoleColor.Gray;
                         List<MPObject> reversedParents = finalResult.Parents.ToList();
@@ -218,6 +219,8 @@ namespace MountainProjectBot_AutoReply
                             await post.CommentAsync(reply);
                             Console.WriteLine($"\n    Auto-replied to post {post.Id}");
                         }
+
+                        File.AppendAllLines(sensedRepliesPath, new List<string> { postTitle });
                     }
                     else
                         Console.WriteLine("    Nothing found");

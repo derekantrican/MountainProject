@@ -10,7 +10,7 @@ namespace MountainProjectBot
 {
     public class RedditHelper
     {
-        const string REDDITPREFIX = "https://reddit.com";
+        public const string REDDITPREFIX = "https://reddit.com";
         Reddit redditService;
         Dictionary<string, int> subredditNamesAndCommentAmounts = new Dictionary<string, int>()
         {
@@ -82,6 +82,11 @@ namespace MountainProjectBot
         public async Task<Comment> GetComment(Uri commentPermalink)
         {
             return await redditService.GetCommentAsync(new Uri(REDDITPREFIX + commentPermalink));
+        }
+
+        public async Task<Post> GetPost(string postId)
+        {
+            return await redditService.GetPostAsync(new Uri($"{REDDITPREFIX}/comments/{postId}"));
         }
 
         public async Task<Comment> ReplyToComment(Comment comment, string replyText)
