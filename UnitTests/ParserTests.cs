@@ -98,7 +98,7 @@ namespace UnitTests
 
         [DataTestMethod]
         [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", 0)] //Subdest areas don't have routes
-        [DataRow("/area/108184422/deception-wall", 17)] //Walls have routes
+        [DataRow("/area/108184422/deception-wall", 18)] //Walls have routes
         public void TestAreaRouteParse(string url, int expectedRoutes)
         {
             if (!url.Contains(Utilities.MPBASEURL))
@@ -224,7 +224,7 @@ namespace UnitTests
 
         [DataTestMethod]
         [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", "TR (2), Trad (1)")]
-        [DataRow("/area/108184422/deception-wall", "Sport (17)")]
+        [DataRow("/area/108184422/deception-wall", "TR (1), Sport (18)")]
         [DataRow("/route/111859673/side-dish", "")] //Statistics aren't generated for routes
         public void TestStatisticsParse(string url, string expectedStatistics)
         {
