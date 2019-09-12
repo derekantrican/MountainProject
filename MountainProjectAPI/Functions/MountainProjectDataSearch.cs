@@ -216,25 +216,38 @@ namespace MountainProjectAPI
         {
             allMatches = FilterBySearchParameters(allMatches, searchParameters);
 
-            //First priority: items where the name matches the search query exactly (but still case-insensitive)
-            List<MPObject> matchingItems = allMatches.Where(p => Utilities.StringsEqual(p.Name, searchQuery)).ToList();
+            if (allMatches.Count == 0)
+                return null;
+
+            //First priority: items where the name matches the search query exactly CASE SENSITIVE
+            List<MPObject> matchingItems = allMatches.Where(p => Utilities.StringsEqual(searchQuery, p.Name, false)).ToList();
             if (matchingItems.Count > 0)
                 return FilterByPopularity(matchingItems);
 
-            //Second priority: items where the name matches the FILTERED (no symbols or spaces, case insensitive) search query exactly
-            matchingItems = allMatches.Where(p => Utilities.StringsEqual(p.NameForMatch, Utilities.FilterStringForMatch(searchQuery))).ToList();
+            //Second priority: items where the name matches the search query exactly (but case-insensitive)
+            matchingItems = allMatches.Where(p => Utilities.StringsEqual(searchQuery, p.Name)).ToList();
             if (matchingItems.Count > 0)
                 return FilterByPopularity(matchingItems);
 
-            //[IN THE FUTURE]Third priority: items with a levenshtein distance less than 3
-
-            //Fourth priority: items where the name contains the search query (still case-insensitive)
-            matchingItems = allMatches.Where(p => Utilities.StringsMatch(p.Name, searchQuery)).ToList();
+            //Third priority: items where the name matches the FILTERED (no symbols or spaces, case insensitive) search query exactly
+            matchingItems = allMatches.Where(p => Utilities.StringsEqual(Utilities.FilterStringForMatch(searchQuery), p.NameForMatch)).ToList();
             if (matchingItems.Count > 0)
                 return FilterByPopularity(matchingItems);
 
-            //Fifth priority: items where the name contains the FITLERED search query (still case-insensitive)
-            matchingItems = allMatches.Where(p => Utilities.StringsMatch(p.NameForMatch, Utilities.FilterStringForMatch(searchQuery))).ToList();
+            //[IN THE FUTURE]Fourth priority: items with a levenshtein distance less than 3
+
+            //Fifth priority: items where the name contains the search query CASE SENSITIVE
+            matchingItems = allMatches.Where(p => Utilities.StringsMatch(searchQuery, p.Name, false)).ToList();
+            if (matchingItems.Count > 0)
+                return FilterByPopularity(matchingItems);
+
+            //Sixth priority: items where the name contains the search query (case-insensitive)
+            matchingItems = allMatches.Where(p => Utilities.StringsMatch(searchQuery, p.Name)).ToList();
+            if (matchingItems.Count > 0)
+                return FilterByPopularity(matchingItems);
+
+            //Seventh priority: items where the name contains the FITLERED search query (case-insensitive)
+            matchingItems = allMatches.Where(p => Utilities.StringsMatch(Utilities.FilterStringForMatch(searchQuery), p.NameForMatch)).ToList();
             if (matchingItems.Count > 0)
                 return FilterByPopularity(matchingItems);
 
