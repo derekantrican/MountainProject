@@ -146,17 +146,63 @@ namespace MountainProjectAPI
             return target.Contains(input);
         }
 
-        public static string GetRedirectURL(string url)
+        public static string GetRedirectURL(string url) //Credit: https://stackoverflow.com/a/28424940/2246411
         {
-            try
+            if (string.IsNullOrWhiteSpace(url))
+                return url;
+
+            int maxRedirCount = 8;  // prevent infinite loops
+            string newUrl = url;
+            do
             {
-                HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
-                return ((HttpWebResponse)req.GetResponse()).ResponseUri.ToString();
-            }
-            catch
-            {
-                return "";
-            }
+                HttpWebResponse resp = null;
+                try
+                {
+                    HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+                    req.Method = "HEAD";
+                    req.AllowAutoRedirect = false;
+                    resp = (HttpWebResponse)req.GetResponse();
+                    switch (resp.StatusCode)
+                    {
+                        case HttpStatusCode.OK:
+                            return newUrl;
+                        case HttpStatusCode.Redirect:
+                        case HttpStatusCode.MovedPermanently:
+                        case HttpStatusCode.RedirectKeepVerb:
+                        case HttpStatusCode.RedirectMethod:
+                            newUrl = resp.Headers["Location"];
+                            if (newUrl == null)
+                                return url;
+
+                            if (newUrl.IndexOf("://", System.StringComparison.Ordinal) == -1)
+                            {
+                                // Doesn't have a URL Schema, meaning it's a relative or absolute URL
+                                Uri u = new Uri(new Uri(url), newUrl);
+                                newUrl = u.ToString();
+                            }
+                            break;
+                        default:
+                            return newUrl;
+                    }
+                    url = newUrl;
+                }
+                catch (WebException)
+                {
+                    // Return the last known good URL
+                    return newUrl;
+                }
+                catch (Exception)
+                {
+                    return null;
+                }
+                finally
+                {
+                    if (resp != null)
+                        resp.Close();
+                }
+            } while (maxRedirCount-- > 0);
+
+            return newUrl;
         }
 
         public static bool IsNumber(string inputString)

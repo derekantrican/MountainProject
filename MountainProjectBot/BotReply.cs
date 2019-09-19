@@ -114,6 +114,11 @@ namespace MountainProjectBot
             if (searchResult.FilteredResult is Area)
             {
                 Area inputArea = searchResult.FilteredResult as Area;
+                if (!string.IsNullOrEmpty(inputArea.Statistics.ToString()))
+                    result += $"{Markdown.Bold(inputArea.Name)} [{inputArea.Statistics}]" + Markdown.NewLine;
+                else
+                    result += $"{Markdown.Bold(inputArea.Name)}" + Markdown.NewLine;
+
                 result += $"{Markdown.Bold(inputArea.Name)} [{inputArea.Statistics}]" + Markdown.NewLine;
                 result += GetLocationString(inputArea, searchResult.RelatedLocation);
                 result += GetPopularRoutes(inputArea, parameters);
@@ -217,6 +222,9 @@ namespace MountainProjectBot
 
             foreach (Route popularRoute in popularRoutes)
                 result += $"\n- {Markdown.Link(popularRoute.Name, popularRoute.URL)} {GetRouteAdditionalInfo(popularRoute, parameters)}";
+
+            if (string.IsNullOrEmpty(result))
+                return "";
 
             result += Markdown.NewLine;
 

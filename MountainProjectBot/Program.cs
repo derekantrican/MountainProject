@@ -189,9 +189,6 @@ namespace MountainProjectBot
                         {
                             string reply = BotReply.GetReplyForMPLinks(updatedParent);
 
-                            if (GetBlacklistLevelForUser(updatedParent.AuthorName) != BlacklistLevel.NoFYI)
-                                reply = $"(FYI in the future you can call me by using {Markdown.InlineCode("!MountainProject")})" + Markdown.HRule + reply;
-
                             if (reply != oldResponseBody)
                                 await redditHelper.EditComment(monitor.BotResponseComment, reply);
 
@@ -274,9 +271,6 @@ namespace MountainProjectBot
                         LogCommentBeenRepliedTo(comment); //Don't check this comment again
                         continue;
                     }
-
-                    if (GetBlacklistLevelForUser(comment.AuthorName) != BlacklistLevel.NoFYI)
-                        reply = $"(FYI in the future you can call me by using {Markdown.InlineCode("!MountainProject")})" + Markdown.HRule + reply;
 
                     if (!Debugger.IsAttached)
                     {
