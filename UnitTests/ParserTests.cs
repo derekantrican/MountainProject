@@ -161,12 +161,13 @@ namespace UnitTests
         [DataRow("/route/111859673/side-dish", GradeSystem.YDS, "5.10c")]
         [DataRow("/route/109063052/geflugelfrikadelle", GradeSystem.YDS, "5.12b/c")] //Has a slash
         [DataRow("/route/116181996/13-above-the-night", GradeSystem.Unlabled, "WI4 M5")] //No YDS/Heuco present
+        [DataRow("/route/105931000/myan-problem", GradeSystem.Hueco, "V-easy")] //Not a usual grade format
         public void TestRouteGradeParse(string url, GradeSystem gradeSystem, string expectedValue)
         {
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            Grade expectedGrade = new Grade(gradeSystem, expectedValue);
+            Grade expectedGrade = new Grade(gradeSystem, expectedValue, false);
             Grade routeGrade = Parsers.ParseRouteGrades(Utilities.GetHtmlDoc(url)).Find(p => p.System == gradeSystem);
 
             Assert.AreEqual(expectedGrade, routeGrade);

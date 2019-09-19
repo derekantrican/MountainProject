@@ -220,7 +220,7 @@ namespace MountainProjectBot
             {
                 try
                 {
-                    Console.WriteLine("    Getting reply for comment");
+                    Console.WriteLine($"    Getting reply for comment: {comment.Id}");
 
                     string reply = BotReply.GetReplyForRequest(comment);
 
@@ -262,6 +262,8 @@ namespace MountainProjectBot
             {
                 try
                 {
+                    Console.WriteLine($"    Getting reply for comment: {comment.Id}");
+
                     string reply = BotReply.GetReplyForMPLinks(comment);
 
                     if (string.IsNullOrEmpty(reply))

@@ -205,12 +205,19 @@ namespace MountainProjectAPI
                 switch (spanElement.Attributes["class"].Value)
                 {
                     case "rateYDS":
-                        //I think there's an issue with the MountainProject website where Hueco grades are listed as YDS (eg /route/111259770/three-pipe-problem).
-                        //I've reported this to them (I think) but for now I'm "coding around it".
-                        if (gradeValue.Contains("5."))
-                            grades.Add(new Grade(GradeSystem.YDS, gradeValue, false));
-                        else if (gradeValue.Contains("V"))
-                            grades.Add(new Grade(GradeSystem.Hueco, gradeValue, false));
+                    case "rateHueco":
+                        List<Grade> parsedGrades = Grade.ParseString(gradeValue);
+                        if (parsedGrades.Count > 0)
+                            grades.Add(Grade.ParseString(gradeValue)[0]);
+                        else
+                        {
+                            //I think there's an issue with the MountainProject website where Hueco grades are listed as YDS (eg /route/111259770/three-pipe-problem).
+                            //I've reported this to them (I think) but for now I'm "coding around it".
+                            if (gradeValue.Contains("5."))
+                                grades.Add(new Grade(GradeSystem.YDS, gradeValue, false));
+                            else if (gradeValue.Contains("V"))
+                                grades.Add(new Grade(GradeSystem.Hueco, gradeValue, false));
+                        }
                         break;
                     case "rateFrench":
                         grades.Add(new Grade(GradeSystem.French, gradeValue, false));
@@ -226,9 +233,6 @@ namespace MountainProjectAPI
                         break;
                     case "rateBritish":
                         grades.Add(new Grade(GradeSystem.Britsh, gradeValue, false));
-                        break;
-                    case "rateHueco":
-                        grades.Add(new Grade(GradeSystem.Hueco, gradeValue, false));
                         break;
                     case "rateFont":
                         grades.Add(new Grade(GradeSystem.Fontainebleau, gradeValue, false));

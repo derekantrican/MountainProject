@@ -2,6 +2,7 @@
 using AngleSharp.Html.Parser;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -202,6 +203,54 @@ namespace MountainProjectAPI
             } while (maxRedirCount-- > 0);
 
             return newUrl;
+        }
+
+        public static bool IsNumber(string inputString)
+        {
+            return int.TryParse(inputString, out _);
+        }
+
+        public static List<string> GetWordGroups(string phrase)
+        {
+            return FindWords(phrase.Split(' ')).ToList();
+        }
+
+        private static string[] FindWords(params string[] args)
+        {
+
+            if (args.Length == 0)
+            {
+                return new string[] { "" };
+            }
+            else
+            {
+                string[] oldWords = FindWords(args.Skip(1).ToArray());
+                string[] newWords = oldWords.Where(word => word == "" || word.Split(new string[] { " " }, StringSplitOptions.RemoveEmptyEntries)[0] == args[1])
+                                            .Select(word => (args[0] + " " + word).Trim()).ToArray();
+
+                return oldWords.Union(newWords).ToArray();
+            }
+        }
+
+        public static string TrimWords(string input, string[] wordsToTrim)
+        {
+            return TrimWordsStart(TrimWordsEnd(input, wordsToTrim), wordsToTrim);
+        }
+
+        public static string TrimWordsStart(string input, string[] wordsToTrim)
+        {
+            var result = string.Join(" ", input.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries)
+                    .SkipWhile(x => wordsToTrim.Contains(x.ToLower())));
+            return result;
+        }
+
+        public static string TrimWordsEnd(string input, string[] wordsToTrim)
+        {
+            var result = string.Join(" ", input.Split(new[] { " " }, StringSplitOptions.RemoveEmptyEntries)
+                    .Reverse()
+                    .SkipWhile(x => wordsToTrim.Contains(x.ToLower()))
+                    .Reverse());
+            return result;
         }
     }
 }

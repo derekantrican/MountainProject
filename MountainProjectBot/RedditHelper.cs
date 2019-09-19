@@ -10,14 +10,14 @@ namespace MountainProjectBot
 {
     public class RedditHelper
     {
-        const string REDDITPREFIX = "https://reddit.com";
+        public const string REDDITPREFIX = "https://reddit.com";
         Reddit redditService;
-        static Dictionary<string, int> subredditNamesAndCommentAmounts = new Dictionary<string, int>()
+        Dictionary<string, int> subredditNamesAndCommentAmounts = new Dictionary<string, int>()
         {
             {"climbing", 1000 }, {"climbingporn", 30}, {"bouldering", 600}, {"socalclimbing", 50}, {"climbingvids", 30}, {"mountainprojectbot", 500},
             {"climbergirls", 200 }, {"climbingcirclejerk", 500}, {"iceclimbing", 30 }, {"rockclimbing", 50}, {"tradclimbing", 100}
         };
-        static List<Subreddit> subreddits = new List<Subreddit>();
+        public List<Subreddit> Subreddits = new List<Subreddit>();
 
         int actionLimit = 20;
 
@@ -44,7 +44,7 @@ namespace MountainProjectBot
             redditService = new Reddit(webAgent, true);
 
             foreach (string subRedditName in subredditNamesAndCommentAmounts.Keys)
-                subreddits.Add(await redditService.GetSubredditAsync(subRedditName));
+                Subreddits.Add(await redditService.GetSubredditAsync(subRedditName));
 
             Console.WriteLine("Reddit authed successfully");
         }
@@ -62,15 +62,15 @@ namespace MountainProjectBot
             return new BotWebAgent(username, password, clientId, clientSecret, redirectUri);
         }
 
-        public async Task<List<Post>> GetPosts(Subreddit subreddit)
+        public async Task<List<Post>> GetPosts(Subreddit subreddit, int amount = 100)
         {
-            return await subreddit.GetPosts(100).ToList();
+            return await subreddit.GetPosts(amount).ToList();
         }
 
         public async Task<Dictionary<Subreddit, List<Comment>>> GetRecentComments()
         {
             Dictionary<Subreddit, List<Comment>> subredditsAndRecentComments = new Dictionary<Subreddit, List<Comment>>();
-            foreach (Subreddit subreddit in subreddits)
+            foreach (Subreddit subreddit in Subreddits)
             {
                 int amountOfCommentsToGet = subredditNamesAndCommentAmounts[subreddit.Name.ToLower()];
                 subredditsAndRecentComments.Add(subreddit, await subreddit.GetComments(amountOfCommentsToGet, amountOfCommentsToGet).ToList());
@@ -82,6 +82,11 @@ namespace MountainProjectBot
         public async Task<Comment> GetComment(Uri commentPermalink)
         {
             return await redditService.GetCommentAsync(new Uri(REDDITPREFIX + commentPermalink));
+        }
+
+        public async Task<Post> GetPost(string postId)
+        {
+            return await redditService.GetPostAsync(new Uri($"{REDDITPREFIX}/comments/{postId}"));
         }
 
         public async Task<Comment> ReplyToComment(Comment comment, string replyText)
@@ -102,7 +107,18 @@ namespace MountainProjectBot
             await comment.DelAsync();
         }
 
+        public async Task<Post> GetParentPostForComment(Comment comment)
+        {
+            string postLink = GetPostLinkFromComment(comment);
+            return await redditService.GetPostAsync(new Uri(GetFullLink(postLink)));
+        }
+
         public static string GetFullLink(Uri relativeLink)
+        {
+            return GetFullLink(relativeLink.ToString());
+        }
+
+        public static string GetFullLink(string relativeLink)
         {
             return REDDITPREFIX + relativeLink;
         }
