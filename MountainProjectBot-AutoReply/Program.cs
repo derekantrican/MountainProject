@@ -35,7 +35,6 @@ namespace MountainProjectBot_AutoReply
         static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
         static string repliedToPostsPath = @"RepliedToPosts.txt";
         static string blacklistedPath = @"..\..\MountainProjectBot\bin\BlacklistedUsers.txt";
-        static string sensedRepliesPath = @"SensedReplies.txt"; //TEMP
 
         static RedditHelper redditHelper = new RedditHelper();
 
@@ -219,8 +218,6 @@ namespace MountainProjectBot_AutoReply
                             await post.CommentAsync(reply);
                             Console.WriteLine($"\n    Auto-replied to post {post.Id}");
                         }
-
-                        File.AppendAllLines(sensedRepliesPath, new List<string> { postTitle });
                     }
                     else
                         Console.WriteLine("    Nothing found");
