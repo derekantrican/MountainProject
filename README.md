@@ -1,6 +1,6 @@
 # MountainProject
 
-This repository has two parts:
+This repository has two main parts:
 
 **The MountainProjectDBBuilder (a parser/scraper for MountainProject.com):** https://github.com/derekantrican/MountainProject/tree/master/MountainProjectDBBuilder
 
