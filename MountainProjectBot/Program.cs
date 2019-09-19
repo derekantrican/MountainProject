@@ -180,7 +180,7 @@ namespace MountainProjectBot
                         {
                             string reply = BotReply.GetReplyForRequest(updatedParent);
 
-                            if (reply != oldResponseBody)
+                            if (reply != oldResponseBody && !string.IsNullOrEmpty(reply))
                                 await redditHelper.EditComment(monitor.BotResponseComment, reply);
 
                             monitor.ParentComment = updatedParent;
@@ -189,7 +189,7 @@ namespace MountainProjectBot
                         {
                             string reply = BotReply.GetReplyForMPLinks(updatedParent);
 
-                            if (reply != oldResponseBody)
+                            if (reply != oldResponseBody && !string.IsNullOrEmpty(reply))
                                 await redditHelper.EditComment(monitor.BotResponseComment, reply);
 
                             monitor.ParentComment = updatedParent;
