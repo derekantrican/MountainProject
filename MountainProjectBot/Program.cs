@@ -180,8 +180,16 @@ namespace MountainProjectBot
                         {
                             string reply = BotReply.GetReplyForRequest(updatedParent);
 
-                            if (reply != oldResponseBody && !string.IsNullOrEmpty(reply))
-                                await redditHelper.EditComment(monitor.BotResponseComment, reply);
+                            if (reply != oldResponseBody)
+                            {
+                                if (!string.IsNullOrEmpty(reply))
+                                    await redditHelper.EditComment(monitor.BotResponseComment, reply);
+                                else
+                                {
+                                    await redditHelper.DeleteComment(monitor.BotResponseComment);
+                                    monitoredComments.Remove(monitor);
+                                }
+                            }
 
                             monitor.ParentComment = updatedParent;
                         }
@@ -189,8 +197,16 @@ namespace MountainProjectBot
                         {
                             string reply = BotReply.GetReplyForMPLinks(updatedParent);
 
-                            if (reply != oldResponseBody && !string.IsNullOrEmpty(reply))
-                                await redditHelper.EditComment(monitor.BotResponseComment, reply);
+                            if (reply != oldResponseBody)
+                            {
+                                if (!string.IsNullOrEmpty(reply))
+                                    await redditHelper.EditComment(monitor.BotResponseComment, reply);
+                                else
+                                {
+                                    await redditHelper.DeleteComment(monitor.BotResponseComment);
+                                    monitoredComments.Remove(monitor);
+                                }
+                            }
 
                             monitor.ParentComment = updatedParent;
                         }
