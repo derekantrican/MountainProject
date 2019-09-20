@@ -213,7 +213,7 @@ namespace MountainProjectBot
         {
             List<Comment> botRequestComments = recentComments.Where(c => Regex.IsMatch(c.Body, BOTKEYWORDREGEX)).ToList();
             botRequestComments.RemoveAll(c => c.IsArchived);
-            botRequestComments.RemoveAll(c => c.AuthorName == "MountainProjectBot" || c.AuthorName == "ClimbingRouteBot"); //Don't reply to bots
+            botRequestComments = RemoveBlacklisted(botRequestComments, new[] { BlacklistLevel.Total }); //Don't reply to bots
             botRequestComments = RemoveAlreadyRepliedTo(botRequestComments);
 
             foreach (Comment comment in botRequestComments)
@@ -251,8 +251,7 @@ namespace MountainProjectBot
             {
                 List<Comment> filteredComments = subredditsAndRecentComments[subreddit].Where(c => c.Body.Contains("mountainproject.com")).ToList();
                 filteredComments.RemoveAll(c => c.IsArchived);
-                filteredComments.RemoveAll(c => c.AuthorName == "MountainProjectBot" || c.AuthorName == "ClimbingRouteBot"); //Don't reply to bots
-                filteredComments = RemoveTotallyBlacklisted(filteredComments); //Remove comments from users who don't want the bot to automatically reply to them
+                filteredComments = RemoveBlacklisted(filteredComments, new[] { BlacklistLevel.OnlyKeywordReplies, BlacklistLevel.Total }); //Remove comments from users who don't want the bot to automatically reply to them
                 filteredComments = RemoveAlreadyRepliedTo(filteredComments);
                 filteredComments = await RemoveCommentsOnSelfPosts(subreddit, filteredComments); //Don't reply to self posts (aka text posts)
                 subredditsAndRecentComments[subreddit] = filteredComments;
@@ -322,23 +321,18 @@ namespace MountainProjectBot
             return result;
         }
 
-        private static BlacklistLevel GetBlacklistLevelForUser(string username)
+        private static List<Comment> RemoveBlacklisted(List<Comment> comments, BlacklistLevel[] blacklistLevels)
         {
-            Dictionary<string, BlacklistLevel> blacklist = GetBlacklist();
-            if (blacklist.ContainsKey(username))
-                return blacklist[username];
-            else
-                return BlacklistLevel.None;
-        }
+            Dictionary<string, BlacklistLevel> usersWithBlacklist = GetBlacklist();
 
-        private static List<Comment> RemoveTotallyBlacklisted(List<Comment> comments)
-        {
             List<Comment> result = comments.ToList();
             foreach (Comment comment in comments)
             {
-                BlacklistLevel level = GetBlacklistLevelForUser(comment.AuthorName);
-                if (level == BlacklistLevel.OnlyKeywordReplies)
-                    result.Remove(comment);
+                if (usersWithBlacklist.ContainsKey(comment.AuthorName))
+                {
+                    if (blacklistLevels.Contains(usersWithBlacklist[comment.AuthorName]))
+                        result.Remove(comment);
+                }
             }
 
             return result;

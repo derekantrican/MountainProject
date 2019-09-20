@@ -141,7 +141,7 @@ namespace MountainProjectBot_AutoReply
                 subredditPosts.RemoveAll(p => p.IsSelfPost);
                 subredditPosts.RemoveAll(p => (DateTime.UtcNow - p.CreatedUTC).TotalMinutes > 10); //Only check recent posts
                 //subredditPosts.RemoveAll(p => (DateTime.Now - p.Created).TotalMinutes < 5); //Wait till posts are 5 minutes old (gives poster time to add a comment with a MP link)
-                subredditPosts = RemoveTotallyBlacklisted(subredditPosts); //Remove posts from users who don't want the bot to automatically reply to them
+                subredditPosts = RemoveBlacklisted(subredditPosts, new[] { BlacklistLevel.NoPostReplies, BlacklistLevel.OnlyKeywordReplies, BlacklistLevel.Total }); //Remove posts from users who don't want the bot to automatically reply to them
                 subredditPosts = RemoveAlreadyRepliedTo(subredditPosts);
                 recentPosts.AddRange(subredditPosts);
             }
@@ -236,28 +236,6 @@ namespace MountainProjectBot_AutoReply
             }
         }
 
-        private static List<Post> RemoveTotallyBlacklisted(List<Post> posts)
-        {
-            List<Post> result = posts.ToList();
-            foreach (Post comment in posts)
-            {
-                BlacklistLevel level = GetBlacklistLevelForUser(comment.AuthorName);
-                if (level == BlacklistLevel.OnlyKeywordReplies)
-                    result.Remove(comment);
-            }
-
-            return result;
-        }
-
-        private static BlacklistLevel GetBlacklistLevelForUser(string username)
-        {
-            Dictionary<string, BlacklistLevel> blacklist = GetBlacklist();
-            if (blacklist.ContainsKey(username))
-                return blacklist[username];
-            else
-                return BlacklistLevel.None;
-        }
-
         private static Dictionary<string, BlacklistLevel> GetBlacklist()
         {
             if (!File.Exists(blacklistedPath))
@@ -271,6 +249,23 @@ namespace MountainProjectBot_AutoReply
                 string username = line.Split(',')[0];
                 BlacklistLevel blacklist = (BlacklistLevel)Convert.ToInt32(line.Split(',')[1]);
                 result.Add(username, blacklist);
+            }
+
+            return result;
+        }
+
+        private static List<Post> RemoveBlacklisted(List<Post> posts, BlacklistLevel[] blacklistLevels)
+        {
+            Dictionary<string, BlacklistLevel> usersWithBlacklist = GetBlacklist();
+
+            List<Post> result = posts.ToList();
+            foreach (Post post in posts)
+            {
+                if (usersWithBlacklist.ContainsKey(post.AuthorName))
+                {
+                    if (blacklistLevels.Contains(usersWithBlacklist[post.AuthorName]))
+                        result.Remove(post);
+                }
             }
 
             return result;
