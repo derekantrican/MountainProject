@@ -1,6 +1,6 @@
 # MountainProjectBot
 
-![status](https://img.shields.io/uptimerobot/status/m783112785-670539cecd20760bce144d87.svg?style=popout)
+![status](https://img.shields.io/uptimerobot/status/m783112785-670539cecd20760bce144d87.svg?style=popout) [![Build status](https://ci.appveyor.com/api/projects/status/ue7w1eu6y3d7hkvn?svg=true)](https://ci.appveyor.com/project/derekantrican/mountainproject)
 
 This is a reddit bot for connecting [MountainProject.com](https://mountainproject.com) and the [/r/climbing](https://reddit.com/r/climbing) subreddit.
 
