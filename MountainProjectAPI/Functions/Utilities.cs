@@ -205,6 +205,16 @@ namespace MountainProjectAPI
             return newUrl;
         }
 
+        public static string GetID(string mpURL)
+        {
+            return mpURL.Replace($"{MPBASEURL}/route/", "").Replace($"{MPBASEURL}/area/", "").Split('/')[0];
+        }
+
+        public static string GetSimpleURL(string mpUrl)
+        {
+            return Regex.Match(mpUrl, $@"{MPBASEURL}/(route|area)/\d+").Value;
+        }
+
         public static bool IsNumber(string inputString)
         {
             return int.TryParse(inputString, out _);

@@ -52,7 +52,10 @@ namespace UnitTests
                 if (string.IsNullOrEmpty(expectedUrl))
                     Assert.IsNull(searchResult.FilteredResult, "Failed for " + testCriteria_search[i, 0]);
                 else
-                    Assert.AreEqual(Utilities.MPBASEURL + expectedUrl, searchResult.FilteredResult.URL, "Failed for " + testCriteria_search[i, 0]);
+                {
+                    Assert.AreEqual(Utilities.GetSimpleURL(Utilities.MPBASEURL + expectedUrl), 
+                                    searchResult.FilteredResult.URL, "Failed for " + testCriteria_search[i, 0]);
+                }
 
                 Assert.IsTrue(searchResult.TimeTaken.TotalSeconds < 5, $"{query} took too long ({searchResult.TimeTaken.TotalMilliseconds} ms)");
             }
@@ -109,7 +112,7 @@ namespace UnitTests
                 string expectedUrl = testCriteria_keyword[i, 1];
                 string resultReply = BotReply.GetReplyForRequest(commentBody);
 
-                Assert.IsTrue(resultReply.Contains(expectedUrl), "Failed for " + testCriteria_keyword[i, 0]);
+                Assert.IsTrue(resultReply.Contains(Utilities.GetSimpleURL(Utilities.MPBASEURL + expectedUrl)), "Failed for " + testCriteria_keyword[i, 0]);
             }
         }
 
@@ -193,7 +196,7 @@ namespace UnitTests
                 string inputGrade = testCriteria_gradeEquality[i, 2].ToString();
                 Grade expectedGrade = Grade.ParseString(inputGrade)[0];
 
-                Route route = MountainProjectDataSearch.GetItemWithMatchingUrl(Utilities.MPBASEURL + inputUrl) as Route;
+                Route route = MountainProjectDataSearch.GetItemWithMatchingID(Utilities.GetID(Utilities.MPBASEURL + inputUrl)) as Route;
 
                 Assert.IsTrue(route.Grades.Any(g => expectedGrade.Equals(g, true, true)));
             }
@@ -217,7 +220,7 @@ namespace UnitTests
             {
                 string[] lineParts = testCriteria[i].Split('\t');
                 string inputPostTitle = lineParts[0];
-                string expectedMPLink = lineParts[1] == "null" ? null : lineParts[1];
+                string expectedMPLink = lineParts[1] == "null" ? null : Utilities.GetSimpleURL(lineParts[1]);
 
                 writer.WriteLine($"POST TITLE: {inputPostTitle}");
 

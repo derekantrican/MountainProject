@@ -42,9 +42,9 @@ namespace MountainProjectBot
             List<MPObject> foundMPObjects = new List<MPObject>();
             foreach (string url in ExtractMPLinks(WebUtility.HtmlDecode(comment.Body)))
             {
-                MPObject mpObjectWithUrl = MountainProjectDataSearch.GetItemWithMatchingUrl(url);
-                if (mpObjectWithUrl != null)
-                    foundMPObjects.Add(mpObjectWithUrl);
+                MPObject mpObjectWithID = MountainProjectDataSearch.GetItemWithMatchingID(Utilities.GetID(url));
+                if (mpObjectWithID != null)
+                    foundMPObjects.Add(mpObjectWithID);
             }
 
             string response = "";
@@ -169,14 +169,14 @@ namespace MountainProjectBot
                 innerParent = MountainProjectDataSearch.GetParent(child, -1); //Get immediate parent
 
             if (innerParent == null ||  //If "child" is a dest area, the parent will be "All Locations" which won't be in our directory
-                innerParent.URL == Utilities.INTERNATIONALURL) //If "child" is an area like "Europe"
+                innerParent.URL == Utilities.GetSimpleURL(Utilities.INTERNATIONALURL)) //If "child" is an area like "Europe"
                 return "";
 
-            if (outerParent.URL == Utilities.INTERNATIONALURL) //If this is international, get the country instead of the state (eg "China")
+            if (outerParent.URL == Utilities.GetSimpleURL(Utilities.INTERNATIONALURL)) //If this is international, get the country instead of the state (eg "China")
             {
-                if (child.ParentUrls.Count > 3)
+                if (child.ParentIDs.Count > 3)
                 {
-                    if (child.ParentUrls.Contains(Utilities.AUSTRALIAURL)) //Australia is both a continent and a country so it is an exception
+                    if (child.ParentIDs.Contains(Utilities.GetID(Utilities.AUSTRALIAURL))) //Australia is both a continent and a country so it is an exception
                         outerParent = MountainProjectDataSearch.GetParent(child, 2);
                     else
                         outerParent = MountainProjectDataSearch.GetParent(child, 3);
@@ -209,7 +209,7 @@ namespace MountainProjectBot
             string result = "Popular routes:\n";
 
             List<Route> popularRoutes = new List<Route>();
-            if (area.PopularRouteUrls.Count == 0) //MountainProject doesn't list any popular routes. Figure out some ourselves
+            if (area.PopularRouteIDs.Count == 0) //MountainProject doesn't list any popular routes. Figure out some ourselves
                 popularRoutes = area.GetPopularRoutes(3);
             else
             {
@@ -217,7 +217,7 @@ namespace MountainProjectBot
                 itemsToSearch.AddRange(area.SubAreas);
                 itemsToSearch.AddRange(area.Routes);
 
-                area.PopularRouteUrls.ForEach(p => popularRoutes.Add(MountainProjectDataSearch.GetItemWithMatchingUrl(p, itemsToSearch) as Route));
+                area.PopularRouteIDs.ForEach(id => popularRoutes.Add(MountainProjectDataSearch.GetItemWithMatchingID(id, itemsToSearch) as Route));
             }
 
             foreach (Route popularRoute in popularRoutes)

@@ -168,9 +168,9 @@ namespace MountainProjectDBBuilder
 
             if (outerParent.URL == Utilities.INTERNATIONALURL) //If this is international, get the country instead of the state (eg "China")
             {
-                if (child.ParentUrls.Count > 3)
+                if (child.ParentIDs.Count > 3)
                 {
-                    if (child.ParentUrls.Contains(Utilities.AUSTRALIAURL)) //Australia is both a continent and a country so it is an exception
+                    if (child.ParentIDs.Contains(Utilities.AUSTRALIAURL)) //Australia is both a continent and a country so it is an exception
                         outerParent = MountainProjectDataSearch.GetParent(child, 2);
                     else
                         outerParent = MountainProjectDataSearch.GetParent(child, 3);

@@ -6,7 +6,7 @@ namespace MountainProjectAPI
 {
     public class Route : MPObject
     {
-        public Route(string name, string url) : base(name, url)
+        public Route(string name, string id) : base(name, id)
         {
             this.Grades = new List<Grade>();
             this.Types = new List<RouteType>();

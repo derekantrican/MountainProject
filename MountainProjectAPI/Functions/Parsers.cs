@@ -40,7 +40,7 @@ namespace MountainProjectAPI
                 Area destArea = new Area()
                 {
                     Name = destAreaElement.TextContent,
-                    URL = destAreaElement.Attributes["href"].Value
+                    ID = Utilities.GetID(destAreaElement.Attributes["href"].Value)
                 };
 
                 destAreas.Add(destArea);
@@ -65,8 +65,8 @@ namespace MountainProjectAPI
 
             inputArea.Statistics = PopulateStatistics(doc);
             inputArea.Popularity = ParsePopularity(doc);
-            inputArea.ParentUrls = GetParentUrls(doc);
-            inputArea.PopularRouteUrls = GetPopularRouteUrls(doc, 3);
+            inputArea.ParentIDs = GetParentIDs(doc);
+            inputArea.PopularRouteIDs = GetPopularRouteIDs(doc, 3);
 
             //Get Area's routes
             IElement routesTable = doc.GetElementsByTagName("table").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table").FirstOrDefault();
@@ -84,7 +84,7 @@ namespace MountainProjectAPI
             //Populate route details
             foreach (IElement routeElement in htmlRoutes)
             {
-                Route route = new Route(routeElement.TextContent, routeElement.Attributes["href"].Value);
+                Route route = new Route(routeElement.TextContent, Utilities.GetID(routeElement.Attributes["href"].Value));
                 inputArea.Routes.Add(route);
                 TotalRoutes++;
 
@@ -94,7 +94,11 @@ namespace MountainProjectAPI
             //Populate sub area details
             foreach (IElement areaElement in htmlSubAreas)
             {
-                Area subArea = new Area() { Name = areaElement.TextContent, URL = areaElement.Attributes["href"].Value };
+                Area subArea = new Area() 
+                { 
+                    Name = areaElement.TextContent, 
+                    ID = Utilities.GetID(areaElement.Attributes["href"].Value) 
+                };
                 inputArea.SubAreas.Add(subArea);
                 TotalAreas++;
 
@@ -105,7 +109,7 @@ namespace MountainProjectAPI
             Console.WriteLine($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
         }
 
-        public static List<string> GetPopularRouteUrls(IHtmlDocument doc, int numberToReturn)
+        public static List<string> GetPopularRouteIDs(IHtmlDocument doc, int numberToReturn)
         {
             List<string> result = new List<string>();
 
@@ -115,7 +119,7 @@ namespace MountainProjectAPI
 
             List<IElement> rows = outerTable.GetElementsByTagName("tr").ToList(); //Skip the header row
             foreach (IElement row in rows)
-                result.Add(row.GetElementsByTagName("a").FirstOrDefault().Attributes["href"].Value);
+                result.Add(Utilities.GetID(row.GetElementsByTagName("a").FirstOrDefault().Attributes["href"].Value));
 
             return result.Take(numberToReturn).ToList();
         }
@@ -175,7 +179,7 @@ namespace MountainProjectAPI
             string additionalInfo = ParseAdditionalRouteInfo(doc);
             inputRoute.Height = ParseRouteHeight(ref additionalInfo);
             inputRoute.AdditionalInfo = additionalInfo;
-            inputRoute.ParentUrls = GetParentUrls(doc);
+            inputRoute.ParentIDs = GetParentIDs(doc);
 
             doc.Dispose();
 
@@ -345,13 +349,13 @@ namespace MountainProjectAPI
         #endregion Parse Route
 
         #region Common Parse Methods
-        public static List<string> GetParentUrls(IHtmlDocument doc)
+        public static List<string> GetParentIDs(IHtmlDocument doc)
         {
             List<string> result = new List<string>();
             IElement outerDiv = doc.GetElementsByTagName("div").FirstOrDefault(x => x.Children.FirstOrDefault(p => p.TagName == "A" && p.TextContent == "All Locations") != null);
             List<IElement> parentList = outerDiv.Children.Where(p => p.TagName == "A").ToList();
             foreach (IElement parentElement in parentList)
-                result.Add(parentElement.Attributes["href"].Value);
+                result.Add(Utilities.GetID(parentElement.Attributes["href"].Value));
 
             return result;
         }

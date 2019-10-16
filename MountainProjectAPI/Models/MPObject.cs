@@ -7,17 +7,17 @@ namespace MountainProjectAPI
 {
     public class MPObject
     {
-        public MPObject(string name, string url)
+        public MPObject(string name, string id)
         {
             this.Name = WebUtility.HtmlDecode(name);
-            this.URL = url;
-            this.ParentUrls = new List<string>();
+            this.ID = id;
+            this.ParentIDs = new List<string>();
             this.Parents = new List<MPObject>();
         }
 
         public MPObject()
         {
-            this.ParentUrls = new List<string>();
+            this.ParentIDs = new List<string>();
             this.Parents = new List<MPObject>();
         }
 
@@ -47,9 +47,23 @@ namespace MountainProjectAPI
 
         public string NameForMatch { get; set; }
 
-        public string URL { get; set; }
+        [XmlIgnore]
+        public string URL
+        {
+            get
+            {
+                if (this is Route)
+                    return $"{Utilities.MPBASEURL}/route/{ID}";
+                else if (this is Area)
+                    return $"{Utilities.MPBASEURL}/area/{ID}";
+
+                return null;
+            }
+        }
+
+        public string ID { get; set; }
         public int Popularity { get; set; }
-        public List<string> ParentUrls { get; set; }
+        public List<string> ParentIDs { get; set; }
         [XmlIgnore]
         public List<MPObject> Parents { get; set; }
 

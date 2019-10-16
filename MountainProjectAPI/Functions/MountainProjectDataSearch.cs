@@ -146,32 +146,32 @@ namespace MountainProjectAPI
             return result;
         }
 
-        public static MPObject GetItemWithMatchingUrl(string url)
+        public static MPObject GetItemWithMatchingID(string id)
         {
-            return GetItemWithMatchingUrl(url, DestAreas);
+            return GetItemWithMatchingID(id, DestAreas);
         }
 
-        public static MPObject GetItemWithMatchingUrl(string url, List<Area> listToSearch)
+        public static MPObject GetItemWithMatchingID(string id, List<Area> listToSearch)
         {
-            return GetItemWithMatchingUrl(url, listToSearch.Cast<MPObject>().ToList());
+            return GetItemWithMatchingID(id, listToSearch.Cast<MPObject>().ToList());
         }
 
-        public static MPObject GetItemWithMatchingUrl(string url, List<MPObject> listToSearch)
+        public static MPObject GetItemWithMatchingID(string id, List<MPObject> listToSearch)
         {
             foreach (MPObject item in listToSearch)
             {
-                if (item.URL == url)
+                if (item.ID == id)
                     return item;
                 else
                 {
                     if (item is Area)
                     {
-                        MPObject matchingRoute = (item as Area).Routes.Find(p => p.URL == url);
+                        MPObject matchingRoute = (item as Area).Routes.Find(p => p.ID == id);
                         if (matchingRoute != null)
                             return matchingRoute;
                         else
                         {
-                            MPObject matchingSubArea = GetItemWithMatchingUrl(url, (item as Area).SubAreas);
+                            MPObject matchingSubArea = GetItemWithMatchingID(id, (item as Area).SubAreas);
                             if (matchingSubArea != null)
                                 return matchingSubArea;
                         }
@@ -190,18 +190,18 @@ namespace MountainProjectAPI
         /// <returns>The parent object to the child. Will return null if the child has no parents or if the parentLevel is invalid</returns>
         public static MPObject GetParent(MPObject child, int parentLevel)
         {
-            string url;
-            if (parentLevel < 0 && Math.Abs(parentLevel) <= child.ParentUrls.Count) //"Negative indicies"
-                url = child.ParentUrls[child.ParentUrls.Count + parentLevel];
-            else if (parentLevel <= child.ParentUrls.Count - 1) //Positive indicies (check for "within range")
-                url = child.ParentUrls[parentLevel];
+            string id;
+            if (parentLevel < 0 && Math.Abs(parentLevel) <= child.ParentIDs.Count) //"Negative indicies"
+                id = child.ParentIDs[child.ParentIDs.Count + parentLevel];
+            else if (parentLevel <= child.ParentIDs.Count - 1) //Positive indicies (check for "within range")
+                id = child.ParentIDs[parentLevel];
             else //Out of range
                 return null;
 
             if (child.Parents.Count == 0)
-                return GetItemWithMatchingUrl(url);
+                return GetItemWithMatchingID(id);
             else
-                return child.Parents.Find(p => p.URL == url);
+                return child.Parents.Find(p => p.ID == id);
         }
         #endregion Public Methods
 

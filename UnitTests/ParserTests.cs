@@ -88,7 +88,7 @@ namespace UnitTests
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            Area testSubDestArea = new Area() { URL = url };
+            Area testSubDestArea = new Area() { ID = Utilities.GetID(url) };
 
             Parsers.ParseAreaAsync(testSubDestArea, false).Wait();
 
@@ -104,7 +104,7 @@ namespace UnitTests
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            Area testSubDestArea = new Area() { URL = url };
+            Area testSubDestArea = new Area() { ID = Utilities.GetID(url) };
 
             Parsers.ParseAreaAsync(testSubDestArea, false).Wait();
 
@@ -120,9 +120,9 @@ namespace UnitTests
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            List<string> popularRoutes = Parsers.GetPopularRouteUrls(Utilities.GetHtmlDoc(url), 3);
-            for (int i = 0; i < popularRoutes.Count; i++)
-                popularRoutes[i] = popularRoutes[i].Replace(Utilities.MPBASEURL, "");
+            List<string> popularRoutes = Parsers.GetPopularRouteIDs(Utilities.GetHtmlDoc(url), 3);
+            for (int i = 0; i < expectedPopClimbs.Length; i++)
+                expectedPopClimbs[i] = Utilities.GetID(Utilities.MPBASEURL + (string)expectedPopClimbs[i]);
 
             CollectionAssert.AreEqual(expectedPopClimbs, popularRoutes);
         }
@@ -215,9 +215,9 @@ namespace UnitTests
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            List<string> parents = Parsers.GetParentUrls(Utilities.GetHtmlDoc(url));
-            for (int i = 0; i < parents.Count; i++)
-                parents[i] = parents[i].Replace(Utilities.MPBASEURL, "");
+            List<string> parents = Parsers.GetParentIDs(Utilities.GetHtmlDoc(url));
+            for (int i = 0; i < expectedParentUrls.Length; i++)
+                expectedParentUrls[i] = Utilities.GetID(Utilities.MPBASEURL + (string)expectedParentUrls[i]);
 
             CollectionAssert.AreEqual(expectedParentUrls, parents); //Compare collections WITH order
         }
