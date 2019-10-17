@@ -91,7 +91,25 @@ namespace MountainProjectAPI
             string html = "";
             using (WebClient client = new WebClient() { Encoding = Encoding.UTF8 })
             {
-                html = client.DownloadString(url);
+                int retries = 0;
+                while (true)
+                {
+                    try
+                    {
+                        html = client.DownloadString(url);
+                        break;
+                    }
+                    catch
+                    {
+                        if (retries <= 5)
+                        {
+                            Console.WriteLine($"Download string failed. Trying again ({retries})");
+                            retries++;
+                        }
+                        else
+                            throw;
+                    }
+                }
             }
 
             IHtmlDocument doc = parser.ParseDocument(html);
@@ -105,7 +123,25 @@ namespace MountainProjectAPI
             string html = "";
             using (WebClient client = new WebClient() { Encoding = Encoding.UTF8 })
             {
-                html = await client.DownloadStringTaskAsync(url);
+                int retries = 0;
+                while (true)
+                {
+                    try
+                    {
+                        html = await client.DownloadStringTaskAsync(url);
+                        break;
+                    }
+                    catch
+                    {
+                        if (retries <= 5)
+                        {
+                            Console.WriteLine($"Download string failed. Trying again ({retries})");
+                            retries++;
+                        }
+                        else
+                            throw;
+                    }
+                }
             }
 
             IHtmlDocument doc = parser.ParseDocument(html);
