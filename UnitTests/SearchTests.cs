@@ -63,7 +63,7 @@ namespace UnitTests
 
         string[,] testCriteria_location = new string[,]
         {
-            { "Red River Gorge", "Kentucky" },
+            //{ "Red River Gorge", "Kentucky" },
             { "Exit 38: Deception Crags", "Exit 38, Washington" },
             { "Deception Crags", "Exit 38, Washington" },
             { "no-rang-na-rang", "South Korea" }, //International

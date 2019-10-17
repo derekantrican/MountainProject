@@ -157,7 +157,7 @@ namespace MountainProjectBot
         {
             MPObject innerParent, outerParent;
             innerParent = null;
-            outerParent = MountainProjectDataSearch.GetParent(child, 1); //Get state that route/area is in
+            outerParent = MountainProjectDataSearch.GetParent(child, 0); //Get state that route/area is in
             if (child is Route)
             {
                 innerParent = MountainProjectDataSearch.GetParent(child, -2); //Get the "second to last" parent https://github.com/derekantrican/MountainProject/issues/12
@@ -177,9 +177,9 @@ namespace MountainProjectBot
                 if (child.ParentIDs.Count > 3)
                 {
                     if (child.ParentIDs.Contains(Utilities.GetID(Utilities.AUSTRALIAURL))) //Australia is both a continent and a country so it is an exception
-                        outerParent = MountainProjectDataSearch.GetParent(child, 2);
+                        outerParent = MountainProjectDataSearch.GetParent(child, 1);
                     else
-                        outerParent = MountainProjectDataSearch.GetParent(child, 3);
+                        outerParent = MountainProjectDataSearch.GetParent(child, 2);
                 }
                 else
                     return ""; //Return a blank string if we are in an area like "China" (so we don't return a string like "China is located in Asia")

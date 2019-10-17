@@ -355,7 +355,11 @@ namespace MountainProjectAPI
             IElement outerDiv = doc.GetElementsByTagName("div").FirstOrDefault(x => x.Children.FirstOrDefault(p => p.TagName == "A" && p.TextContent == "All Locations") != null);
             List<IElement> parentList = outerDiv.Children.Where(p => p.TagName == "A").ToList();
             foreach (IElement parentElement in parentList)
-                result.Add(Utilities.GetID(parentElement.Attributes["href"].Value));
+            {
+                string url = parentElement.Attributes["href"].Value;
+                if (url != "https://www.mountainproject.com/route-guide")
+                    result.Add(Utilities.GetID(url));
+            }
 
             return result;
         }
