@@ -9,7 +9,7 @@ namespace MountainProjectAPI
 
         public static ResultParameters ParseParameters(ref string input)
         {
-            ResultParameters parameters = new ResultParameters();
+            ResultParameters parameters = null;
             if (Regex.IsMatch(input, "-grade", RegexOptions.IgnoreCase))
             {
                 string system = Regex.Match(input, @"-grade:([^-\n]*)", RegexOptions.IgnoreCase).Groups[1].Value;
@@ -18,33 +18,33 @@ namespace MountainProjectAPI
                     case "yds":
                     case "usa":
                     case "us":
-                        parameters.GradeSystem = GradeSystem.YDS;
+                        (parameters ??= new ResultParameters()).GradeSystem = GradeSystem.YDS;
                         break;
                     case "french":
-                        parameters.GradeSystem = GradeSystem.French;
+                        (parameters ??= new ResultParameters()).GradeSystem = GradeSystem.French;
                         break;
                     case "ewbanks":
                     case "australia":
                     case "nz":
-                        parameters.GradeSystem = GradeSystem.Ewbanks;
+                        (parameters ??= new ResultParameters()).GradeSystem = GradeSystem.Ewbanks;
                         break;
                     case "uiaa":
-                        parameters.GradeSystem = GradeSystem.UIAA;
+                        (parameters ??= new ResultParameters()).GradeSystem = GradeSystem.UIAA;
                         break;
                     case "southafrica":
                     case "za":
-                        parameters.GradeSystem = GradeSystem.SouthAfrica;
+                        (parameters ??= new ResultParameters()).GradeSystem = GradeSystem.SouthAfrica;
                         break;
                     case "british":
                     case "uk":
-                        parameters.GradeSystem = GradeSystem.Britsh;
+                        (parameters ??= new ResultParameters()).GradeSystem = GradeSystem.Britsh;
                         break;
                     case "hueco":
-                        parameters.GradeSystem = GradeSystem.Hueco;
+                        (parameters ??= new ResultParameters()).GradeSystem = GradeSystem.Hueco;
                         break;
                     case "fontainebleau":
                     case "font":
-                        parameters.GradeSystem = GradeSystem.Fontainebleau;
+                        (parameters ??= new ResultParameters()).GradeSystem = GradeSystem.Fontainebleau;
                         break;
                 }
 

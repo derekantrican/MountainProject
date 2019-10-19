@@ -38,15 +38,6 @@ namespace MountainProjectAPI
         public string AdditionalInfo { get; set; }
         public Dimension Height { get; set; }
 
-        public Grade GetRouteGrade(ResultParameters parameters)
-        {
-            GradeSystem gradeSystem = GradeSystem.YDS;
-            if (parameters != null)
-                gradeSystem = parameters.GradeSystem;
-
-            return GetRouteGrade(gradeSystem);
-        }
-
         public Grade GetRouteGrade(GradeSystem requestedSystem = GradeSystem.YDS)
         {
             Grade matchingGrade = this.Grades.Find(g => g.System == requestedSystem);
@@ -69,23 +60,13 @@ namespace MountainProjectAPI
                 return null;
         }
 
-        public override string ToString()
+        public string ToString(ResultParameters resultParameters = null)
         {
-            string result = "";
-            result += $"{this.Name} [{this.TypeString} {this.GetRouteGrade(GradeSystem.YDS)}";
-
-            if (!string.IsNullOrEmpty(this.AdditionalInfo))
-                result += ", " + this.AdditionalInfo;
-
-            result += "]";
-
-            return result;
-        }
-
-        public string ToString(ResultParameters resultParameters)
-        {
-            string result = "";
-            result += $"{this.Name} [{this.TypeString} {this.GetRouteGrade(resultParameters)}";
+            string result;
+            if (resultParameters != null)
+                result = $"{this.Name} [{this.TypeString} {this.GetRouteGrade(resultParameters.GradeSystem)}";
+            else
+                result = $"{this.Name} [{this.TypeString} {this.GetRouteGrade(GradeSystem.YDS)}";
 
             if (!string.IsNullOrEmpty(this.AdditionalInfo))
                 result += ", " + this.AdditionalInfo;

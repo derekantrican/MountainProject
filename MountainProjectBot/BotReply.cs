@@ -34,7 +34,7 @@ namespace MountainProjectBot
 
             SearchResult searchResult = MountainProjectDataSearch.Search(queryText, searchParameters);
 
-            return GetResponse(queryText, searchParameters.SpecificLocation, searchResult, resultParameters);
+            return GetResponse(queryText, searchParameters?.SpecificLocation, searchResult, resultParameters);
         }
 
         public static string GetReplyForMPLinks(Comment comment)
@@ -119,7 +119,6 @@ namespace MountainProjectBot
                 else
                     result += $"{Markdown.Bold(inputArea.Name)}" + Markdown.NewLine;
 
-                result += $"{Markdown.Bold(inputArea.Name)} [{inputArea.Statistics}]" + Markdown.NewLine;
                 result += GetLocationString(inputArea, searchResult.RelatedLocation);
                 result += GetPopularRoutes(inputArea, parameters);
 
@@ -134,7 +133,7 @@ namespace MountainProjectBot
                 result += Markdown.NewLine;
 
                 result += $"Type: {string.Join(", ", inputRoute.Types)}" + Markdown.NewLine;
-                result += $"Grade: {inputRoute.GetRouteGrade(parameters).ToString()}" + Markdown.NewLine;
+                result += $"Grade: {GetRouteGrade(inputRoute, parameters)}" + Markdown.NewLine;
 
                 if (inputRoute.Height != null && inputRoute.Height.Value != 0)
                 {
@@ -151,6 +150,21 @@ namespace MountainProjectBot
             }
 
             return result;
+        }
+
+        public static string GetRouteGrade(Route route, ResultParameters parameters)
+        {
+            if (parameters != null)
+                return route.GetRouteGrade(parameters.GradeSystem).ToString();
+            else
+            {
+                List<Grade> grades = route.Grades.Where(g => g.System == GradeSystem.YDS ||
+                                                             g.System == GradeSystem.French ||
+                                                             g.System == GradeSystem.UIAA ||
+                                                             g.System == GradeSystem.Hueco ||
+                                                             g.System == GradeSystem.Fontainebleau).ToList();
+                return string.Join(" | ", grades.Select(g => { return g.ToString(false); }));
+            }
         }
 
         public static string GetLocationString(MPObject child, Area referenceLocation = null)
@@ -236,7 +250,7 @@ namespace MountainProjectBot
             List<string> parts = new List<string>();
 
             if (showGrade)
-                parts.Add(route.GetRouteGrade(parameters).ToString());
+                parts.Add(GetRouteGrade(route, parameters).ToString());
 
             if (showHeight && route.Height != null && route.Height.Value != 0)
             {
