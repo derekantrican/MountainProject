@@ -165,8 +165,11 @@ namespace MountainProjectBot_AutoReply
                 reply += Markdown.HRule;
                 reply += BotReply.GetBotLinks(post.Key);
 
-                await post.Key.CommentAsync(reply);
-                Console.WriteLine($"\n    Auto-replied to post {post.Key.Id}");
+                if (!Debugger.IsAttached)
+                {
+                    await post.Key.CommentAsync(reply);
+                    Console.WriteLine($"\n    Auto-replied to post {post.Key.Id}");
+                }
 
                 postsPendingApproval.RemoveAll(p => p.Key == post.Key);
             }
