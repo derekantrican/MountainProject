@@ -161,7 +161,7 @@ namespace MountainProjectAPI
                                      @"\d{2,}[a-dA-D]|" +                          //Fourth format option: 10a (but not single digits, as YDS uses -/+ below 10 but French uses a-d below 10)
                                      @"\d+[+-]";                                   //Fifth format option: 9- or 9+
 
-                ratingRegex = new Regex(@"(?<!\\|\/|\d)\d+[\/\\\-]\d+(?!\\|\/|\d)|\d+[a-dA-D][\/\\\-][a-dA-D]|\d+(-[\/\\]\+|\+[\/\\]-)|\d{2,}[a-dA-D]|\d+[+-]");
+                ratingRegex = new Regex(regexString);
                 foreach (Match possibleGrade in ratingRegex.Matches(input))
                 {
                     string matchedGrade = possibleGrade.Value;
@@ -173,9 +173,12 @@ namespace MountainProjectAPI
                         parsedGrade.RangeStart = parsedGrade.RectifyGradeValue(parsedGrade.System, rangeParts[0]);
                         parsedGrade.RangeEnd = parsedGrade.RectifyGradeValue(parsedGrade.System, rangeParts[1]);
 
-                        //Make sure range end isn't bigger than range start (eg 12/7)
-                        if (Convert.ToInt32(rangeParts[0]) > Convert.ToInt32(rangeParts[1]))
+                        //Make sure range end isn't bigger than range start (eg 12/7 - which is a date)
+                        if (int.TryParse(rangeParts[0], out _) && int.TryParse(rangeParts[1], out _) &&
+                            Convert.ToInt32(rangeParts[0]) > Convert.ToInt32(rangeParts[1]))
+                        {
                             continue;
+                        }
 
                         parsedGrade.RectifyRange();
                     }
@@ -185,9 +188,12 @@ namespace MountainProjectAPI
                         parsedGrade.RangeStart = parsedGrade.RectifyGradeValue(parsedGrade.System, rangeParts[0]);
                         parsedGrade.RangeEnd = parsedGrade.RectifyGradeValue(parsedGrade.System, rangeParts[1]);
 
-                        //Make sure range end isn't bigger than range start (eg 12-7)
-                        if (Convert.ToInt32(rangeParts[0]) > Convert.ToInt32(rangeParts[1]))
+                        //Make sure range end isn't bigger than range start (eg 12/7 - which is a date)
+                        if (int.TryParse(rangeParts[0], out _) && int.TryParse(rangeParts[1], out _) &&
+                            Convert.ToInt32(rangeParts[0]) > Convert.ToInt32(rangeParts[1]))
+                        {
                             continue;
+                        }
 
                         parsedGrade.RectifyRange();
                     }
