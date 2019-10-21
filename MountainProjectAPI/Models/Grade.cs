@@ -173,6 +173,10 @@ namespace MountainProjectAPI
                         parsedGrade.RangeStart = parsedGrade.RectifyGradeValue(parsedGrade.System, rangeParts[0]);
                         parsedGrade.RangeEnd = parsedGrade.RectifyGradeValue(parsedGrade.System, rangeParts[1]);
 
+                        //Make sure range end isn't bigger than range start (eg 12/7)
+                        if (Convert.ToInt32(rangeParts[0]) > Convert.ToInt32(rangeParts[1]))
+                            continue;
+
                         parsedGrade.RectifyRange();
                     }
                     else if (Regex.IsMatch(matchedGrade, @"-(?=.)"))
@@ -180,6 +184,10 @@ namespace MountainProjectAPI
                         string[] rangeParts = matchedGrade.Split('-');
                         parsedGrade.RangeStart = parsedGrade.RectifyGradeValue(parsedGrade.System, rangeParts[0]);
                         parsedGrade.RangeEnd = parsedGrade.RectifyGradeValue(parsedGrade.System, rangeParts[1]);
+
+                        //Make sure range end isn't bigger than range start (eg 12-7)
+                        if (Convert.ToInt32(rangeParts[0]) > Convert.ToInt32(rangeParts[1]))
+                            continue;
 
                         parsedGrade.RectifyRange();
                     }
