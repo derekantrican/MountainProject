@@ -125,12 +125,23 @@ namespace MountainProjectAPI
                 foreach (string possibleRouteName in possibleRouteNames)
                 {
                     SearchResult searchResult = Search(possibleRouteName, new SearchParameters() { OnlyRoutes = true });
-                    if (!searchResult.IsEmpty() && searchResult.AllResults.Count < 75) //If the number of matching results is greater than 75, it was probably a very generic word for a search (eg "There")
+                    if (!searchResult.IsEmpty())
                     {
-                        foreach (Route route in searchResult.AllResults.Cast<Route>())
+                        if (searchResult.AllResults.Count < 75) //If the number of matching results is greater than 75, it was probably a very generic word for a search (eg "There")
                         {
-                            if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
-                                possibleResults.Add(route);
+                            foreach (Route route in searchResult.AllResults.Cast<Route>())
+                            {
+                                if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
+                                    possibleResults.Add(route);
+                            }
+                        }
+                        else if (searchResult.AllResults.Any(r => StringContainsAParent(r, inputString, false))) //If the above if statement is not chosen, but some routes have a location in the inputString, work with those
+                        {
+                            foreach (Route route in searchResult.AllResults.Where(r => StringContainsAParent(r, inputString, false)).Cast<Route>())
+                            {
+                                if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
+                                    possibleResults.Add(route);
+                            }
                         }
                     }
                 }
@@ -151,7 +162,7 @@ namespace MountainProjectAPI
                     int confidence = 3;
                     if (filteredResults.Count == 1)
                     {
-                        if (StringContainsParent(filteredResults.FirstOrDefault(), inputString) ||
+                        if (StringContainsAParent(filteredResults.FirstOrDefault(), inputString) ||
                             Grade.ParseString(inputString, false).Count > 0)
                             confidence = 1; //Highest confidence when we also match a location in the string or if we match a full grade
                         else
@@ -160,17 +171,26 @@ namespace MountainProjectAPI
                     else if (filteredResults.Count > 1)
                     {
                         //Prioritize routes where one of the parents (locations) is also in the input string
-                        List<Route> routesWithMatchingLocations = filteredResults.Where(r => StringContainsParent(r, inputString)).ToList();
+                        List<Route> routesWithMatchingLocations = filteredResults.Where(r => StringContainsAParent(r, inputString, false)).ToList();
                         if (routesWithMatchingLocations.Count > 0)
                         {
                             filteredResults = routesWithMatchingLocations;
                             confidence = 1; //Highest confidence when we have found the location in the string
                         }
+                        else
+                        {
+                            routesWithMatchingLocations = filteredResults.Where(r => StringContainsAParent(r, inputString)).ToList();
+                            if (routesWithMatchingLocations.Count > 0)
+                            {
+                                filteredResults = routesWithMatchingLocations;
+                                confidence = 1; //Highest confidence when we have found the location in the string
+                            }
+                        }
                     }
                     else
                     {
                         //Prioritize routes where one of the parents (locations) is also in the input string
-                        List<Route> routesWithMatchingLocations = possibleResults.Where(r => StringContainsParent(r, inputString)).ToList();
+                        List<Route> routesWithMatchingLocations = possibleResults.Where(r => StringContainsAParent(r, inputString)).ToList();
                         if (routesWithMatchingLocations.Count > 0)
                         {
                             filteredResults = routesWithMatchingLocations;
@@ -198,14 +218,13 @@ namespace MountainProjectAPI
             return finalResult;
         }
 
-        private static bool StringContainsParent(MPObject child, string inputString)
+        private static bool StringContainsAParent(MPObject child, string inputString, bool allowStateAbbr = true)
         {
-            if (child.Parents.Any(p => inputString.ToLower().Contains(p.Name.ToLower()) ||
-                                       (Utilities.StatesWithAbbr.ContainsKey(p.Name) &&
-                                        inputString.Contains(Utilities.StatesWithAbbr[p.Name]))))
-            {
+            if (child.Parents.Any(p => inputString.ToLower().Contains(p.Name.ToLower())))
                 return true;
-            }
+
+            if (allowStateAbbr && child.Parents.Any(p => Utilities.StatesWithAbbr.ContainsKey(p.Name) && inputString.Contains(Utilities.StatesWithAbbr[p.Name])))
+                return true;
 
             return false;
         }
