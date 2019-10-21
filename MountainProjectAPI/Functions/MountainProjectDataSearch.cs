@@ -190,11 +190,20 @@ namespace MountainProjectAPI
                     else
                     {
                         //Prioritize routes where one of the parents (locations) is also in the input string
-                        List<Route> routesWithMatchingLocations = possibleResults.Where(r => StringContainsAParent(r, inputString)).ToList();
+                        List<Route> routesWithMatchingLocations = possibleResults.Where(r => StringContainsAParent(r, inputString, false)).ToList();
                         if (routesWithMatchingLocations.Count > 0)
                         {
                             filteredResults = routesWithMatchingLocations;
                             confidence = 1; //Highest confidence when we have found the location in the string
+                        }
+                        else
+                        {
+                            routesWithMatchingLocations = possibleResults.Where(r => StringContainsAParent(r, inputString)).ToList();
+                            if (routesWithMatchingLocations.Count > 0)
+                            {
+                                filteredResults = routesWithMatchingLocations;
+                                confidence = 1; //Highest confidence when we have found the location in the string
+                            }
                         }
                     }
 
