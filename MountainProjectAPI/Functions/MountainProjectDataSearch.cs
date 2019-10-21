@@ -110,6 +110,165 @@ namespace MountainProjectAPI
             return searchResult;
         }
 
+        #region Post Title Parsing
+        public static SearchResult ParseRouteFromString(string inputString)
+        {
+            SearchResult finalResult = new SearchResult(); //Todo: in the future support returning multiple routes (but only if there are multiple grades in the title? Maybe only if all of the routes' full names are in the title?)
+
+            List<Grade> postGrades = Grade.ParseString(inputString);
+            if (postGrades.Count > 0)
+            {
+                Console.WriteLine($"    Recognized grade(s): {string.Join(" | ", postGrades)}");
+                List<Route> possibleResults = new List<Route>();
+                List<string> possibleRouteNames = GetPossibleRouteNames(inputString);
+                Console.WriteLine($"    Recognized name(s): {string.Join(" | ", possibleRouteNames)}");
+                foreach (string possibleRouteName in possibleRouteNames)
+                {
+                    SearchResult searchResult = Search(possibleRouteName, new SearchParameters() { OnlyRoutes = true });
+                    if (!searchResult.IsEmpty() && searchResult.AllResults.Count < 75) //If the number of matching results is greater than 75, it was probably a very generic word for a search (eg "There")
+                    {
+                        foreach (Route route in searchResult.AllResults.Cast<Route>())
+                        {
+                            if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
+                                possibleResults.Add(route);
+                        }
+                    }
+                }
+
+                if (possibleResults.Count > 0)
+                {
+                    //Todo: possible improvements:
+                    //  - prioritize routes where the grade matches exactly (eg 5.11a matches 5.11a rather than matching 5.11a-b)
+                    //  - prioritize routes that have locations OTHER than state abbrev in the title over ones that just have state abbrev (eg "Joshua Tree, CA" over just "CA")
+
+                    //Todo: maybe we should prioritize "route full name in the string" or "location in the string" before we discard generic matches?
+
+                    //Prioritize routes where the full name is in the input string
+                    //(Additionally, we could also prioritize how close - within the input string - the name is to the rating)
+                    List<Route> filteredResults = possibleResults.Where(p => Utilities.StringsMatch(Utilities.FilterStringForMatch(p.Name), 
+                                                                                                    Utilities.FilterStringForMatch(inputString))).ToList();
+
+                    int confidence = 3;
+                    if (filteredResults.Count == 1)
+                    {
+                        if (StringContainsParent(filteredResults.FirstOrDefault(), inputString) ||
+                            Grade.ParseString(inputString, false).Count > 0)
+                            confidence = 1; //Highest confidence when we also match a location in the string or if we match a full grade
+                        else
+                            confidence = 2; //Medium confidence when we have only found one match with that exact name but can't match a location in the string
+                    }
+                    else if (filteredResults.Count > 1)
+                    {
+                        //Prioritize routes where one of the parents (locations) is also in the input string
+                        List<Route> routesWithMatchingLocations = filteredResults.Where(r => StringContainsParent(r, inputString)).ToList();
+                        if (routesWithMatchingLocations.Count > 0)
+                        {
+                            filteredResults = routesWithMatchingLocations;
+                            confidence = 1; //Highest confidence when we have found the location in the string
+                        }
+                    }
+                    else
+                    {
+                        //Prioritize routes where one of the parents (locations) is also in the input string
+                        List<Route> routesWithMatchingLocations = possibleResults.Where(r => StringContainsParent(r, inputString)).ToList();
+                        if (routesWithMatchingLocations.Count > 0)
+                        {
+                            filteredResults = routesWithMatchingLocations;
+                            confidence = 1; //Highest confidence when we have found the location in the string
+                        }
+                    }
+
+                    if (filteredResults.Count == 1)
+                        finalResult = new SearchResult(filteredResults.First());
+                    else if (filteredResults.Count > 1)
+                    {
+                        finalResult = new SearchResult(filteredResults.OrderByDescending(p => p.Popularity).First());
+                        confidence = 2; //Medium confidence when we have matched the string exactly, but there are multiple results
+                    }
+                    else
+                    {
+                        finalResult = new SearchResult(possibleResults.OrderByDescending(p => p.Popularity).First());
+                        confidence = 3; //Low confidence when we can't match the string exactly, haven't matched any locations, and there are multiple results
+                    }
+
+                    finalResult.Confidence = confidence;
+                }
+            }
+
+            return finalResult;
+        }
+
+        private static bool StringContainsParent(MPObject child, string inputString)
+        {
+            if (child.Parents.Any(p => inputString.ToLower().Contains(p.Name.ToLower()) ||
+                                       (Utilities.StatesWithAbbr.ContainsKey(p.Name) &&
+                                        inputString.Contains(Utilities.StatesWithAbbr[p.Name]))))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public static List<string> GetPossibleRouteNames(string postTitle)
+        {
+            //Todo: this method should also filter out locations as possible route names (of the form ", POSSIBLENAME"). 
+            //For instance, in the postTitle "Evening session on Dasani 6-. Morrison, Colorado" Colorado should not be 
+            //a possible name. This may be difficult because there could also be "My first 12, Jade" (maybe that's ok, though).
+            //Maybe in a series of "POSSIBLE_NAME, POSSIBLE_NAME, POSSIBLE_NAME" (possible names separated by commas and optional
+            //spaces) we only take the first one in the list. For instance, in this:
+            //"Sex Cave Sector of the Daliwood Boulders, in Dali, Yunnan Province, China" we should only consider
+            //"Sex Cave Sector of the Daliwood Boulders" (and that even below will get broken into "Sex Cave Sector" and
+            //"Daliwood Boulders" for alternate matches)
+
+            List<string> result = new List<string>();
+
+            Regex routeGradeRegex = new Regex(@"((5\.)\d+[+-]?[a-dA-D]?([\/\\\-][a-dA-D])?)|([vV]\d+([\/\\\-]\d+)?)");
+            postTitle = routeGradeRegex.Replace(postTitle, "");
+
+            string[] connectingWords = new string[] { "and", "the", "to", "or", "a", "an", "was", "but" };
+            string[] locationWords = new string[] { "of", "on", "at", "in" };
+            connectingWords = connectingWords.Concat(locationWords).ToArray();
+
+            string possibleRouteName = "";
+            foreach (string word in Regex.Split(postTitle, @"[^\p{L}0-9'’]"))
+            {
+                if ((!string.IsNullOrWhiteSpace(word) && char.IsUpper(word[0]) && word.Length > 1) ||
+                    (connectingWords.Contains(word.ToLower()) && !string.IsNullOrWhiteSpace(possibleRouteName)) || Utilities.IsNumber(word))
+                    possibleRouteName += word + " ";
+                else if (!string.IsNullOrWhiteSpace(possibleRouteName))
+                {
+                    possibleRouteName = possibleRouteName.Trim();
+                    result.Add(possibleRouteName);
+
+                    //If there is a "location word" in the possibleRouteName, add the separate parts to the result as well
+                    Regex locationWordsRegex = new Regex(@"(\s+" + string.Join(@"\s+)|(\s+", locationWords) + @"\s+)");
+                    if (locationWordsRegex.IsMatch(possibleRouteName))
+                        locationWordsRegex.Split(possibleRouteName).ToList().ForEach(p => result.Add(Utilities.TrimWords(p, connectingWords).Trim()));
+
+                    possibleRouteName = "";
+                }
+            }
+
+            //Add any "remaining" names
+            if (!string.IsNullOrWhiteSpace(possibleRouteName) && possibleRouteName != "V")
+                result.Add(possibleRouteName.Trim());
+
+            result = result.Distinct().ToList();
+            result.RemoveAll(p => p.Length < 3); //Remove any short "names" (eg "My")
+            result.RemoveAll(p => connectingWords.Contains(p.ToLower())); //Remove any "possible names" that are only a connecting word (eg "the")
+            result.RemoveAll(p => Utilities.IsNumber(p));
+
+            //Todo: experiment with using all "word combinations". IE once we have parsed our list of "possibleRouteNames", expand the list to
+            //be all combinations of those words (respecting order and not "cross-contaminating groups"). EG "Climbed Matthes Crest"
+            //possibleRouteName should be expanded to "Climbed Matthes Crest", "Climbed", "Matthes", "Crest", "Climbed Matthes", "Matthes Crest".
+            //See if this actually improves results or hurts it. (After this, we should probably run the "RemoveAll" lines again and remove the 
+            //"locationWordsRegex.Split" section above)
+
+            return result;
+        }
+        #endregion Post Title Parsing
+
         private static List<Tuple<string, string>> GetPossibleQueryAndLocationGroups(string queryText, SearchParameters searchParameters = null)
         {
             List<Tuple<string, string>> result = new List<Tuple<string, string>>();

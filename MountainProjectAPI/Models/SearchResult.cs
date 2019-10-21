@@ -20,6 +20,10 @@ namespace MountainProjectAPI
         public List<MPObject> AllResults { get; set; }
         public Area RelatedLocation { get; set; }
         public TimeSpan TimeTaken { get; set; }
+        /// <summary>
+        /// A value determining the confidence of the result. The LOWER the value, the higher the confidence (1 = 100% confidence)
+        /// </summary>
+        public int Confidence { get; set; }
 
         public bool IsEmpty()
         {

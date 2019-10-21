@@ -1,5 +1,6 @@
 ﻿using MountainProjectAPI;
 using MountainProjectBot;
+using Newtonsoft.Json.Linq;
 using RedditSharp;
 using RedditSharp.Things;
 using System;
@@ -10,6 +11,8 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using static MountainProjectBot.Enums;
@@ -35,6 +38,7 @@ namespace MountainProjectBot_AutoReply
         static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
         static string repliedToPostsPath = @"RepliedToPosts.txt";
         static string blacklistedPath = @"..\..\MountainProjectBot\bin\BlacklistedUsers.txt";
+        static string requestForApprovalURL = "";
 
         static RedditHelper redditHelper = new RedditHelper();
 
@@ -47,7 +51,14 @@ namespace MountainProjectBot_AutoReply
             CheckRequiredFiles();
             MountainProjectDataSearch.InitMountainProjectData(xmlPath);
             redditHelper.Auth(credentialsPath).Wait();
+            GetRequestServerURL(credentialsPath);
             DoBotLoop().Wait();
+        }
+
+        private static void GetRequestServerURL(string filePath)
+        {
+            List<string> fileLines = File.ReadAllLines(filePath).ToList();
+            requestForApprovalURL = fileLines.FirstOrDefault(p => p.Contains("requestForApprovalURL")).Split(new[] { ':' }, 2)[1]; //Split on first occurence only because requestForApprovalURL also contains ':'
         }
 
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -107,9 +118,14 @@ namespace MountainProjectBot_AutoReply
                 {
                     redditHelper.Actions = 0; //Reset number of actions
 
+                    Console.WriteLine("    Replying to approved posts...");
+                    elapsed = stopwatch.ElapsedMilliseconds;
+                    await ReplyToApprovedPosts();
+                    Console.WriteLine($"    Done replying ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+
                     Console.WriteLine("    Checking posts for auto-reply...");
                     elapsed = stopwatch.ElapsedMilliseconds;
-                    await AutoReplyToPosts(redditHelper.Subreddits);
+                    await CheckPostsForAutoReply(redditHelper.Subreddits);
                     Console.WriteLine($"    Done with auto-reply ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
                 }
                 catch (Exception e)
@@ -132,7 +148,31 @@ namespace MountainProjectBot_AutoReply
             }
         }
 
-        private static async Task AutoReplyToPosts(List<Subreddit> subreddits)
+        static List<KeyValuePair<Post, SearchResult>> postsPendingApproval = new List<KeyValuePair<Post, SearchResult>>();
+
+        private static async Task ReplyToApprovedPosts()
+        {
+            postsPendingApproval.RemoveAll(p => (DateTime.UtcNow - p.Key.CreatedUTC).TotalMinutes > 15); //Remove posts that have "timed out"
+            postsPendingApproval = await RemoveWhereClimbingRouteBotHasReplied(postsPendingApproval);
+            if (postsPendingApproval.Count == 0)
+                return;
+
+            List<string> approvedUrls = GetApprovedPostUrls();
+            List<KeyValuePair<Post, SearchResult>> approvedPosts = postsPendingApproval.Where(p => approvedUrls.Contains(p.Key.Shortlink) || p.Value.Confidence == 1).ToList();
+            foreach (KeyValuePair<Post, SearchResult> post in approvedPosts)
+            {
+                string reply = BotReply.GetFormattedString(post.Value);
+                reply += Markdown.HRule;
+                reply += BotReply.GetBotLinks(post.Key);
+
+                await post.Key.CommentAsync(reply);
+                Console.WriteLine($"\n    Auto-replied to post {post.Key.Id}");
+
+                postsPendingApproval.RemoveAll(p => p.Key == post.Key);
+            }
+        }
+
+        private static async Task CheckPostsForAutoReply(List<Subreddit> subreddits)
         {
             List<Post> recentPosts = new List<Post>();
             foreach (Subreddit subreddit in subreddits)
@@ -154,75 +194,19 @@ namespace MountainProjectBot_AutoReply
 
                     Console.WriteLine($"    Trying to get an automatic reply for post (/r/{post.SubredditName}): {postTitle}");
 
-                    Route finalResult = BotReply.ParsePostTitleToRoute(postTitle);
-                    if (finalResult != null)
+                    SearchResult searchResult = MountainProjectDataSearch.ParseRouteFromString(postTitle);
+                    if (!searchResult.IsEmpty())
                     {
-                        FlashWindow.Flash();
+                        postsPendingApproval.Add(new KeyValuePair<Post, SearchResult>(post, searchResult));
 
-                        //Ask for confirmation to post (with special console color formatting)
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine($"\n\nI FOUND A RESULT!");
-
-                        Console.Write("\n\tPOST: ");
-                        Console.ForegroundColor = ConsoleColor.Gray;
-                        Console.WriteLine(postTitle);
-
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.Write("\tSUBREDDIT: ");
-                        Console.ForegroundColor = ConsoleColor.Gray;
-                        Console.WriteLine($"/r/{post.SubredditName}");
-
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.Write("\tPOSTER: ");
-                        Console.ForegroundColor = ConsoleColor.Gray;
-                        Console.WriteLine($"{post.AuthorName}");
-
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.Write("\t(Post is ");
-                        Console.ForegroundColor = ConsoleColor.Gray;
-                        Console.Write(Math.Round((DateTime.UtcNow - post.CreatedUTC).TotalMinutes, 2).ToString());
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.WriteLine(" min old)");
-
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.Write("\tRESULT: ");
-                        Console.ForegroundColor = ConsoleColor.Gray;
-                        Console.WriteLine(finalResult.ToString());
-
-                        Console.ForegroundColor = ConsoleColor.Green;
-                        Console.Write("\tLOCATION: ");
-                        Console.ForegroundColor = ConsoleColor.Gray;
-                        List<MPObject> reversedParents = finalResult.Parents.ToList();
-                        reversedParents.Reverse();
-                        Console.WriteLine(string.Join(" > ", reversedParents.Select(p => p.Name)));
-
-                        Console.ForegroundColor = ConsoleColor.Red;
-                        Console.Write("\nSHOULD I REPLY (y/n)? ");
-                        Console.ForegroundColor = ConsoleColor.Gray;
-
-                        string response = null;
-                        try
-                        {
-                            response = Reader.ReadLine(10 * 60 * 1000); //Try to get a response, but give up after 10 min (credit: https://stackoverflow.com/a/18342182/2246411)
-                        }
-                        catch (TimeoutException)
-                        {
-                        }
-
-                        if (response == "y")
-                        {
-                            string reply = BotReply.GetFormattedString(finalResult);
-                            reply += Markdown.HRule;
-                            reply += BotReply.GetBotLinks(post);
-
-                            await post.CommentAsync(reply);
-                            Console.WriteLine($"\n    Auto-replied to post {post.Id}");
-                        }
+                        //Until we are more confident with automatic results, we're going to request for approval for confidence values greater than 1 (less than 100%)
+                        if (searchResult.Confidence > 1)
+                            RequestApproval(post, searchResult);
                     }
                     else
                         Console.WriteLine("    Nothing found");
 
-                    LogPostBeenRepliedTo(post);
+                    LogPostBeenSeen(post);
                 }
                 catch (RateLimitException)
                 {
@@ -234,6 +218,79 @@ namespace MountainProjectBot_AutoReply
                     Console.WriteLine($"    {e.Message}\n{e.StackTrace}");
                 }
             }
+        }
+
+        public static void RequestApproval(Post post, SearchResult searchResult)
+        {
+            DateTime now = DateTime.Now;
+            if (now.Hour >= 21 || now.Hour < 5) //Don't run between the hours 9pm-5am
+                return;
+
+            string locationString = Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult), @"\[|\]|\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
+            NotifyFoundPost(WebUtility.HtmlDecode(post.Title), post.Shortlink, searchResult.FilteredResult.Name, locationString,
+                        (searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false), searchResult.FilteredResult.URL, searchResult.FilteredResult.ID);
+
+            //FlashWindow.Flash();
+
+            ////Ask for confirmation to post (with special console color formatting)
+            //Console.ForegroundColor = ConsoleColor.Red;
+            //Console.WriteLine($"\n\nI FOUND A RESULT!");
+
+            //Console.Write("\n\tPOST: ");
+            //Console.ForegroundColor = ConsoleColor.Gray;
+            //Console.WriteLine(postTitle);
+
+            //Console.ForegroundColor = ConsoleColor.Red;
+            //Console.Write("\tSUBREDDIT: ");
+            //Console.ForegroundColor = ConsoleColor.Gray;
+            //Console.WriteLine($"/r/{post.SubredditName}");
+
+            //Console.ForegroundColor = ConsoleColor.Red;
+            //Console.Write("\tPOSTER: ");
+            //Console.ForegroundColor = ConsoleColor.Gray;
+            //Console.WriteLine($"{post.AuthorName}");
+
+            //Console.ForegroundColor = ConsoleColor.Red;
+            //Console.Write("\t(Post is ");
+            //Console.ForegroundColor = ConsoleColor.Gray;
+            //Console.Write(Math.Round((DateTime.UtcNow - post.CreatedUTC).TotalMinutes, 2).ToString());
+            //Console.ForegroundColor = ConsoleColor.Red;
+            //Console.WriteLine(" min old)");
+
+            //Console.ForegroundColor = ConsoleColor.Green;
+            //Console.Write("\tRESULT: ");
+            //Console.ForegroundColor = ConsoleColor.Gray;
+            //Console.WriteLine(finalResult.ToString());
+
+            //Console.ForegroundColor = ConsoleColor.Green;
+            //Console.Write("\tLOCATION: ");
+            //Console.ForegroundColor = ConsoleColor.Gray;
+            //List<MPObject> reversedParents = finalResult.Parents.ToList();
+            //reversedParents.Reverse();
+            //Console.WriteLine(string.Join(" > ", reversedParents.Select(p => p.Name)));
+
+            //Console.ForegroundColor = ConsoleColor.Red;
+            //Console.Write("\nSHOULD I REPLY (y/n)? ");
+            //Console.ForegroundColor = ConsoleColor.Gray;
+
+            //string response = null;
+            //try
+            //{
+            //    response = Reader.ReadLine(10 * 60 * 1000); //Try to get a response, but give up after 10 min (credit: https://stackoverflow.com/a/18342182/2246411)
+            //}
+            //catch (TimeoutException)
+            //{
+            //}
+
+            //if (response == "y")
+            //{
+            //    string reply = BotReply.GetFormattedString(finalResult);
+            //    reply += Markdown.HRule;
+            //    reply += BotReply.GetBotLinks(post);
+
+            //    await post.CommentAsync(reply);
+            //    Console.WriteLine($"\n    Auto-replied to post {post.Id}");
+            //}
         }
 
         private static Dictionary<string, BlacklistLevel> GetBlacklist()
@@ -271,7 +328,20 @@ namespace MountainProjectBot_AutoReply
             return result;
         }
 
-        private static void LogPostBeenRepliedTo(Post post)
+        private static async Task<List<KeyValuePair<Post, SearchResult>>> RemoveWhereClimbingRouteBotHasReplied(List<KeyValuePair<Post, SearchResult>> posts)
+        {
+            List<KeyValuePair<Post, SearchResult>> result = posts.ToList();
+            foreach (Post post in posts.Select(p => p.Key))
+            {
+                List<Comment> postComments = await post.GetCommentsAsync(100);
+                if (postComments.Any(c => c.AuthorName == "ClimbingRouteBot"))
+                    result.RemoveAll(p => p.Key == post);
+            }
+
+            return result;
+        }
+
+        private static void LogPostBeenSeen(Post post)
         {
             if (!File.Exists(repliedToPostsPath))
                 File.Create(repliedToPostsPath).Close();
@@ -296,6 +366,64 @@ namespace MountainProjectBot_AutoReply
             Console.WriteLine("Press any key to exit");
             Console.Read();
             Environment.Exit(0);
+        }
+
+        public static void NotifyFoundPost(string postTitle, string postUrl, string mpResultTitle, string mpResultLoc, string mpResultGrade, string mpResultUrl, string mpResultID)
+        {
+            if (string.IsNullOrEmpty(requestForApprovalURL))
+                return;
+
+            List<string> parameters = new List<string>
+            {
+                "postTitle=" + Uri.EscapeDataString(postTitle),
+                "postURL=" + Uri.EscapeDataString(postUrl),
+                "mpResultTitle=" + Uri.EscapeDataString(mpResultTitle),
+                "mpResultLocation=" + Uri.EscapeDataString(mpResultLoc),
+                "mpResultGrade=" + Uri.EscapeDataString(mpResultGrade),
+                "mpResultURL=" + Uri.EscapeDataString(mpResultUrl),
+                "mpResultID=" + Uri.EscapeDataString(mpResultID)
+            };
+
+            string postData = string.Join("&", parameters);
+            byte[] data = Encoding.ASCII.GetBytes(postData);
+
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestForApprovalURL);
+            request.Method = "POST";
+            request.ContentType = "application/x-www-form-urlencoded";
+            request.ContentLength = data.Length;
+
+            using (Stream stream = request.GetRequestStream())
+            {
+                stream.Write(data, 0, data.Length);
+            }
+
+            using (HttpWebResponse serverResponse = (HttpWebResponse)request.GetResponse())
+            using (StreamReader reader = new StreamReader(serverResponse.GetResponseStream()))
+            {
+                _ = reader.ReadToEnd(); //For POST requests, we don't care about what we get back
+            }
+        }
+
+        public static List<string> GetApprovedPostUrls()
+        {
+            if (string.IsNullOrEmpty(requestForApprovalURL))
+                return new List<string>();
+
+            string response;
+            HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(requestForApprovalURL);
+            httpRequest.AutomaticDecompression = DecompressionMethods.GZip;
+
+            using (HttpWebResponse serverResponse = (HttpWebResponse)httpRequest.GetResponse())
+            using (StreamReader reader = new StreamReader(serverResponse.GetResponseStream()))
+            {
+                response = reader.ReadToEnd();
+            }
+
+            if (response.Contains("<title>Error</title>") || string.IsNullOrEmpty(response)) //Hit an error when contacting server code
+                return new List<string>();
+
+            JObject json = JObject.Parse(response);
+            return json["approvedPosts"].ToObject<List<string>>();
         }
     }
 

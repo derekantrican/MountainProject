@@ -224,7 +224,7 @@ namespace UnitTests
 
                 writer.WriteLine($"POST TITLE: {inputPostTitle}");
 
-                Route result = BotReply.ParsePostTitleToRoute(WebUtility.HtmlDecode(inputPostTitle));
+                Route result = MountainProjectDataSearch.ParseRouteFromString(WebUtility.HtmlDecode(inputPostTitle)).FilteredResult as Route;
 
                 if (expectedMPLink == null)
                 {
