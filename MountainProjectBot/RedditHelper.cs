@@ -15,7 +15,7 @@ namespace MountainProjectBot
         Dictionary<string, int> subredditNamesAndCommentAmounts = new Dictionary<string, int>()
         {
             {"climbing", 1000 }, {"climbingporn", 30}, {"bouldering", 600}, {"socalclimbing", 50}, {"climbingvids", 30}, {"mountainprojectbot", 500},
-            {"climbergirls", 200 }, {"climbingcirclejerk", 500}, {"iceclimbing", 30 }, {"rockclimbing", 50}, {"tradclimbing", 100}
+            {"climbergirls", 200 }, {"iceclimbing", 30 }, {"rockclimbing", 50}, {"tradclimbing", 100}
         };
         public List<Subreddit> Subreddits = new List<Subreddit>();
 
