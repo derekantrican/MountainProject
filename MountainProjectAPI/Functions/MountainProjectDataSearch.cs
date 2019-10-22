@@ -146,13 +146,13 @@ namespace MountainProjectAPI
                     }
                 }
 
+                possibleResults = possibleResults.Distinct().ToList();
+
                 if (possibleResults.Count > 0)
                 {
                     //Todo: possible improvements:
                     //  - prioritize routes where the grade matches exactly (eg 5.11a matches 5.11a rather than matching 5.11a-b)
                     //  - prioritize routes that have locations OTHER than state abbrev in the title over ones that just have state abbrev (eg "Joshua Tree, CA" over just "CA")
-
-                    //Todo: maybe we should prioritize "route full name in the string" or "location in the string" before we discard generic matches?
 
                     //Prioritize routes where the full name is in the input string
                     //(Additionally, we could also prioritize how close - within the input string - the name is to the rating)
@@ -232,6 +232,7 @@ namespace MountainProjectAPI
 
         private static bool StringContainsAParent(MPObject child, string inputString, bool allowStateAbbr = true)
         {
+            //Todo: improve location matching (currently this fails for the string "V3 TKO at Stone Fort (LRC)" because the location name in MP is "Stone Fort (aka Little Rock City)")
             if (child.Parents.Any(p => inputString.ToLower().Contains(p.Name.ToLower())))
                 return true;
 
@@ -241,7 +242,7 @@ namespace MountainProjectAPI
             return false;
         }
 
-        public static List<string> GetPossibleRouteNames(string postTitle)
+        private static List<string> GetPossibleRouteNames(string postTitle)
         {
             //Todo: this method should also filter out locations as possible route names (of the form ", POSSIBLENAME"). 
             //For instance, in the postTitle "Evening session on Dasani 6-. Morrison, Colorado" Colorado should not be 
