@@ -135,9 +135,9 @@ namespace MountainProjectAPI
                                     possibleResults.Add(route);
                             }
                         }
-                        else if (searchResult.AllResults.Any(r => StringContainsAParent(r, inputString, false))) //If the above if statement is not chosen, but some routes have a location in the inputString, work with those
+                        else if (searchResult.AllResults.Any(r => ParentsInString(r, inputString).Count > 0)) //If the above if statement is not chosen, but some routes have a location in the inputString, work with those
                         {
-                            foreach (Route route in searchResult.AllResults.Where(r => StringContainsAParent(r, inputString, false)).Cast<Route>())
+                            foreach (Route route in searchResult.AllResults.Where(r => ParentsInString(r, inputString).Count > 0).Cast<Route>())
                             {
                                 if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
                                     possibleResults.Add(route);
@@ -150,9 +150,7 @@ namespace MountainProjectAPI
 
                 if (possibleResults.Count > 0)
                 {
-                    //Todo: possible improvements:
-                    //  - prioritize routes where the grade matches exactly (eg 5.11a matches 5.11a rather than matching 5.11a-b)
-                    //  - prioritize routes that have locations OTHER than state abbrev in the title over ones that just have state abbrev (eg "Joshua Tree, CA" over just "CA")
+                    //Todo: prioritize routes where the grade matches exactly (eg 5.11a matches 5.11a rather than matching 5.11a-b)
 
                     //Prioritize routes where the full name is in the input string
                     //(Additionally, we could also prioritize how close - within the input string - the name is to the rating)
@@ -162,7 +160,7 @@ namespace MountainProjectAPI
                     int confidence = 3;
                     if (filteredResults.Count == 1)
                     {
-                        if (StringContainsAParent(filteredResults.FirstOrDefault(), inputString) ||
+                        if (ParentsInString(filteredResults.FirstOrDefault(), inputString, true).Count > 0 ||
                             Grade.ParseString(inputString, false).Count > 0)
                             confidence = 1; //Highest confidence when we also match a location in the string or if we match a full grade
                         else
@@ -171,7 +169,7 @@ namespace MountainProjectAPI
                     else if (filteredResults.Count > 1)
                     {
                         //Prioritize routes where one of the parents (locations) is also in the input string
-                        List<Route> routesWithMatchingLocations = filteredResults.Where(r => StringContainsAParent(r, inputString, false)).ToList();
+                        List<Route> routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r, inputString).Count > 0).ToList();
                         if (routesWithMatchingLocations.Count > 0)
                         {
                             filteredResults = routesWithMatchingLocations;
@@ -179,18 +177,27 @@ namespace MountainProjectAPI
                         }
                         else
                         {
-                            routesWithMatchingLocations = filteredResults.Where(r => StringContainsAParent(r, inputString)).ToList();
+                            routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r, inputString, true).Count > 0).ToList();
                             if (routesWithMatchingLocations.Count > 0)
                             {
                                 filteredResults = routesWithMatchingLocations;
                                 confidence = 1; //Highest confidence when we have found the location in the string
+                            }
+                            else
+                            {
+                                routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r, inputString, true, true).Count > 0).ToList();
+                                if (routesWithMatchingLocations.Count > 0)
+                                {
+                                    filteredResults = routesWithMatchingLocations;
+                                    confidence = 2; //Medium confidence when we have matched only part of a parent's name
+                                }
                             }
                         }
                     }
                     else
                     {
                         //Prioritize routes where one of the parents (locations) is also in the input string
-                        List<Route> routesWithMatchingLocations = possibleResults.Where(r => StringContainsAParent(r, inputString, false)).ToList();
+                        List<Route> routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r, inputString).Count > 0).ToList();
                         if (routesWithMatchingLocations.Count > 0)
                         {
                             filteredResults = routesWithMatchingLocations;
@@ -198,11 +205,20 @@ namespace MountainProjectAPI
                         }
                         else
                         {
-                            routesWithMatchingLocations = possibleResults.Where(r => StringContainsAParent(r, inputString)).ToList();
+                            routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r, inputString, true).Count > 0).ToList();
                             if (routesWithMatchingLocations.Count > 0)
                             {
                                 filteredResults = routesWithMatchingLocations;
                                 confidence = 1; //Highest confidence when we have found the location in the string
+                            }
+                            else
+                            {
+                                routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r, inputString, true, true).Count > 0).ToList();
+                                if (routesWithMatchingLocations.Count > 0)
+                                {
+                                    filteredResults = routesWithMatchingLocations;
+                                    confidence = 2; //Medium confidence when we have matched only part of a parent's name
+                                }
                             }
                         }
                     }
@@ -220,8 +236,8 @@ namespace MountainProjectAPI
                         confidence = 3; //Low confidence when we can't match the string exactly, haven't matched any locations, and there are multiple results
                     }
 
-                    if (finalResult.FilteredResult.Parents.Any(p => inputString.ToLower().Contains(p.Name.ToLower())))
-                        finalResult.RelatedLocation = finalResult.FilteredResult.Parents.FirstOrDefault(p => inputString.ToLower().Contains(p.Name.ToLower())) as Area;
+                    if (ParentsInString(finalResult.FilteredResult, inputString, allowPartialParents: true).Count > 0)
+                        finalResult.RelatedLocation = ParentsInString(finalResult.FilteredResult, inputString, allowPartialParents: true).First() as Area;
 
                     finalResult.Confidence = confidence;
                 }
@@ -230,16 +246,35 @@ namespace MountainProjectAPI
             return finalResult;
         }
 
-        private static bool StringContainsAParent(MPObject child, string inputString, bool allowStateAbbr = true)
+        private static List<MPObject> ParentsInString(MPObject child, string inputString, bool allowStateAbbr = false, bool allowPartialParents = false)
         {
-            //Todo: improve location matching (currently this fails for the string "V3 TKO at Stone Fort (LRC)" because the location name in MP is "Stone Fort (aka Little Rock City)")
+            List<MPObject> matchedParents = new List<MPObject>();
+
             if (child.Parents.Any(p => inputString.ToLower().Contains(p.Name.ToLower())))
-                return true;
+                matchedParents.AddRange(child.Parents.Where(p => inputString.ToLower().Contains(p.Name.ToLower())));
 
-            if (allowStateAbbr && child.Parents.Any(p => Utilities.StatesWithAbbr.ContainsKey(p.Name) && inputString.Contains(Utilities.StatesWithAbbr[p.Name])))
-                return true;
+            if (allowStateAbbr)
+            {
+                foreach (MPObject parent in child.Parents)
+                {
+                    if (Utilities.StatesWithAbbr.ContainsKey(parent.Name) && inputString.Contains(Utilities.StatesWithAbbr[parent.Name]))
+                        matchedParents.Add(parent);
+                }
+            }
 
-            return false;
+            if (allowPartialParents)
+            {
+                foreach (MPObject parent in child.Parents)
+                {
+                    List<string> parentWords = Utilities.GetWordGroups(Utilities.FilterStringForMatch(parent.Name.ToLower(), false), false);
+                    if (parentWords.Any(p => inputString.ToLower().Contains(p)))
+                        matchedParents.Add(parent);
+                }
+            }
+
+            matchedParents = matchedParents.Distinct().ToList();
+
+            return matchedParents;
         }
 
         private static List<string> GetPossibleRouteNames(string postTitle)

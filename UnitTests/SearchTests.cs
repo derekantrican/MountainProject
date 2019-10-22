@@ -261,7 +261,7 @@ namespace UnitTests
             System.Diagnostics.Debug.WriteLine(writer.ToString());
 
             writer.Dispose();
-            Assert.IsTrue(totalFailures <= 48);
+            Assert.IsTrue((double)totalPasses / (totalPasses + totalFailures) > 0.95);
         }
     }
 }

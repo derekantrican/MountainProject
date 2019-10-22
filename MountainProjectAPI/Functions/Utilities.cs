@@ -151,9 +151,12 @@ namespace MountainProjectAPI
             return doc;
         }
 
-        public static string FilterStringForMatch(string input)
+        public static string FilterStringForMatch(string input, bool removeSpaces = true)
         {
-            return Regex.Replace(input, @"[^\p{L}0-9]", "");
+            if (removeSpaces)
+                return Regex.Replace(input, @"[^\p{L}0-9]", "");
+            else
+                return Regex.Replace(input, @"[^\p{L}0-9 ]", "");
         }
 
         public static bool StringsEqual(string inputString, string targetString, bool caseInsensitive = true)
@@ -258,9 +261,12 @@ namespace MountainProjectAPI
             return int.TryParse(inputString, out _);
         }
 
-        public static List<string> GetWordGroups(string phrase)
+        public static List<string> GetWordGroups(string phrase, bool allowSingleWords = true)
         {
-            return FindWords(phrase.Split(' ')).ToList();
+            if (allowSingleWords)
+                return FindWords(phrase.Split(' ')).Where(s => !string.IsNullOrWhiteSpace(s)).Distinct().ToList();
+            else
+                return FindWords(phrase.Split(' ')).Where(s => !string.IsNullOrWhiteSpace(s) && s.Contains(" ")).Distinct().ToList();
         }
 
         private static string[] FindWords(params string[] args)
@@ -299,6 +305,79 @@ namespace MountainProjectAPI
                     .SkipWhile(x => wordsToTrim.Contains(x.ToLower()))
                     .Reverse());
             return result;
+        }
+
+        public static int StringDifference(string s1, string s2, bool allowTransposedLetters = false)
+        {
+            if (!allowTransposedLetters)
+                return Levenshtein(s1, s2);
+            else
+                return DamerauLevenshtein(s1, s2);
+        }
+
+        private static int Levenshtein(string s, string t)
+        {
+            int n = s.Length;
+            int m = t.Length;
+            int[,] d = new int[n + 1, m + 1];
+
+            if (n == 0)
+                return m;
+
+            if (m == 0)
+                return n;
+
+            for (int i = 0; i <= n; d[i, 0] = i++) { }
+
+            for (int j = 0; j <= m; d[0, j] = j++) { }
+
+            for (int i = 1; i <= n; i++)
+            {
+                for (int j = 1; j <= m; j++)
+                {
+                    int cost = (t[j - 1] == s[i - 1]) ? 0 : 1;
+                    d[i, j] = Math.Min(Math.Min(d[i - 1, j] + 1, 
+                                                d[i, j - 1] + 1),
+                                                d[i - 1, j - 1] + cost);
+                }
+            }
+
+            return d[n, m];
+        }
+
+        private static int DamerauLevenshtein(string s, string t)
+        {
+            var bounds = new { Height = s.Length + 1, Width = t.Length + 1 };
+
+            int[,] matrix = new int[bounds.Height, bounds.Width];
+
+            for (int height = 0; height < bounds.Height; height++)
+                matrix[height, 0] = height;
+
+            for (int width = 0; width < bounds.Width; width++)
+                matrix[0, width] = width;
+
+            for (int height = 1; height < bounds.Height; height++)
+            {
+                for (int width = 1; width < bounds.Width; width++)
+                {
+                    int cost = (s[height - 1] == t[width - 1]) ? 0 : 1;
+                    int insertion = matrix[height, width - 1] + 1;
+                    int deletion = matrix[height - 1, width] + 1;
+                    int substitution = matrix[height - 1, width - 1] + cost;
+
+                    int distance = Math.Min(insertion, Math.Min(deletion, substitution));
+
+                    if (height > 1 && width > 1 && s[height - 1] == t[width - 2] && s[height - 2] == t[width - 1])
+                    {
+                        distance = Math.Min(distance, matrix[height - 2, width - 2] + cost);
+                    }
+
+                    matrix[height, width] = distance;
+                }
+            }
+
+            return matrix[bounds.Height - 1, bounds.Width - 1];
         }
     }
 }
