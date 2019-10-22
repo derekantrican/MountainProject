@@ -220,6 +220,9 @@ namespace MountainProjectAPI
                         confidence = 3; //Low confidence when we can't match the string exactly, haven't matched any locations, and there are multiple results
                     }
 
+                    if (finalResult.FilteredResult.Parents.Any(p => inputString.ToLower().Contains(p.Name.ToLower())))
+                        finalResult.RelatedLocation = finalResult.FilteredResult.Parents.FirstOrDefault(p => inputString.ToLower().Contains(p.Name.ToLower())) as Area;
+
                     finalResult.Confidence = confidence;
                 }
             }
