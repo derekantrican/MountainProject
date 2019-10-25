@@ -225,10 +225,6 @@ namespace MountainProjectBot_AutoReply
 
         public static void RequestApproval(Post post, SearchResult searchResult)
         {
-            DateTime now = DateTime.Now;
-            if (now.Hour >= 21 || now.Hour < 5) //Don't run between the hours 9pm-5am
-                return;
-
             string locationString = Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult), @"\[|\]|\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
             NotifyFoundPost(WebUtility.HtmlDecode(post.Title), post.Shortlink, searchResult.FilteredResult.Name, locationString,
                         (searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false), searchResult.FilteredResult.URL, searchResult.FilteredResult.ID);
