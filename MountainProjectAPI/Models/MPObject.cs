@@ -41,7 +41,7 @@ namespace MountainProjectAPI
                 //Remove any special characters (spaces, apostrophes, etc) and leave only letter characters (of any language)
                 //Ideally, we would do this during MountainProjectDataSearch.StringMatch but Regex.Replace takes a significant 
                 //amount of time. So running it during the DBBuild saves time for the Reddit bot
-                NameForMatch = Utilities.FilterStringForMatch(name);
+                NameForMatch = Utilities.FilterStringForMatch(Utilities.EnfoceWordConsistency(name));
             }
         }
 

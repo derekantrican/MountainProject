@@ -42,8 +42,8 @@ namespace MountainProjectAPI
             List<Tuple<string, string>> possibleQueryAndLocationGroups = GetPossibleQueryAndLocationGroups(queryText, searchParameters);
             foreach (Tuple<string, string> group in possibleQueryAndLocationGroups)
             {
-                string query = Utilities.FilterStringForMatch(group.Item1);
-                string location = Utilities.FilterStringForMatch(group.Item2);
+                string query = Utilities.FilterStringForMatch(Utilities.EnfoceWordConsistency(group.Item1));
+                string location = Utilities.FilterStringForMatch(Utilities.EnfoceWordConsistency(group.Item2));
 
                 List<MPObject> possibleMatches = DeepSearch(query, DestAreas);
                 possibleMatches = FilterBySearchParameters(possibleMatches, searchParameters);

@@ -2,6 +2,7 @@
 using AngleSharp.Html.Parser;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text;
@@ -149,6 +150,41 @@ namespace MountainProjectAPI
             IHtmlDocument doc = parser.ParseDocument(html);
 
             return doc;
+        }
+
+        public static string CleanExtraPartsFromName(string input)
+        {
+            input = Regex.Replace(input, "( rock)? climbing$", "", RegexOptions.IgnoreCase);
+            input = Regex.Replace(input, " area$", "", RegexOptions.IgnoreCase);
+            input = input.Trim(' ', '*', '-');
+
+            return input;
+        }
+
+        public static string EnfoceWordConsistency(string input)
+        {
+            //Convert abbreviations (eg "Mt." or "&") to full words (eg "Mount" or "and")
+            input = input.Replace("Mount ", "Mt. ");
+            input = input.Replace("Mister ", "Mr. ");
+            input = input.Replace("&", "and");
+
+            //Remove diacritics (eg "Landjäger" should become "Landjager") (Credit: https://stackoverflow.com/a/249126/2246411)
+            var normalizedString = input.Normalize(NormalizationForm.FormD);
+            var stringBuilder = new StringBuilder();
+
+            foreach (var c in normalizedString)
+            {
+                var unicodeCategory = CharUnicodeInfo.GetUnicodeCategory(c);
+                if (unicodeCategory != UnicodeCategory.NonSpacingMark)
+                    stringBuilder.Append(c);
+            }
+
+            input = stringBuilder.ToString().Normalize(NormalizationForm.FormC);
+
+            //Convert number words (eg "Twenty Three") to numbers (eg "23")
+            input = NumberWordsToNumbers.ConvertString(input);
+
+            return input;
         }
 
         public static string FilterStringForMatch(string input, bool removeSpaces = true)
@@ -378,6 +414,262 @@ namespace MountainProjectAPI
             }
 
             return matrix[bounds.Height - 1, bounds.Width - 1];
+        }
+    }
+
+    public static class NumberWordsToNumbers
+    {
+        #region Number Dictionaries
+        private static Dictionary<string, int> singleNumbers = new Dictionary<string, int>
+        {
+            {"zero", 0 },
+            {"one", 1 },
+            {"two", 2 },
+            {"three", 3 },
+            {"four", 4 },
+            {"five", 5 },
+            {"six", 6 },
+            {"seven", 7 },
+            {"eight", 8 },
+            {"nine", 9 }
+        };
+
+        private static Dictionary<string, int> teenNumbers = new Dictionary<string, int>
+        {
+            {"eleven", 11 },
+            {"twelve", 12 },
+            {"thirteen", 13 },
+            {"fourteen", 14 },
+            {"fifteen", 15 },
+            {"sixteen", 16 },
+            {"seventeen", 17 },
+            {"eighteen", 18 },
+            {"nineteen", 19 }
+        };
+
+        private static Dictionary<string, int> doubleNumbers = new Dictionary<string, int>
+        {
+            {"ten", 10 },
+            {"twenty", 20 },
+            {"thirty", 30 },
+            {"fourty", 40 },
+            {"fifty", 50 },
+            {"sixty", 60 },
+            {"seventy", 70 },
+            {"eighty", 80 },
+            {"ninety", 90 }
+        };
+
+        private static Dictionary<string, long> multiplierWords = new Dictionary<string, long>
+        {
+            {"hundred", 100 },
+            {"thousand", 1000 },
+            {"million", 1000000 },
+            {"billion", 1000000000 },
+            {"trillion", 1000000000000 }
+        };
+        #endregion Number Dictionaries
+
+        public static string ConvertString(string input)
+        {
+            List<Match> numberWords = GetNumberWords(input);
+
+            List<Tuple<string, int, int>> numberWordGroups = CombineNumberWordGroups(numberWords, input);
+
+            for (int i = 0; i < numberWordGroups.Count; i++)
+            {
+                string filteredNumberWords = numberWordGroups[i].Item1.Replace("-", " ").Replace(",", " ").Replace(" and ", " ");
+                numberWordGroups[i] = new Tuple<string, int, int>(ConvertNumberWordsToNumber(filteredNumberWords).ToString(),
+                                                                  numberWordGroups[i].Item2,
+                                                                  numberWordGroups[i].Item3);
+            }
+
+            input = ReplaceNumbersInString(input, numberWordGroups);
+
+            return input;
+        }
+
+        private static List<Match> GetNumberWords(string input)
+        {
+            List<Match> result = new List<Match>();
+
+            string allNumbersRegex = $"{string.Join("|", multiplierWords.Keys)}|" +
+                                     $"{string.Join("|", doubleNumbers.Keys)}|" +
+                                     $"{string.Join("|", teenNumbers.Keys)}|" +
+                                     $"{string.Join("|", singleNumbers.Keys)}|" +
+                                     @"\d+";
+
+            foreach (Match match in Regex.Matches(input, allNumbersRegex, RegexOptions.IgnoreCase))
+                result.Add(match);
+
+            return result;
+        }
+
+        private static List<Tuple<string, int, int>> CombineNumberWordGroups(List<Match> numberWords, string input)
+        {
+            List<Tuple<string, int, int>> result = new List<Tuple<string, int, int>>();
+
+            for (int i = 0; i < numberWords.Count; i++)
+            {
+                Match word = numberWords[i];
+                if (i > 0)
+                {
+                    Match lastWord = numberWords[i - 1];
+                    string separatingString = input.Substring(lastWord.Index + lastWord.Length, word.Index - lastWord.Index - lastWord.Length);
+
+                    //If words are only separated by "and", " ", or "-" then combine them together into one group
+                    if (Regex.Replace(separatingString, " |-|and", "", RegexOptions.IgnoreCase) == "")
+                    {
+                        result[result.Count - 1] = new Tuple<string, int, int>(result[result.Count - 1].Item1 + separatingString + word.Value,
+                                                                                result[result.Count - 1].Item2,
+                                                                                result[result.Count - 1].Item3 + separatingString.Length + word.Value.Length);
+
+                        continue;
+                    }
+                }
+
+                result.Add(new Tuple<string, int, int>(word.Value, word.Index, word.Length));
+            }
+
+            return result;
+        }
+
+        private static string ConvertNumberWordsToNumber(string numberWords)
+        {
+            //Need to do number matching in reverse order so we match things like "sixty" before "six"
+            foreach (string key in multiplierWords.Keys)
+                numberWords = Regex.Replace(numberWords, key, multiplierWords[key].ToString(), RegexOptions.IgnoreCase);
+
+            foreach (string key in doubleNumbers.Keys)
+                numberWords = Regex.Replace(numberWords, key, doubleNumbers[key].ToString(), RegexOptions.IgnoreCase);
+
+            foreach (string key in teenNumbers.Keys)
+                numberWords = Regex.Replace(numberWords, key, teenNumbers[key].ToString(), RegexOptions.IgnoreCase);
+
+            foreach (string key in singleNumbers.Keys)
+                numberWords = Regex.Replace(numberWords, key, singleNumbers[key].ToString(), RegexOptions.IgnoreCase);
+
+            numberWords = CombineMultipliers(numberWords);
+
+            numberWords = CombineNearbyNumbers(numberWords);
+
+            return numberWords;
+        }
+
+        private static string CombineMultipliers(string input)
+        {
+            string result = "";
+            int currentNum = int.MinValue;
+            foreach (string word in input.Split(' '))
+            {
+                if (word == "")
+                    continue;
+
+                int number;
+                if (int.TryParse(word, out number))
+                {
+                    string numStr = currentNum.ToString();
+                    if (currentNum == int.MinValue)
+                        currentNum = number;
+                    else if (multiplierWords.Values.Contains(number) && currentNum != int.MinValue)
+                        currentNum *= number;
+                    else
+                    {
+                        if (currentNum != int.MinValue)
+                        {
+                            result += currentNum + " ";
+                            currentNum = int.MinValue;
+                        }
+
+                        currentNum = number;
+                    }
+                }
+                else
+                {
+                    if (currentNum != double.MinValue)
+                    {
+                        result += currentNum + " ";
+                        currentNum = int.MinValue;
+                    }
+
+                    result += word + " ";
+                }
+            }
+
+            if (currentNum != int.MinValue)
+                result += currentNum;
+
+            return result.Trim();
+        }
+
+        private static string CombineNearbyNumbers(string input)
+        {
+            string result = "";
+            int currentNum = int.MinValue;
+            foreach (string word in input.Split(' '))
+            {
+                if (word == "")
+                    continue;
+
+                int number;
+                if (int.TryParse(word, out number))
+                {
+                    string numStr = currentNum.ToString();
+                    if (currentNum == int.MinValue)
+                        currentNum = number;
+                    else if (numStr.Length > word.Length &&
+                             numStr.Substring(numStr.Length - word.Length).Distinct().All(c => c == '0')) //Check if space for new number in currentNum is only zeros
+                    {
+                        currentNum = currentNum + number;
+                    }
+                    else
+                    {
+                        if (currentNum != int.MinValue)
+                        {
+                            result += currentNum + " ";
+                            currentNum = int.MinValue;
+                        }
+
+                        currentNum = number;
+                    }
+                }
+                else
+                {
+                    if (currentNum != int.MinValue)
+                    {
+                        result += currentNum + " ";
+                        currentNum = int.MinValue;
+                    }
+
+                    result += word + " ";
+                }
+            }
+
+            if (currentNum != int.MinValue)
+                result += currentNum;
+
+            return result.Trim();
+        }
+
+        private static string ReplaceNumbersInString(string originalString, List<Tuple<string, int, int>> replacementNumbersAndPositions)
+        {
+            int indexDiff = 0; //Account for difference in length values as we replace substrings
+            foreach (Tuple<string, int, int> replacementNumber in replacementNumbersAndPositions)
+            {
+                string temp = originalString.Replace(replacementNumber.Item2 - indexDiff, replacementNumber.Item3, replacementNumber.Item1);
+                indexDiff += originalString.Length - temp.Length;
+                originalString = temp;
+            }
+
+            return originalString;
+        }
+
+        private static string Replace(this string inputString, int startIndex, int length, string newSubString)
+        {
+            StringBuilder aStringBuilder = new StringBuilder(inputString);
+            aStringBuilder.Remove(startIndex, length);
+            aStringBuilder.Insert(startIndex, newSubString);
+            return aStringBuilder.ToString();
         }
     }
 }

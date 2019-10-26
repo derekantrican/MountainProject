@@ -153,6 +153,8 @@ namespace MountainProjectAPI
 
             if (allowHeadlessMatch)
             {
+                //Todo: right now we filter out french grades, but maybe we can support them in the future
+
                 //FOURTH, attempt to match YDS grades with no prefix, but with a subgrade (eg 10b or 9+)
                 //For numbers below 10, if it is followed by a letter grade we won't match it (likely a French grade)
                 string regexString = @"(?<!\\|\/|\d)\d+[\/\\\-]\d+(?!\\|\/|\d)|" + //First format option: 5/7 (where there isn't a date - other slashes or a partial date)

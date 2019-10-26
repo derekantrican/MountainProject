@@ -16,6 +16,21 @@ namespace MountainProjectAPI
     {
         public static int TotalAreas = 0;
         public static int TotalRoutes = 0;
+        public static int TargetTotalRoutes = 0;
+        public static Stopwatch TotalTimer;
+
+        public static double Progress
+        {
+            get { return (double)TotalRoutes / TargetTotalRoutes; }
+        }
+
+        public static int GetTargetTotalRoutes()
+        {
+            IHtmlDocument doc = Utilities.GetHtmlDoc(Utilities.ALLLOCATIONSURL);
+            IElement element = doc.GetElementsByTagName("h2").FirstOrDefault(x => x.TextContent.Contains("Climbing Directory"));
+
+            return int.Parse(Regex.Match(element.TextContent.Replace(",", ""), @"\d+").Value);
+        }
 
         public static List<Area> GetDestAreas()
         {
@@ -39,7 +54,6 @@ namespace MountainProjectAPI
             {
                 Area destArea = new Area()
                 {
-                    Name = destAreaElement.TextContent,
                     ID = Utilities.GetID(destAreaElement.Attributes["href"].Value)
                 };
 
@@ -55,13 +69,13 @@ namespace MountainProjectAPI
         #region Parse Area
         public static async Task ParseAreaAsync(Area inputArea, bool recursive = true)
         {
-            Console.WriteLine($"Current Area: {inputArea.Name}");
-
             Stopwatch areaStopwatch = Stopwatch.StartNew();
             IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL);
 
             if (string.IsNullOrEmpty(inputArea.Name))
-                inputArea.Name = ParseName(doc);
+                inputArea.Name = Utilities.CleanExtraPartsFromName(ParseName(doc));
+
+            Console.WriteLine($"Current Area: {inputArea.Name}");
 
             inputArea.Statistics = PopulateStatistics(doc);
             inputArea.Popularity = ParsePopularity(doc);
@@ -96,9 +110,9 @@ namespace MountainProjectAPI
             {
                 Area subArea = new Area() 
                 { 
-                    Name = areaElement.TextContent, 
                     ID = Utilities.GetID(areaElement.Attributes["href"].Value) 
                 };
+
                 inputArea.SubAreas.Add(subArea);
                 TotalAreas++;
 
@@ -184,6 +198,10 @@ namespace MountainProjectAPI
             doc.Dispose();
 
             Console.WriteLine($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
+
+            long elapsedMS = TotalTimer.ElapsedMilliseconds;
+            TimeSpan estTimeRemaining = TimeSpan.FromMilliseconds(elapsedMS / Progress - elapsedMS);
+            WriteLineWithColor($"{Progress * 100:0.00}% complete. Estimated time remaining: {Math.Floor(estTimeRemaining.TotalHours)} hours, {estTimeRemaining.Minutes} min", ConsoleColor.Green);
         }
 
         public static double ParseRouteRating(IHtmlDocument doc)
@@ -377,5 +395,16 @@ namespace MountainProjectAPI
             return Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
         }
         #endregion Common Parse Methods
+
+        private static object sync = new object();
+        private static void WriteLineWithColor(string text, ConsoleColor color)
+        {
+            lock (sync)
+            {
+                Console.ForegroundColor = color;
+                Console.WriteLine(text);
+                Console.ForegroundColor = ConsoleColor.Gray;
+            }
+        }
     }
 }

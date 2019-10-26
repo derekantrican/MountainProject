@@ -183,7 +183,7 @@ namespace MountainProjectBot_AutoReply
                 List<Post> subredditPosts = await redditHelper.GetPosts(subreddit);
                 subredditPosts.RemoveAll(p => p.IsSelfPost);
                 subredditPosts.RemoveAll(p => (DateTime.UtcNow - p.CreatedUTC).TotalMinutes > 10); //Only check recent posts
-                //subredditPosts.RemoveAll(p => (DateTime.Now - p.Created).TotalMinutes < 5); //Wait till posts are 5 minutes old (gives poster time to add a comment with a MP link)
+                //subredditPosts.RemoveAll(p => (DateTime.UtcNow - p.CreatedUTC).TotalMinutes < 3); //Wait till posts are 3 minutes old (gives poster time to add a comment with a MP link or for the ClimbingRouteBot to respond)
                 subredditPosts = RemoveBlacklisted(subredditPosts, new[] { BlacklistLevel.NoPostReplies, BlacklistLevel.OnlyKeywordReplies, BlacklistLevel.Total }); //Remove posts from users who don't want the bot to automatically reply to them
                 subredditPosts = RemoveAlreadyRepliedTo(subredditPosts);
                 recentPosts.AddRange(subredditPosts);
@@ -225,7 +225,7 @@ namespace MountainProjectBot_AutoReply
 
         public static void RequestApproval(Post post, SearchResult searchResult)
         {
-            string locationString = Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult), @"\[|\]|\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
+            string locationString = Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
             NotifyFoundPost(WebUtility.HtmlDecode(post.Title), post.Shortlink, searchResult.FilteredResult.Name, locationString,
                         (searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false), searchResult.FilteredResult.URL, searchResult.FilteredResult.ID);
 

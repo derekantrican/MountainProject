@@ -203,6 +203,8 @@ namespace MountainProjectDBBuilder
                 totalTimer.Start();
                 Console.WriteLine("Starting DB Build...");
 
+                Parsers.TotalTimer = totalTimer;
+                Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
                 List<Area> destAreas = Parsers.GetDestAreas();
                 List<Task> areaTasks = new List<Task>();
                 Parallel.ForEach(destAreas, destArea =>

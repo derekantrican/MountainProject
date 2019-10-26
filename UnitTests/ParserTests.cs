@@ -75,6 +75,7 @@ namespace UnitTests
             };
 
             List<Area> destAreas = Parsers.GetDestAreas();
+            destAreas.ForEach(a => a.Name = Utilities.CleanExtraPartsFromName(Parsers.ParseName(Utilities.GetHtmlDoc(a.URL))));
             List<string> resultNames = destAreas.Select(p => p.Name).ToList();
 
             CollectionAssert.AreEqual(expectedDestAreas, resultNames); //Compare collections WITH order
@@ -234,6 +235,32 @@ namespace UnitTests
             AreaStats testStats = Parsers.PopulateStatistics(Utilities.GetHtmlDoc(url));
 
             Assert.AreEqual(expectedStatistics, testStats.ToString());
+        }
+
+        [DataTestMethod]
+        [DataRow("Sixty-Nine", "69")]
+        [DataRow("Nine to Five", "9 to 5")]
+        [DataRow("Dude's Five Nine", "Dude's 5 9")]
+        [DataRow("Zero to Sixty-Nine", "0 to 69")]
+        [DataRow("Goose Bubbs and 500 Million Years", "Goose Bubbs and 500000000 Years")]
+        [DataRow("Five Hundred", "500")]
+        [DataRow("Sixty Seven", "67")]
+        [DataRow("Four hundred six", "406")]
+        [DataRow("Four hundred, six", "400, 6")]
+        [DataRow("Four hundred and six", "406")]
+        [DataRow("Four hundred, and six", "400, and 6")]
+        [DataRow("Six hundred, Seven hundred", "600, 700")]
+        [DataRow("One thousand eighteen", "1018")]
+        [DataRow("Earth Wind & Fire", "Earth Wind and Fire")]
+        [DataRow("Earth, Wind and Fire Dihedral", "Earth, Wind and Fire Dihedral")]
+        [DataRow("Mt. Temple", "Mt. Temple")]
+        [DataRow("Mount Nemo", "Mt. Nemo")]
+        [DataRow("Mr. Masters", "Mr. Masters")]
+        [DataRow("Mister Masters", "Mr. Masters")]
+        public void TestWordConsistency(string inputString, string expectedConversion)
+        {
+            string convertedString = Utilities.EnfoceWordConsistency(inputString);
+            Assert.AreEqual(expectedConversion, convertedString);
         }
     }
 }

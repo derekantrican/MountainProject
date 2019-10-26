@@ -31,7 +31,17 @@ namespace UnitTests
             { "Sin Gaz", "/route/108244424/sin-gaz" }, //The text "singaz" is contained by a higher popularity route. This is more a test for "DetermineBestMatch"
             { "East Ridge", "/route/105848762/east-ridge" }, //"East Ridge" is contained in the text "Northeast Ridges and Valleys"
             { "East Ridge, Mt Temple", "/route/106997654/east-ridge" }, //Todo: in the future support "Mt" vs "Mount"
-            { "East Face of Pingora", "/route/105827735/east-face-left-side-cracks" } //Location also has a route called "Northeast face" with a higher priority
+            { "East Face of Pingora", "/route/105827735/east-face-left-side-cracks" }, //Location also has a route called "Northeast face" with a higher priority
+            { "Five gallon buckets", "/route/105789060/5-gallon-buckets" }, //Number words/Numbers interchangable
+            { "5 gallon buckets", "/route/105789060/5-gallon-buckets" }, //Number words/Numbers interchangable
+            { "Earth Wind & Fire", "/route/106293533/earth-wind-fire" }, //"And"/& interchangable
+            { "Earth Wind and Fire", "/route/106293533/earth-wind-fire" }, //"And"/& interchangable
+            { "Mt Temple", "/area/106997567/mt-temple" }, //"Mt"/"Mount" interchangable
+            { "Mount Temple", "/area/106997567/mt-temple" }, //"Mt"/"Mount" interchangable
+            { "Mister Masters", "/route/105733163/mister-masters" }, //"Mr"/"Mister" interchangable
+            { "Mr Masters", "/route/105733163/mister-masters" }, //"Mr"/"Mister" interchangable
+            { "Landjäger", "/route/117251258/landjager" }, //Diacritical marks optional
+            { "Landjager", "/route/117251258/landjager" } //Diacritical marks optional
         };
 
         [TestMethod]
@@ -63,13 +73,13 @@ namespace UnitTests
 
         string[,] testCriteria_location = new string[,]
         {
-            //{ "Red River Gorge", "Kentucky" },
+            { "Red River Gorge", "Kentucky" },
             { "Exit 38: Deception Crags", "Exit 38, Washington" },
             { "Deception Crags", "Exit 38, Washington" },
             { "no-rang-na-rang", "South Korea" }, //International
             { "Sweet Dreams", "Blue Mountains, Australia"}, //Australia route (special case for Australia)
             { "Grab Your Balls", "Breakneck, Pennsylvania" }, //https://github.com/derekantrican/MountainProject/issues/12
-            { "Highball aka Pocket Problem", "Grand Ledge, Michigan" }, //Parent is 1 less than state (ie Michigan -> Grand Ledge -> Pocket Problem)
+            { "Highball aka Pocket Problem", "Grand Ledge (aka Oak Park), Michigan" }, //Parent is 1 less than state (ie Michigan -> Grand Ledge -> Pocket Problem)
             { "Chúc sức khoẻ", "Hữu Lũng, Vietnam" } //Special characters
         };
 
@@ -86,7 +96,7 @@ namespace UnitTests
                 string resultLocation = BotReply.GetLocationString(searchResult.FilteredResult);
                 resultLocation = resultLocation.Replace(Markdown.NewLine, ""); //Remove markdown newline
                 resultLocation = resultLocation.Replace("Located in ", ""); //Simplify results for unit test
-                resultLocation = Regex.Replace(resultLocation, @"\[|\]|\(.*?\)", ""); //Remove markdown link formatting
+                resultLocation = Regex.Replace(resultLocation, @"\[|\]\(.*?\)", ""); //Remove markdown link formatting
 
                 Assert.AreEqual(expectedLocation, resultLocation, "Failed for " + testCriteria_location[i, 0]);
                 Assert.IsTrue(searchResult.TimeTaken.TotalSeconds < 5, $"{query} took too long ({searchResult.TimeTaken.Milliseconds} ms)");
