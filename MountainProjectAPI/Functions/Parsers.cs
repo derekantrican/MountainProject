@@ -199,9 +199,12 @@ namespace MountainProjectAPI
 
             Console.WriteLine($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
 
-            long elapsedMS = TotalTimer.ElapsedMilliseconds;
-            TimeSpan estTimeRemaining = TimeSpan.FromMilliseconds(elapsedMS / Progress - elapsedMS);
-            WriteLineWithColor($"{Progress * 100:0.00}% complete. Estimated time remaining: {Math.Floor(estTimeRemaining.TotalHours)} hours, {estTimeRemaining.Minutes} min", ConsoleColor.Green);
+            if (TotalTimer != null)
+            {
+                long elapsedMS = TotalTimer.ElapsedMilliseconds;
+                TimeSpan estTimeRemaining = TimeSpan.FromMilliseconds(elapsedMS / Progress - elapsedMS);
+                WriteLineWithColor($"{Progress * 100:0.00}% complete. Estimated time remaining: {Math.Floor(estTimeRemaining.TotalHours)} hours, {estTimeRemaining.Minutes} min", ConsoleColor.Green);
+            }
         }
 
         public static double ParseRouteRating(IHtmlDocument doc)
