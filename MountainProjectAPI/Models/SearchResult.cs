@@ -16,6 +16,13 @@ namespace MountainProjectAPI
             AllResults = new List<MPObject> { singleResult };
         }
 
+        public SearchResult(MPObject singleResult, Area location)
+        {
+            FilteredResult = singleResult;
+            AllResults = new List<MPObject> { singleResult };
+            RelatedLocation = location;
+        }
+
         public MPObject FilteredResult { get; set; }
         public List<MPObject> AllResults { get; set; }
         public Area RelatedLocation { get; set; }

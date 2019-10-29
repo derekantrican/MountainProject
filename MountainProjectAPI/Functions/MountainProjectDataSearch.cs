@@ -235,22 +235,22 @@ namespace MountainProjectAPI
                     }
                 }
 
+                KeyValuePair<Route, string> chosenRoute;
                 if (filteredResults.Count == 1)
-                    finalResult = new SearchResult(filteredResults.First().Key);
+                    chosenRoute = filteredResults.First();
                 else if (filteredResults.Count > 1)
                 {
-                    finalResult = new SearchResult(filteredResults.OrderByDescending(p => p.Key.Popularity).First().Key);
+                    chosenRoute = filteredResults.OrderByDescending(p => p.Key.Popularity).First();
                     confidence = medConfidence; //Medium confidence when we have matched the string exactly, but there are multiple results
                 }
                 else
                 {
-                    finalResult = new SearchResult(possibleResults.OrderByDescending(p => p.Key.Popularity).First().Key);
+                    chosenRoute = possibleResults.OrderByDescending(p => p.Key.Popularity).First();
                     confidence = lowConfidence; //Low confidence when we can't match the string exactly, haven't matched any locations, and there are multiple results
                 }
 
-                if (ParentsInString(finalResult.FilteredResult, inputString, allowPartialParents: true).Any())
-                    finalResult.RelatedLocation = ParentsInString(finalResult.FilteredResult, inputString, allowPartialParents: true).First() as Area;
-
+                Area location = ParentsInString(chosenRoute.Key, chosenRoute.Value, allowPartialParents: true).FirstOrDefault() as Area;
+                finalResult = new SearchResult(chosenRoute.Key, location);
                 finalResult.Confidence = confidence;
             }
 
