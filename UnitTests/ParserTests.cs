@@ -75,7 +75,7 @@ namespace UnitTests
             };
 
             List<Area> destAreas = Parsers.GetDestAreas();
-            destAreas.ForEach(a => a.Name = Utilities.CleanExtraPartsFromName(Parsers.ParseName(Utilities.GetHtmlDoc(a.URL))));
+            destAreas.ForEach(a => a.Name = Utilities.CleanExtraPartsFromName(Parsers.ParseAreaNameFromSidebar(Utilities.GetHtmlDoc(a.URL))));
             List<string> resultNames = destAreas.Select(p => p.Name).ToList();
 
             CollectionAssert.AreEqual(expectedDestAreas, resultNames); //Compare collections WITH order
@@ -132,13 +132,21 @@ namespace UnitTests
         [DataRow("/route/111859673/side-dish", "Side Dish")]
         [DataRow("/route/109063052/geflugelfrikadelle", "Geflügelfrikadelle")] //Special characters
         [DataRow("/route/112177605/no-rang-na-rang", "너랑나랑 (no-rang-na-rang)")] //Special characters
-        [DataRow("/area/115968522/huu-lung", "Hữu Lũng Rock Climbing")] //Special characters
+        [DataRow("/area/115968522/huu-lung", "Hữu Lũng")] //Special characters
+        [DataRow("/area/107448852/phoenix-areas", "Phoenix")] //Remove "Area" and "*" from title
+        [DataRow("/area/108276053/area-51-boulder-area", "Area 51 Boulder")] //Remove only end "Area" from title
+        [DataRow("/area/106558306/drop-area-horseshoe-area", "Drop (Horseshoe)")] //Remove "Area" both inside and outside parenthesis
+        [DataRow("/area/107373214/turtle-rock-area-corridors-area", "Turtle Rock/ Corridors")] //Remove "Area" both before and after slash
         public void TestNameParse(string url, string expectedName)
         {
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            string name = Parsers.ParseName(Utilities.GetHtmlDoc(url));
+            string name;
+            if (url.Contains("route"))
+                name = Parsers.ParseNameFromHeader(Utilities.GetHtmlDoc(url));
+            else
+                name = Utilities.CleanExtraPartsFromName(Parsers.ParseAreaNameFromSidebar(Utilities.GetHtmlDoc(url)));
 
             Assert.AreEqual(expectedName, name);
         }
@@ -259,7 +267,7 @@ namespace UnitTests
         [DataRow("Mister Masters", "Mr. Masters")]
         public void TestWordConsistency(string inputString, string expectedConversion)
         {
-            string convertedString = Utilities.EnfoceWordConsistency(inputString);
+            string convertedString = Utilities.EnforceWordConsistency(inputString);
             Assert.AreEqual(expectedConversion, convertedString);
         }
     }

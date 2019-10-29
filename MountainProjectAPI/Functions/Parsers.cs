@@ -73,7 +73,7 @@ namespace MountainProjectAPI
             IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL);
 
             if (string.IsNullOrEmpty(inputArea.Name))
-                inputArea.Name = Utilities.CleanExtraPartsFromName(ParseName(doc));
+                inputArea.Name = Utilities.CleanExtraPartsFromName(ParseAreaNameFromSidebar(doc));
 
             Console.WriteLine($"Current Area: {inputArea.Name}");
 
@@ -184,7 +184,7 @@ namespace MountainProjectAPI
             IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL);
 
             if (string.IsNullOrEmpty(inputRoute.Name))
-                inputRoute.Name = ParseName(doc);
+                inputRoute.Name = ParseNameFromHeader(doc);
 
             inputRoute.Types = ParseRouteTypes(doc);
             inputRoute.Popularity = ParsePopularity(doc);
@@ -393,13 +393,23 @@ namespace MountainProjectAPI
             return Convert.ToInt32(pageViewsStr);
         }
 
-        public static string ParseName(IHtmlDocument doc)
+        public static string ParseAreaNameFromSidebar(IHtmlDocument doc)
         {
-            return Regex.Replace(doc.GetElementsByTagName("h1").FirstOrDefault().TextContent, @"<[^>]*>", "").Replace("\n", "").Trim();
+            IElement leftColumnDiv = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar");
+            IElement nameElementInSidebar = doc.GetElementsByTagName("h3").Where(p => p.ParentElement == leftColumnDiv).FirstOrDefault();
+            if (nameElementInSidebar != null)
+                return nameElementInSidebar.TextContent.Replace("Routes in ", "").Replace("Areas in ", "").Trim();
+            else
+                return ParseNameFromHeader(doc);
+        }
+
+        public static string ParseNameFromHeader(IHtmlDocument doc)
+        {
+            return doc.GetElementsByTagName("h1").FirstOrDefault().InnerHtml.Replace("\n", "").Split('<')[0].Trim();
         }
         #endregion Common Parse Methods
 
-        private static object sync = new object();
+        private static readonly object sync = new object();
         private static void WriteLineWithColor(string text, ConsoleColor color)
         {
             lock (sync)

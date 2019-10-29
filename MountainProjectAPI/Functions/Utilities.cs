@@ -115,9 +115,7 @@ namespace MountainProjectAPI
                 }
             }
 
-            IHtmlDocument doc = parser.ParseDocument(html);
-
-            return doc;
+            return parser.ParseDocument(html);
         }
 
         public static async Task<IHtmlDocument> GetHtmlDocAsync(string url)
@@ -147,21 +145,16 @@ namespace MountainProjectAPI
                 }
             }
 
-            IHtmlDocument doc = parser.ParseDocument(html);
-
-            return doc;
+            return parser.ParseDocument(html);
         }
 
         public static string CleanExtraPartsFromName(string input)
         {
-            input = Regex.Replace(input, "( rock)? climbing$", "", RegexOptions.IgnoreCase);
-            input = Regex.Replace(input, " area$", "", RegexOptions.IgnoreCase);
-            input = input.Trim(' ', '*', '-');
-
-            return input;
+            input = Regex.Replace(input, @"\sarea(s)?(?=($|\s*[\\\/]|\s*\(|\s*\)))", "", RegexOptions.IgnoreCase);
+            return input.Trim(' ', '*', '-');
         }
 
-        public static string EnfoceWordConsistency(string input)
+        public static string EnforceWordConsistency(string input)
         {
             //Convert abbreviations (eg "Mt." or "&") to full words (eg "Mount" or "and")
             input = input.Replace("Mount ", "Mt. ");
