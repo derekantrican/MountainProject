@@ -2,6 +2,7 @@
 using MountainProjectAPI;
 using MountainProjectBot;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -218,6 +219,7 @@ namespace UnitTests
             int linkPasses = 0; //Passes where a MP link was expected
             int totalPasses = 0;
             int totalFailures = 0;
+            List<string> failingPostsWithConfidence1 = new List<string>();
 
             StringWriter writer = new StringWriter();
             Console.SetOut(writer);
@@ -231,14 +233,16 @@ namespace UnitTests
                 string[] lineParts = testCriteria[i].Split('\t');
                 string inputPostTitle = lineParts[0];
                 string expectedMPLink = lineParts[1] == "null" ? null : Utilities.GetSimpleURL(lineParts[1]);
+                string comment = lineParts.Length > 2 ? lineParts[2] : null;
 
                 writer.WriteLine($"POST TITLE: {inputPostTitle}");
 
-                Route result = MountainProjectDataSearch.ParseRouteFromString(WebUtility.HtmlDecode(inputPostTitle)).FilteredResult as Route;
+                SearchResult result = MountainProjectDataSearch.ParseRouteFromString(WebUtility.HtmlDecode(inputPostTitle));
+                Route route = result.FilteredResult as Route;
 
                 if (expectedMPLink == null)
                 {
-                    if (result == null)
+                    if (route == null)
                     {
                         writer.WriteLine("PASS");
                         totalPasses++;
@@ -246,17 +250,23 @@ namespace UnitTests
                     else
                     {
                         writer.WriteLine($"FAILED FOR: {inputPostTitle}");
-                        writer.WriteLine($"EXPECTED: {expectedMPLink}, ACTUAL: {result?.URL}");
+                        writer.WriteLine($"EXPECTED: {expectedMPLink} , ACTUAL: {route?.URL} {comment}");
                         totalFailures++;
+
+                        if (result.Confidence == 1)
+                            failingPostsWithConfidence1.Add(inputPostTitle);
                     }
                 }
                 else
                 {
-                    if (result == null || result.URL != expectedMPLink)
+                    if (route == null || route.URL != expectedMPLink)
                     {
                         writer.WriteLine($"FAILED FOR: {inputPostTitle}");
-                        writer.WriteLine($"EXPECTED: {expectedMPLink}, ACTUAL: {result?.URL}");
+                        writer.WriteLine($"EXPECTED: {expectedMPLink} , ACTUAL: {route?.URL} {comment}");
                         totalFailures++;
+
+                        if (result.Confidence == 1)
+                            failingPostsWithConfidence1.Add(inputPostTitle);
                     }
                     else
                     {
@@ -269,8 +279,15 @@ namespace UnitTests
 
             System.Diagnostics.Debug.WriteLine($"Passes: {totalPasses}, Failures: {totalFailures}, Pass percentage: {Math.Round((double)totalPasses / (totalPasses + totalFailures) * 100, 2)}%\n");
             System.Diagnostics.Debug.WriteLine(writer.ToString());
-
             writer.Dispose();
+
+            if (failingPostsWithConfidence1.Any())
+            {
+                System.Diagnostics.Debug.WriteLine("Failing posts with confidence 1:");
+                System.Diagnostics.Debug.WriteLine(string.Join("\n", failingPostsWithConfidence1));
+                Assert.Fail("Some failed matches have a confidence of 1");
+            }
+
             Assert.IsTrue((double)totalPasses / (totalPasses + totalFailures) > 0.95);
         }
     }

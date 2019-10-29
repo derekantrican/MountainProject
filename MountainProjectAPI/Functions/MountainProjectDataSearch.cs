@@ -42,8 +42,8 @@ namespace MountainProjectAPI
             List<Tuple<string, string>> possibleQueryAndLocationGroups = GetPossibleQueryAndLocationGroups(queryText, searchParameters);
             foreach (Tuple<string, string> group in possibleQueryAndLocationGroups)
             {
-                string query = Utilities.FilterStringForMatch(Utilities.EnfoceWordConsistency(group.Item1));
-                string location = Utilities.FilterStringForMatch(Utilities.EnfoceWordConsistency(group.Item2));
+                string query = Utilities.FilterStringForMatch(Utilities.EnforceWordConsistency(group.Item1));
+                string location = Utilities.FilterStringForMatch(Utilities.EnforceWordConsistency(group.Item2));
 
                 List<MPObject> possibleMatches = DeepSearch(query, DestAreas);
                 possibleMatches = FilterBySearchParameters(possibleMatches, searchParameters);
@@ -83,7 +83,7 @@ namespace MountainProjectAPI
                     possibleResults.Add(possibleResult);
             }
 
-            if (possibleResults.Count > 0)
+            if (possibleResults.Any())
                 searchResult = DetermineBestMatch(possibleResults, queryText, searchParameters);
             else if (searchParameters != null && !string.IsNullOrEmpty(searchParameters.SpecificLocation))
             {
@@ -114,144 +114,164 @@ namespace MountainProjectAPI
         public static SearchResult ParseRouteFromString(string inputString)
         {
             SearchResult finalResult = new SearchResult(); //Todo: in the future support returning multiple routes (but only if there are multiple grades in the title? Maybe only if all of the routes' full names are in the title?)
+            List<KeyValuePair<Route, string>> possibleResults = new List<KeyValuePair<Route, string>>();
 
             List<Grade> postGrades = Grade.ParseString(inputString);
-            if (postGrades.Count > 0)
+            Console.WriteLine($"    Recognized grade(s): {string.Join(" | ", postGrades)}");
+
+            List<string> possibleRouteNames = GetPossibleRouteNames(inputString);
+            Console.WriteLine($"    Recognized name(s): {string.Join(" | ", possibleRouteNames)}");
+            
+            foreach (string possibleRouteName in possibleRouteNames)
             {
-                Console.WriteLine($"    Recognized grade(s): {string.Join(" | ", postGrades)}");
-                List<Route> possibleResults = new List<Route>();
-                List<string> possibleRouteNames = GetPossibleRouteNames(inputString);
-                Console.WriteLine($"    Recognized name(s): {string.Join(" | ", possibleRouteNames)}");
-                foreach (string possibleRouteName in possibleRouteNames)
+                string inputWithoutName = inputString.Replace(possibleRouteName, "");
+                SearchResult searchResult = Search(possibleRouteName, new SearchParameters() { OnlyRoutes = true });
+                if (!searchResult.IsEmpty())
                 {
-                    SearchResult searchResult = Search(possibleRouteName, new SearchParameters() { OnlyRoutes = true });
-                    if (!searchResult.IsEmpty())
+                    if ((searchResult.AllResults.Count == 1 && ParentsInString(searchResult.AllResults.First(), inputWithoutName, false, true).Any()))
+                        possibleResults.Add(new KeyValuePair<Route, string>(searchResult.AllResults.First() as Route, inputWithoutName));
+                    else if (postGrades.Any())
                     {
                         if (searchResult.AllResults.Count < 75) //If the number of matching results is greater than 75, it was probably a very generic word for a search (eg "There")
                         {
-                            foreach (Route route in searchResult.AllResults.Cast<Route>())
+                            if (searchResult.AllResults.Any(r => ParentsInString(r, inputWithoutName).Any())) //If some routes have a location in the inputString, work with those
                             {
-                                if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
-                                    possibleResults.Add(route);
+                                foreach (Route route in searchResult.AllResults.Where(r => ParentsInString(r, inputWithoutName).Any()).Cast<Route>())
+                                {
+                                    if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
+                                        possibleResults.Add(new KeyValuePair<Route, string>(route, inputWithoutName));
+                                }
                             }
-                        }
-                        else if (searchResult.AllResults.Any(r => ParentsInString(r, inputString).Count > 0)) //If the above if statement is not chosen, but some routes have a location in the inputString, work with those
-                        {
-                            foreach (Route route in searchResult.AllResults.Where(r => ParentsInString(r, inputString).Count > 0).Cast<Route>())
+                            else
                             {
-                                if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
-                                    possibleResults.Add(route);
+                                foreach (Route route in searchResult.AllResults.Cast<Route>())
+                                {
+                                    if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
+                                        possibleResults.Add(new KeyValuePair<Route, string>(route, inputWithoutName));
+                                }
                             }
                         }
                     }
                 }
+            }
 
-                possibleResults = possibleResults.Distinct().ToList();
+            possibleResults = possibleResults.GroupBy(x => x.Key).Select(g => g.First()).ToList(); //Distinct routes
 
-                if (possibleResults.Count > 0)
+            if (possibleResults.Any())
+            {
+                //Todo: prioritize routes where the grade matches exactly (eg 5.11a matches 5.11a rather than matching 5.11a-b)
+
+                //Prioritize routes where the full name is in the input string
+                //(Additionally, we could also prioritize how close - within the input string - the name is to the rating)
+                List<KeyValuePair<Route, string>> filteredResults = possibleResults.Where(p => Utilities.StringsMatch(Utilities.FilterStringForMatch(Utilities.EnforceWordConsistency(p.Key.Name)), 
+                                                                                                Utilities.FilterStringForMatch(Utilities.EnforceWordConsistency(inputString)))).ToList();
+
+                int highConfidence = 1;
+                int medConfidence = 2;
+                int lowConfidence = 3;
+                int confidence = lowConfidence;
+                if (filteredResults.Count == 1)
                 {
-                    //Todo: prioritize routes where the grade matches exactly (eg 5.11a matches 5.11a rather than matching 5.11a-b)
-
-                    //Prioritize routes where the full name is in the input string
-                    //(Additionally, we could also prioritize how close - within the input string - the name is to the rating)
-                    List<Route> filteredResults = possibleResults.Where(p => Utilities.StringsMatch(Utilities.FilterStringForMatch(p.Name), 
-                                                                                                    Utilities.FilterStringForMatch(inputString))).ToList();
-
-                    int confidence = 3;
-                    if (filteredResults.Count == 1)
-                    {
-                        if (ParentsInString(filteredResults.FirstOrDefault(), inputString, true).Count > 0 ||
-                            Grade.ParseString(inputString, false).Count > 0)
-                            confidence = 1; //Highest confidence when we also match a location in the string or if we match a full grade
-                        else
-                            confidence = 2; //Medium confidence when we have only found one match with that exact name but can't match a location in the string
-                    }
-                    else if (filteredResults.Count > 1)
-                    {
-                        //Prioritize routes where one of the parents (locations) is also in the input string
-                        List<Route> routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r, inputString).Count > 0).ToList();
-                        if (routesWithMatchingLocations.Count > 0)
-                        {
-                            filteredResults = routesWithMatchingLocations;
-                            confidence = 1; //Highest confidence when we have found the location in the string
-                        }
-                        else
-                        {
-                            routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r, inputString, true).Count > 0).ToList();
-                            if (routesWithMatchingLocations.Count > 0)
-                            {
-                                filteredResults = routesWithMatchingLocations;
-                                confidence = 1; //Highest confidence when we have found the location in the string
-                            }
-                            else
-                            {
-                                routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r, inputString, true, true).Count > 0).ToList();
-                                if (routesWithMatchingLocations.Count > 0)
-                                {
-                                    filteredResults = routesWithMatchingLocations;
-                                    confidence = 2; //Medium confidence when we have matched only part of a parent's name
-                                }
-                            }
-                        }
-                    }
+                    if (ParentsInString(filteredResults.First().Key, inputString, true).Any() ||
+                        Grade.ParseString(inputString, false).Any(g => filteredResults.First().Key.Grades.Any(p => g.Equals(p))))
+                        confidence = highConfidence; //Highest confidence when we also match a location in the string or if we match a full grade
                     else
-                    {
-                        //Prioritize routes where one of the parents (locations) is also in the input string
-                        List<Route> routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r, inputString).Count > 0).ToList();
-                        if (routesWithMatchingLocations.Count > 0)
-                        {
-                            filteredResults = routesWithMatchingLocations;
-                            confidence = 1; //Highest confidence when we have found the location in the string
-                        }
-                        else
-                        {
-                            routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r, inputString, true).Count > 0).ToList();
-                            if (routesWithMatchingLocations.Count > 0)
-                            {
-                                filteredResults = routesWithMatchingLocations;
-                                confidence = 1; //Highest confidence when we have found the location in the string
-                            }
-                            else
-                            {
-                                routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r, inputString, true, true).Count > 0).ToList();
-                                if (routesWithMatchingLocations.Count > 0)
-                                {
-                                    filteredResults = routesWithMatchingLocations;
-                                    confidence = 2; //Medium confidence when we have matched only part of a parent's name
-                                }
-                            }
-                        }
-                    }
-
-                    if (filteredResults.Count == 1)
-                        finalResult = new SearchResult(filteredResults.First());
-                    else if (filteredResults.Count > 1)
-                    {
-                        finalResult = new SearchResult(filteredResults.OrderByDescending(p => p.Popularity).First());
-                        confidence = 2; //Medium confidence when we have matched the string exactly, but there are multiple results
-                    }
-                    else
-                    {
-                        finalResult = new SearchResult(possibleResults.OrderByDescending(p => p.Popularity).First());
-                        confidence = 3; //Low confidence when we can't match the string exactly, haven't matched any locations, and there are multiple results
-                    }
-
-                    if (ParentsInString(finalResult.FilteredResult, inputString, allowPartialParents: true).Count > 0)
-                        finalResult.RelatedLocation = ParentsInString(finalResult.FilteredResult, inputString, allowPartialParents: true).First() as Area;
-
-                    finalResult.Confidence = confidence;
+                        confidence = medConfidence; //Medium confidence when we have only found one match with that exact name but can't match a location in the string
                 }
+                else if (filteredResults.Count > 1)
+                {
+                    //Prioritize routes where one of the parents (locations) is also in the input string
+                    List<KeyValuePair<Route, string>> routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r.Key, r.Value).Any()).ToList();
+                    if (routesWithMatchingLocations.Any())
+                    {
+                        filteredResults = routesWithMatchingLocations;
+                        confidence = postGrades.Any() ? highConfidence : medConfidence; //Highest confidence when we have found the location in the string
+                    }
+                    else
+                    {
+                        routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r.Key, r.Value, true).Any()).ToList();
+                        if (routesWithMatchingLocations.Any())
+                        {
+                            filteredResults = routesWithMatchingLocations;
+                            confidence = postGrades.Any() ? highConfidence : medConfidence; //Highest confidence when we have found the location in the string
+                        }
+                        else
+                        {
+                            routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r.Key, r.Value, true, true).Any()).ToList();
+                            if (routesWithMatchingLocations.Any())
+                            {
+                                filteredResults = routesWithMatchingLocations;
+                                confidence = medConfidence; //Medium confidence when we have matched only part of a parent's name
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    //Prioritize routes where one of the parents (locations) is also in the input string
+                    List<KeyValuePair<Route, string>> routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r.Key, r.Value).Any()).ToList();
+                    if (routesWithMatchingLocations.Any())
+                    {
+                        filteredResults = routesWithMatchingLocations;
+                        confidence = medConfidence; //Medium confidence when we didn't match a full route name, but have found a parent location in the string
+                    }
+                    else
+                    {
+                        routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r.Key, r.Value, true).Any()).ToList();
+                        if (routesWithMatchingLocations.Any())
+                        {
+                            filteredResults = routesWithMatchingLocations;
+                            confidence = medConfidence; //Medium confidence when we didn't match a full route name, but have found a parent location in the string (including the possibility of the state abbrv)
+                        }
+                        else
+                        {
+                            routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r.Key, r.Value, true, true).Any()).ToList();
+                            if (routesWithMatchingLocations.Any())
+                            {
+                                filteredResults = routesWithMatchingLocations;
+                                confidence = medConfidence; //Medium confidence when we didn't match a full route name and have matched only part of a parent's name in the string
+                            }
+                        }
+                    }
+                }
+
+                if (filteredResults.Count == 1)
+                    finalResult = new SearchResult(filteredResults.First().Key);
+                else if (filteredResults.Count > 1)
+                {
+                    finalResult = new SearchResult(filteredResults.OrderByDescending(p => p.Key.Popularity).First().Key);
+                    confidence = medConfidence; //Medium confidence when we have matched the string exactly, but there are multiple results
+                }
+                else
+                {
+                    finalResult = new SearchResult(possibleResults.OrderByDescending(p => p.Key.Popularity).First().Key);
+                    confidence = lowConfidence; //Low confidence when we can't match the string exactly, haven't matched any locations, and there are multiple results
+                }
+
+                if (ParentsInString(finalResult.FilteredResult, inputString, allowPartialParents: true).Any())
+                    finalResult.RelatedLocation = ParentsInString(finalResult.FilteredResult, inputString, allowPartialParents: true).First() as Area;
+
+                finalResult.Confidence = confidence;
             }
 
             return finalResult;
         }
 
-        private static List<MPObject> ParentsInString(MPObject child, string inputString, bool allowStateAbbr = false, bool allowPartialParents = false)
+        private static List<MPObject> ParentsInString(MPObject child, string inputString, bool allowStateAbbr = false, bool allowPartialParents = false, bool caseSensitive = false)
         {
             List<MPObject> matchedParents = new List<MPObject>();
+            List<string> possibleNames = GetPossibleRouteNames(inputString);
 
-            if (child.Parents.Any(p => inputString.ToLower().Contains(p.Name.ToLower())))
-                matchedParents.AddRange(child.Parents.Where(p => inputString.ToLower().Contains(p.Name.ToLower())));
+            if (caseSensitive)
+            {
+                if (child.Parents.Any(p => possibleNames.Any(n => p.Name.Contains(n))))
+                    matchedParents.AddRange(child.Parents.Where(p => possibleNames.Any(n => p.Name.ToLower().Contains(n.ToLower()))));
+            }
+            else
+            {
+                if (child.Parents.Any(p => possibleNames.Any(n => p.Name.ToLower().Contains(n.ToLower()))))
+                    matchedParents.AddRange(child.Parents.Where(p => possibleNames.Any(n => p.Name.Contains(n))));
+            }
 
             if (allowStateAbbr)
             {
@@ -266,9 +286,18 @@ namespace MountainProjectAPI
             {
                 foreach (MPObject parent in child.Parents)
                 {
-                    List<string> parentWords = Utilities.GetWordGroups(Utilities.FilterStringForMatch(parent.Name.ToLower(), false), false);
-                    if (parentWords.Any(p => inputString.ToLower().Contains(p)))
-                        matchedParents.Add(parent);
+                    if (caseSensitive)
+                    {
+                        List<string> parentWords = Utilities.GetWordGroups(Utilities.FilterStringForMatch(parent.Name, false), false);
+                        if (parentWords.Any(p => inputString.Contains(p)))
+                            matchedParents.Add(parent);
+                    }
+                    else
+                    {
+                        List<string> parentWords = Utilities.GetWordGroups(Utilities.FilterStringForMatch(parent.Name.ToLower(), false), false);
+                        if (parentWords.Any(p => inputString.ToLower().Contains(p)))
+                            matchedParents.Add(parent);
+                    }
                 }
             }
 
@@ -289,6 +318,8 @@ namespace MountainProjectAPI
             //"Daliwood Boulders" for alternate matches)
 
             List<string> result = new List<string>();
+
+            postTitle = Regex.Replace(postTitle, @"\d+[\\/]\d+[\\/]\d+", ""); //Remove dates from post titles
 
             Regex routeGradeRegex = new Regex(@"((5\.)\d+[+-]?[a-dA-D]?([\/\\\-][a-dA-D])?)|([vV]\d+([\/\\\-]\d+)?)");
             postTitle = routeGradeRegex.Replace(postTitle, "");
@@ -319,7 +350,15 @@ namespace MountainProjectAPI
 
             //Add any "remaining" names
             if (!string.IsNullOrWhiteSpace(possibleRouteName) && possibleRouteName != "V")
-                result.Add(possibleRouteName.Trim());
+            {
+                possibleRouteName = possibleRouteName.Trim();
+                result.Add(possibleRouteName);
+
+                //If there is a "location word" in the possibleRouteName, add the separate parts to the result as well
+                Regex locationWordsRegex = new Regex(@"(\s+" + string.Join(@"\s+)|(\s+", locationWords) + @"\s+)");
+                if (locationWordsRegex.IsMatch(possibleRouteName))
+                    locationWordsRegex.Split(possibleRouteName).ToList().ForEach(p => result.Add(Utilities.TrimWords(p, connectingWords).Trim()));
+            }
 
             result = result.Distinct().ToList();
             result.RemoveAll(p => p.Length < 3); //Remove any short "names" (eg "My")
@@ -447,34 +486,34 @@ namespace MountainProjectAPI
 
             //First priority: items where the name matches the search query exactly CASE SENSITIVE
             List<MPObject> matchingItems = allMatches.Where(p => Utilities.StringsEqual(searchQuery, p.Name, false)).ToList();
-            if (matchingItems.Count > 0)
+            if (matchingItems.Any())
                 return FilterByPopularity(matchingItems);
 
             //Second priority: items where the name matches the search query exactly (but case-insensitive)
             matchingItems = allMatches.Where(p => Utilities.StringsEqual(searchQuery, p.Name)).ToList();
-            if (matchingItems.Count > 0)
+            if (matchingItems.Any())
                 return FilterByPopularity(matchingItems);
 
             //Third priority: items where the name matches the FILTERED (no symbols or spaces, case insensitive) search query exactly
             matchingItems = allMatches.Where(p => Utilities.StringsEqual(Utilities.FilterStringForMatch(searchQuery), p.NameForMatch)).ToList();
-            if (matchingItems.Count > 0)
+            if (matchingItems.Any())
                 return FilterByPopularity(matchingItems);
 
             //[IN THE FUTURE]Fourth priority: items with a levenshtein distance less than 3
 
             //Fifth priority: items where the name contains the search query CASE SENSITIVE
             matchingItems = allMatches.Where(p => Utilities.StringsMatch(searchQuery, p.Name, false)).ToList();
-            if (matchingItems.Count > 0)
+            if (matchingItems.Any())
                 return FilterByPopularity(matchingItems);
 
             //Sixth priority: items where the name contains the search query (case-insensitive)
             matchingItems = allMatches.Where(p => Utilities.StringsMatch(searchQuery, p.Name)).ToList();
-            if (matchingItems.Count > 0)
+            if (matchingItems.Any())
                 return FilterByPopularity(matchingItems);
 
             //Seventh priority: items where the name contains the FITLERED search query (case-insensitive)
             matchingItems = allMatches.Where(p => Utilities.StringsMatch(Utilities.FilterStringForMatch(searchQuery), p.NameForMatch)).ToList();
-            if (matchingItems.Count > 0)
+            if (matchingItems.Any())
                 return FilterByPopularity(matchingItems);
 
             //Finally, if we haven't matched anything above, just filter by priority
