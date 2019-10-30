@@ -126,31 +126,34 @@ namespace MountainProjectAPI
             {
                 string inputWithoutName = inputString.Replace(possibleRouteName, "");
                 SearchResult searchResult = Search(possibleRouteName, new SearchParameters() { OnlyRoutes = true });
-                if (!searchResult.IsEmpty())
+                if (!searchResult.IsEmpty() && searchResult.AllResults.Count < 75) //If the number of matching results is greater than 75, it was probably a very generic word for a search (eg "There")
                 {
-                    if ((searchResult.AllResults.Count == 1 && ParentsInString(searchResult.AllResults.First(), inputWithoutName, false, true).Any()))
+                    if (searchResult.AllResults.Count == 1 && ParentsInString(searchResult.AllResults.First(), inputWithoutName, false, true).Any())
                         possibleResults.Add(new KeyValuePair<Route, string>(searchResult.AllResults.First() as Route, inputWithoutName));
                     else if (postGrades.Any())
                     {
-                        if (searchResult.AllResults.Count < 75) //If the number of matching results is greater than 75, it was probably a very generic word for a search (eg "There")
+                        if (searchResult.AllResults.Any(r => ParentsInString(r, inputWithoutName).Any())) //If some routes have a location in the inputString, work with those
                         {
-                            if (searchResult.AllResults.Any(r => ParentsInString(r, inputWithoutName).Any())) //If some routes have a location in the inputString, work with those
+                            foreach (Route route in searchResult.AllResults.Where(r => ParentsInString(r, inputWithoutName).Any()).Cast<Route>())
                             {
-                                foreach (Route route in searchResult.AllResults.Where(r => ParentsInString(r, inputWithoutName).Any()).Cast<Route>())
-                                {
-                                    if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
-                                        possibleResults.Add(new KeyValuePair<Route, string>(route, inputWithoutName));
-                                }
-                            }
-                            else
-                            {
-                                foreach (Route route in searchResult.AllResults.Cast<Route>())
-                                {
-                                    if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
-                                        possibleResults.Add(new KeyValuePair<Route, string>(route, inputWithoutName));
-                                }
+                                if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
+                                    possibleResults.Add(new KeyValuePair<Route, string>(route, inputWithoutName));
                             }
                         }
+                        else
+                        {
+                            foreach (Route route in searchResult.AllResults.Cast<Route>())
+                            {
+                                if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
+                                    possibleResults.Add(new KeyValuePair<Route, string>(route, inputWithoutName));
+                            }
+                        }
+                    }
+                    else if (searchResult.AllResults.Any(r => ParentsInString(r as Route, inputWithoutName, false, true).Any() && Utilities.StringContainsWithFilters(r.Name, inputString)))
+                    {
+                        List<MPObject> routesWhereParentIsInString = searchResult.AllResults.Where(r => ParentsInString(r as Route, inputWithoutName, false, true).Any() &&
+                                                                                                        Utilities.StringContainsWithFilters(r.Name, inputString)).ToList();
+                        routesWhereParentIsInString.ForEach(r => possibleResults.Add(new KeyValuePair<Route, string>(r as Route, inputWithoutName)));
                     }
                 }
             }
@@ -160,11 +163,12 @@ namespace MountainProjectAPI
             if (possibleResults.Any())
             {
                 //Todo: prioritize routes where the grade matches exactly (eg 5.11a matches 5.11a rather than matching 5.11a-b)
+                //Todo: for matching parents in string, maybe give higher priority to results that match MORE parents. EG "Once Upon a Time - Black Mountain, California" gives
+                //  2 routes named "Once upon a time" in California. But only one is also at "Black Mountain"
 
                 //Prioritize routes where the full name is in the input string
                 //(Additionally, we could also prioritize how close - within the input string - the name is to the rating)
-                List<KeyValuePair<Route, string>> filteredResults = possibleResults.Where(p => Utilities.StringsMatch(Utilities.FilterStringForMatch(Utilities.EnforceWordConsistency(p.Key.Name)), 
-                                                                                                Utilities.FilterStringForMatch(Utilities.EnforceWordConsistency(inputString)))).ToList();
+                List<KeyValuePair<Route, string>> filteredResults = possibleResults.Where(p => Utilities.StringContainsWithFilters(p.Key.Name, inputString)).ToList();
 
                 int highConfidence = 1;
                 int medConfidence = 2;
@@ -509,17 +513,17 @@ namespace MountainProjectAPI
             //[IN THE FUTURE]Fourth priority: items with a levenshtein distance less than 3
 
             //Fifth priority: items where the name contains the search query CASE SENSITIVE
-            matchingItems = allMatches.Where(p => Utilities.StringsMatch(searchQuery, p.Name, false)).ToList();
+            matchingItems = allMatches.Where(p => Utilities.StringContains(p.Name, searchQuery, false)).ToList();
             if (matchingItems.Any())
                 return FilterByPopularity(matchingItems);
 
             //Sixth priority: items where the name contains the search query (case-insensitive)
-            matchingItems = allMatches.Where(p => Utilities.StringsMatch(searchQuery, p.Name)).ToList();
+            matchingItems = allMatches.Where(p => Utilities.StringContains(p.Name, searchQuery)).ToList();
             if (matchingItems.Any())
                 return FilterByPopularity(matchingItems);
 
             //Seventh priority: items where the name contains the FITLERED search query (case-insensitive)
-            matchingItems = allMatches.Where(p => Utilities.StringsMatch(Utilities.FilterStringForMatch(searchQuery), p.NameForMatch)).ToList();
+            matchingItems = allMatches.Where(p => Utilities.StringContains(p.NameForMatch, Utilities.FilterStringForMatch(searchQuery))).ToList();
             if (matchingItems.Any())
                 return FilterByPopularity(matchingItems);
 
@@ -598,7 +602,7 @@ namespace MountainProjectAPI
             foreach (Area destArea in destAreas)
             {
                 //Controls whether dest area names should be matched (should the keyword "Alabama" match the state or a route named "Sweet Home Alabama")
-                if (allowDestAreaMatch && Utilities.StringsMatch(input, destArea.NameForMatch))
+                if (allowDestAreaMatch && Utilities.StringContains(destArea.NameForMatch, input))
                     matchedObjects.Add(destArea);
 
                 List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, destArea.SubAreas);
@@ -619,7 +623,7 @@ namespace MountainProjectAPI
 
             foreach (Area subDestArea in subAreas)
             {
-                if (Utilities.StringsMatch(input, subDestArea.NameForMatch))
+                if (Utilities.StringContains(subDestArea.NameForMatch, input))
                     matchedObjects.Add(subDestArea);
 
                 if (subDestArea.SubAreas != null &&
@@ -656,7 +660,7 @@ namespace MountainProjectAPI
 
             foreach (Route route in routes)
             {
-                if (Utilities.StringsMatch(input, route.NameForMatch))
+                if (Utilities.StringContains(route.NameForMatch, input))
                     matchedObjects.Add(route);
             }
 
@@ -670,7 +674,7 @@ namespace MountainProjectAPI
             Dictionary<MPObject, Area> results = new Dictionary<MPObject, Area>();
             foreach (MPObject result in listToFilter)
             {
-                Area matchingParent = result.Parents.ToList().FirstOrDefault(p => Utilities.StringsMatch(location, p.NameForMatch)) as Area;
+                Area matchingParent = result.Parents.ToList().FirstOrDefault(p => Utilities.StringContains(p.NameForMatch, location)) as Area;
                 if (matchingParent != null)
                     results.Add(result, matchingParent);
             }
