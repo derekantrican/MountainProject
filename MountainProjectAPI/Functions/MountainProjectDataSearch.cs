@@ -149,10 +149,10 @@ namespace MountainProjectAPI
                             }
                         }
                     }
-                    else if (searchResult.AllResults.Any(r => ParentsInString(r as Route, inputWithoutName, false, true).Any() && Utilities.StringContainsWithFilters(r.Name, inputString)))
+                    else if (searchResult.AllResults.Any(r => ParentsInString(r as Route, inputWithoutName, false, true).Any() && Utilities.StringContainsWithFilters(inputString, r.Name)))
                     {
                         List<MPObject> routesWhereParentIsInString = searchResult.AllResults.Where(r => ParentsInString(r as Route, inputWithoutName, false, true).Any() &&
-                                                                                                        Utilities.StringContainsWithFilters(r.Name, inputString)).ToList();
+                                                                                                        Utilities.StringContainsWithFilters(inputString, r.Name)).ToList();
                         routesWhereParentIsInString.ForEach(r => possibleResults.Add(new KeyValuePair<Route, string>(r as Route, inputWithoutName)));
                     }
                 }
@@ -168,7 +168,7 @@ namespace MountainProjectAPI
 
                 //Prioritize routes where the full name is in the input string
                 //(Additionally, we could also prioritize how close - within the input string - the name is to the rating)
-                List<KeyValuePair<Route, string>> filteredResults = possibleResults.Where(p => Utilities.StringContainsWithFilters(p.Key.Name, inputString)).ToList();
+                List<KeyValuePair<Route, string>> filteredResults = possibleResults.Where(p => Utilities.StringContainsWithFilters(inputString, p.Key.Name)).ToList();
 
                 int highConfidence = 1;
                 int medConfidence = 2;
