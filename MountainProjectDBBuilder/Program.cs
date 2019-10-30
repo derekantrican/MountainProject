@@ -149,45 +149,21 @@ namespace MountainProjectDBBuilder
 
         public static string GetLocationString(MPObject child, Area referenceLocation = null)
         {
-            MPObject innerParent, outerParent;
-            innerParent = null;
-            outerParent = MountainProjectDataSearch.GetParent(child, 0); //Get state that route/area is in
-            if (child is Route)
-            {
-                innerParent = MountainProjectDataSearch.GetParent(child, -2); //Get the "second to last" parent https://github.com/derekantrican/MountainProject/issues/12
-
-                if (innerParent.URL == outerParent.URL)
-                    innerParent = MountainProjectDataSearch.GetParent(child, -1);
-            }
-            else if (child is Area)
-                innerParent = MountainProjectDataSearch.GetParent(child, -1); //Get immediate parent
-
-            if (innerParent == null ||  //If "child" is a dest area, the parent will be "All Locations" which won't be in our directory
-                innerParent.URL == Utilities.GetSimpleURL(Utilities.INTERNATIONALURL)) //If "child" is an area like "Europe"
-                return "";
-
-            if (outerParent.URL == Utilities.GetSimpleURL(Utilities.INTERNATIONALURL)) //If this is international, get the country instead of the state (eg "China")
-            {
-                if (child.ParentIDs.Count > 3)
-                {
-                    if (child.ParentIDs.Contains(Utilities.GetID(Utilities.AUSTRALIAURL))) //Australia is both a continent and a country so it is an exception
-                        outerParent = MountainProjectDataSearch.GetParent(child, 1);
-                    else
-                        outerParent = MountainProjectDataSearch.GetParent(child, 2);
-                }
-                else
-                    return ""; //Return a blank string if we are in an area like "China" (so we don't return a string like "China is located in Asia")
-            }
+            MPObject innerParent = MountainProjectDataSearch.GetInnerParent(child);
+            MPObject outerParent = MountainProjectDataSearch.GetOuterParent(child);
 
             if (referenceLocation != null) //Override the "innerParent" in situations where we want the location string to include the "insisted" location
             {
                 //Only override if the location is not already present
-                if (innerParent.URL != referenceLocation.URL &&
-                    outerParent.URL != referenceLocation.URL)
+                if (innerParent?.URL != referenceLocation.URL &&
+                    outerParent?.URL != referenceLocation.URL)
                 {
                     innerParent = referenceLocation;
                 }
             }
+
+            if (innerParent == null)
+                return "";
 
             string locationString = $"Located in {innerParent.Name}";
             if (outerParent != null && outerParent.URL != innerParent.URL)

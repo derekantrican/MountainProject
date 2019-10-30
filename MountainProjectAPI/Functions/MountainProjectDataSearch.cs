@@ -114,7 +114,7 @@ namespace MountainProjectAPI
         public static SearchResult ParseRouteFromString(string inputString)
         {
             SearchResult finalResult = new SearchResult(); //Todo: in the future support returning multiple routes (but only if there are multiple grades in the title? Maybe only if all of the routes' full names are in the title?)
-            List<KeyValuePair<Route, string>> possibleResults = new List<KeyValuePair<Route, string>>();
+            List<Tuple<Route, Area, string>> possibleResults = new List<Tuple<Route, Area, string>>();
 
             List<Grade> postGrades = Grade.ParseString(inputString);
             Console.WriteLine($"    Recognized grade(s): {string.Join(" | ", postGrades)}");
@@ -129,7 +129,7 @@ namespace MountainProjectAPI
                 if (!searchResult.IsEmpty() && searchResult.AllResults.Count < 75) //If the number of matching results is greater than 75, it was probably a very generic word for a search (eg "There")
                 {
                     if (searchResult.AllResults.Count == 1 && ParentsInString(searchResult.AllResults.First(), inputWithoutName, false, true).Any())
-                        possibleResults.Add(new KeyValuePair<Route, string>(searchResult.AllResults.First() as Route, inputWithoutName));
+                        possibleResults.Add(new Tuple<Route, Area, string>(searchResult.AllResults.First() as Route, searchResult.RelatedLocation, inputWithoutName));
                     else if (postGrades.Any())
                     {
                         if (searchResult.AllResults.Any(r => ParentsInString(r, inputWithoutName).Any())) //If some routes have a location in the inputString, work with those
@@ -137,7 +137,7 @@ namespace MountainProjectAPI
                             foreach (Route route in searchResult.AllResults.Where(r => ParentsInString(r, inputWithoutName).Any()).Cast<Route>())
                             {
                                 if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
-                                    possibleResults.Add(new KeyValuePair<Route, string>(route, inputWithoutName));
+                                    possibleResults.Add(new Tuple<Route, Area, string>(route, searchResult.RelatedLocation, inputWithoutName));
                             }
                         }
                         else
@@ -145,7 +145,7 @@ namespace MountainProjectAPI
                             foreach (Route route in searchResult.AllResults.Cast<Route>())
                             {
                                 if (route.Grades.Any(g => postGrades.Any(p => g.Equals(p, true, true))))
-                                    possibleResults.Add(new KeyValuePair<Route, string>(route, inputWithoutName));
+                                    possibleResults.Add(new Tuple<Route, Area, string>(route, searchResult.RelatedLocation, inputWithoutName));
                             }
                         }
                     }
@@ -153,12 +153,12 @@ namespace MountainProjectAPI
                     {
                         List<MPObject> routesWhereParentIsInString = searchResult.AllResults.Where(r => ParentsInString(r as Route, inputWithoutName, false, true).Any() &&
                                                                                                         Utilities.StringContainsWithFilters(inputString, r.Name)).ToList();
-                        routesWhereParentIsInString.ForEach(r => possibleResults.Add(new KeyValuePair<Route, string>(r as Route, inputWithoutName)));
+                        routesWhereParentIsInString.ForEach(r => possibleResults.Add(new Tuple<Route, Area, string>(r as Route, searchResult.RelatedLocation, inputWithoutName)));
                     }
                 }
             }
 
-            possibleResults = possibleResults.GroupBy(x => x.Key).Select(g => g.First()).ToList(); //Distinct routes
+            possibleResults = possibleResults.GroupBy(x => x.Item1).Select(g => g.First()).ToList(); //Distinct routes
 
             if (possibleResults.Any())
             {
@@ -168,7 +168,7 @@ namespace MountainProjectAPI
 
                 //Prioritize routes where the full name is in the input string
                 //(Additionally, we could also prioritize how close - within the input string - the name is to the rating)
-                List<KeyValuePair<Route, string>> filteredResults = possibleResults.Where(p => Utilities.StringContainsWithFilters(inputString, p.Key.Name)).ToList();
+                List<Tuple<Route, Area, string>> filteredResults = possibleResults.Where(p => Utilities.StringContainsWithFilters(inputString, p.Item1.Name)).ToList();
 
                 int highConfidence = 1;
                 int medConfidence = 2;
@@ -176,8 +176,8 @@ namespace MountainProjectAPI
                 int confidence = lowConfidence;
                 if (filteredResults.Count == 1)
                 {
-                    if (ParentsInString(filteredResults.First().Key, inputString, true).Any() ||
-                        Grade.ParseString(inputString, false).Any(g => filteredResults.First().Key.Grades.Any(p => g.Equals(p))))
+                    if (ParentsInString(filteredResults.First().Item1, inputString, true).Any() ||
+                        Grade.ParseString(inputString, false).Any(g => filteredResults.First().Item1.Grades.Any(p => g.Equals(p))))
                         confidence = highConfidence; //Highest confidence when we also match a location in the string or if we match a full grade
                     else
                         confidence = medConfidence; //Medium confidence when we have only found one match with that exact name but can't match a location in the string
@@ -185,7 +185,7 @@ namespace MountainProjectAPI
                 else if (filteredResults.Count > 1)
                 {
                     //Prioritize routes where one of the parents (locations) is also in the input string
-                    List<KeyValuePair<Route, string>> routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r.Key, r.Value).Any()).ToList();
+                    List<Tuple<Route, Area, string>> routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r.Item1, r.Item3).Any()).ToList();
                     if (routesWithMatchingLocations.Any())
                     {
                         filteredResults = routesWithMatchingLocations;
@@ -193,7 +193,7 @@ namespace MountainProjectAPI
                     }
                     else
                     {
-                        routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r.Key, r.Value, true).Any()).ToList();
+                        routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r.Item1, r.Item3, true).Any()).ToList();
                         if (routesWithMatchingLocations.Any())
                         {
                             filteredResults = routesWithMatchingLocations;
@@ -201,7 +201,7 @@ namespace MountainProjectAPI
                         }
                         else
                         {
-                            routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r.Key, r.Value, true, true).Any()).ToList();
+                            routesWithMatchingLocations = filteredResults.Where(r => ParentsInString(r.Item1, r.Item3, true, true).Any()).ToList();
                             if (routesWithMatchingLocations.Any())
                             {
                                 filteredResults = routesWithMatchingLocations;
@@ -213,7 +213,7 @@ namespace MountainProjectAPI
                 else
                 {
                     //Prioritize routes where one of the parents (locations) is also in the input string
-                    List<KeyValuePair<Route, string>> routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r.Key, r.Value).Any()).ToList();
+                    List<Tuple<Route, Area, string>> routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r.Item1, r.Item3).Any()).ToList();
                     if (routesWithMatchingLocations.Any())
                     {
                         filteredResults = routesWithMatchingLocations;
@@ -221,7 +221,7 @@ namespace MountainProjectAPI
                     }
                     else
                     {
-                        routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r.Key, r.Value, true).Any()).ToList();
+                        routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r.Item1, r.Item3, true).Any()).ToList();
                         if (routesWithMatchingLocations.Any())
                         {
                             filteredResults = routesWithMatchingLocations;
@@ -229,7 +229,7 @@ namespace MountainProjectAPI
                         }
                         else
                         {
-                            routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r.Key, r.Value, true, true).Any()).ToList();
+                            routesWithMatchingLocations = possibleResults.Where(r => ParentsInString(r.Item1, r.Item3, true, true).Any()).ToList();
                             if (routesWithMatchingLocations.Any())
                             {
                                 filteredResults = routesWithMatchingLocations;
@@ -239,29 +239,32 @@ namespace MountainProjectAPI
                     }
                 }
 
-                KeyValuePair<Route, string> chosenRoute;
+                Tuple<Route, Area, string> chosenRoute;
                 Area location;
                 List<MPObject> allResults = new List<MPObject>();
                 if (filteredResults.Count == 1)
                 {
                     chosenRoute = filteredResults.First();
-                    allResults.Add(chosenRoute.Key);
+                    allResults.Add(chosenRoute.Item1);
                 }
                 else if (filteredResults.Count > 1)
                 {
-                    chosenRoute = filteredResults.OrderByDescending(p => p.Key.Popularity).First();
-                    allResults.AddRange(filteredResults.Select(p => p.Key));
+                    chosenRoute = filteredResults.OrderByDescending(p => p.Item1.Popularity).First();
+                    allResults.AddRange(filteredResults.Select(p => p.Item1));
                     confidence = medConfidence; //Medium confidence when we have matched the string exactly, but there are multiple results
                 }
                 else
                 {
-                    chosenRoute = possibleResults.OrderByDescending(p => p.Key.Popularity).First();
-                    allResults.AddRange(possibleResults.Select(p => p.Key));
+                    chosenRoute = possibleResults.OrderByDescending(p => p.Item1.Popularity).First();
+                    allResults.AddRange(possibleResults.Select(p => p.Item1));
                     confidence = lowConfidence; //Low confidence when we can't match the string exactly, haven't matched any locations, and there are multiple results
                 }
 
-                location = ParentsInString(chosenRoute.Key, chosenRoute.Value, allowPartialParents: true).FirstOrDefault() as Area;
-                finalResult = new SearchResult(chosenRoute.Key, location) { AllResults = allResults };
+                location = chosenRoute.Item2;
+                if (location == null)
+                    location = ParentsInString(chosenRoute.Item1, chosenRoute.Item3, allowPartialParents: true).FirstOrDefault(p => p.ID != GetOuterParent(chosenRoute.Item1).ID) as Area;
+                
+                finalResult = new SearchResult(chosenRoute.Item1, location) { AllResults = allResults };
                 finalResult.Confidence = confidence;
             }
 
@@ -478,6 +481,54 @@ namespace MountainProjectAPI
                 return GetItemWithMatchingID(id);
             else
                 return child.Parents.Find(p => p.ID == id);
+        }
+
+        /// <summary>
+        /// Gets the outer parent (state for US, country for international) for a child
+        /// </summary>
+        /// <param name="child">The area or route of the parent to return</param>
+        /// <returns></returns>
+        public static MPObject GetOuterParent(MPObject child)
+        {
+            MPObject parent = GetParent(child, 0); //Get state that route/area is in
+            if (parent.URL == Utilities.GetSimpleURL(Utilities.INTERNATIONALURL)) //If this is international, get the country instead of the state (eg "China")
+            {
+                if (child.ParentIDs.Count > 3)
+                {
+                    if (child.ParentIDs.Contains(Utilities.GetID(Utilities.AUSTRALIAURL))) //Australia is both a continent and a country so it is an exception
+                        parent = GetParent(child, 1);
+                    else
+                        parent = GetParent(child, 2);
+                }
+                else
+                    parent = null; //Return null if "child" is an area like "China" (so we don't return a string like "China is located in Asia")
+            }
+
+            return parent;
+        }
+
+        /// <summary>
+        /// Gets the inner parent for a child
+        /// </summary>
+        /// <param name="child">The area or route of the parent to return</param>
+        /// <returns></returns>
+        public static MPObject GetInnerParent(MPObject child)
+        {
+            MPObject parent = null;
+            if (child is Route)
+            {
+                parent = GetParent(child, -2); //Get the "second to last" parent https://github.com/derekantrican/MountainProject/issues/12
+
+                if (parent.URL == GetParent(child, 0).URL)
+                    parent = GetParent(child, -1);
+            }
+            else if (child is Area)
+                parent = GetParent(child, -1); //Get immediate parent
+
+            if (parent != null && parent.URL == Utilities.GetSimpleURL(Utilities.INTERNATIONALURL)) //If "child" is an area like "Europe"
+                parent = null;
+
+            return parent;
         }
         #endregion Public Methods
 
