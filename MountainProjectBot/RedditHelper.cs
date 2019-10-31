@@ -107,6 +107,12 @@ namespace MountainProjectBot
             await comment.DelAsync();
         }
 
+        public async Task CommentOnPost(Post post, string comment)
+        {
+            IncrementActionAndCheckLimit();
+            await post.CommentAsync(comment);
+        }
+
         public async Task<Post> GetParentPostForComment(Comment comment)
         {
             string postLink = GetPostLinkFromComment(comment);

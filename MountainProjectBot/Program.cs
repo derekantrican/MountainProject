@@ -1,4 +1,5 @@
 ﻿using MountainProjectAPI;
+using Newtonsoft.Json.Linq;
 using RedditSharp;
 using RedditSharp.Things;
 using System;
@@ -8,6 +9,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
@@ -22,6 +24,8 @@ namespace MountainProjectBot
         const string CREDENTIALSNAME = "Credentials.txt";
         static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
         static string repliedToPath = "RepliedTo.txt";
+        static string repliedToPostsPath = @"RepliedToPosts.txt";
+        static string requestForApprovalURL = "";
         static string blacklistedPath = "BlacklistedUsers.txt";
         const string BOTKEYWORDREGEX = @"(?i)!mountain\s*project";
 
@@ -49,7 +53,14 @@ namespace MountainProjectBot
             CheckRequiredFiles();
             MountainProjectDataSearch.InitMountainProjectData(xmlPath);
             redditHelper.Auth(credentialsPath).Wait();
+            GetRequestServerURL(credentialsPath);
             DoBotLoop().Wait();
+        }
+
+        private static void GetRequestServerURL(string filePath)
+        {
+            List<string> fileLines = File.ReadAllLines(filePath).ToList();
+            requestForApprovalURL = fileLines.FirstOrDefault(p => p.Contains("requestForApprovalURL")).Split(new[] { ':' }, 2)[1]; //Split on first occurence only because requestForApprovalURL also contains ':'
         }
 
         #region Error Handling
@@ -106,7 +117,7 @@ namespace MountainProjectBot
             {
                 _ = Task.Run(() => PingStatus()); //Send the bot status (for Uptime Robot)
 
-                Console.WriteLine("    Getting comments...");
+                Console.WriteLine("\tGetting comments...");
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 long elapsed;
                 
@@ -114,25 +125,35 @@ namespace MountainProjectBot
                 {
                     redditHelper.Actions = 0; //Reset number of actions
 
-                    Console.WriteLine("    Checking monitored comments...");
+                    Console.WriteLine("\tChecking monitored comments...");
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await CheckMonitoredComments();
-                    Console.WriteLine($"    Done checking monitored comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+                    Console.WriteLine($"\tDone checking monitored comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
 
-                    Console.WriteLine("    Getting recent comments for each subreddit...");
+                    Console.WriteLine("\tReplying to approved posts...");
+                    elapsed = stopwatch.ElapsedMilliseconds;
+                    await ReplyToApprovedPosts();
+                    Console.WriteLine($"\tDone replying ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+
+                    Console.WriteLine("\tChecking posts for auto-reply...");
+                    elapsed = stopwatch.ElapsedMilliseconds;
+                    await CheckPostsForAutoReply(redditHelper.Subreddits);
+                    Console.WriteLine($"\tDone with auto-reply ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+
+                    Console.WriteLine("\tGetting recent comments for each subreddit...");
                     elapsed = stopwatch.ElapsedMilliseconds;
                     Dictionary<Subreddit, List<Comment>> subredditsAndRecentComments = await redditHelper.GetRecentComments();
-                    Console.WriteLine($"    Done getting recent comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+                    Console.WriteLine($"\tDone getting recent comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
 
-                    Console.WriteLine("    Checking for requests (comments with !MountainProject)...");
+                    Console.WriteLine("\tChecking for requests (comments with !MountainProject)...");
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await RespondToRequests(subredditsAndRecentComments.SelectMany(p => p.Value).ToList());
-                    Console.WriteLine($"    Done with requests ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+                    Console.WriteLine($"\tDone with requests ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
 
-                    Console.WriteLine("    Checking for MP links...");
+                    Console.WriteLine("\tChecking for MP links...");
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await RespondToMPUrls(subredditsAndRecentComments);
-                    Console.WriteLine($"    Done with MP links ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+                    Console.WriteLine($"\tDone with MP links ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
                 }
                 catch (Exception e)
                 {
@@ -142,7 +163,7 @@ namespace MountainProjectBot
                         e is WebException ||
                         (e is TaskCanceledException && !(e as TaskCanceledException).CancellationToken.IsCancellationRequested))
                     {
-                        Console.WriteLine($"    Issue connecting to reddit: {e.Message}");
+                        Console.WriteLine($"\tIssue connecting to reddit: {e.Message}");
                     }
                     else //If it isn't one of the errors above, it might be more serious. So throw it to be caught as an unhandled exception
                         throw;
@@ -219,8 +240,86 @@ namespace MountainProjectBot
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"    Exception occured when checking monitor for comment {RedditHelper.GetFullLink(monitor.ParentComment.Permalink)}");
-                    Console.WriteLine($"    {e.Message}\n{e.StackTrace}");
+                    Console.WriteLine($"\tException occured when checking monitor for comment {RedditHelper.GetFullLink(monitor.ParentComment.Permalink)}");
+                    Console.WriteLine($"\t{e.Message}\n{e.StackTrace}");
+                }
+            }
+        }
+
+        static List<KeyValuePair<Post, SearchResult>> postsPendingApproval = new List<KeyValuePair<Post, SearchResult>>();
+        private static async Task ReplyToApprovedPosts()
+        {
+            postsPendingApproval.RemoveAll(p => (DateTime.UtcNow - p.Key.CreatedUTC).TotalMinutes > 15); //Remove posts that have "timed out"
+            postsPendingApproval = await RemoveWhereClimbingRouteBotHasReplied(postsPendingApproval);
+            if (postsPendingApproval.Count == 0)
+                return;
+
+            List<string> approvedUrls = GetApprovedPostUrls();
+            List<KeyValuePair<Post, SearchResult>> approvedPosts = postsPendingApproval.Where(p => approvedUrls.Contains(p.Key.Shortlink) || p.Value.Confidence == 1).ToList();
+            foreach (KeyValuePair<Post, SearchResult> post in approvedPosts)
+            {
+                string reply = BotReply.GetFormattedString(post.Value);
+                reply += Markdown.HRule;
+                reply += BotReply.GetBotLinks(post.Key);
+
+                if (!Debugger.IsAttached)
+                {
+                    await redditHelper.CommentOnPost(post.Key, reply);
+                    Console.WriteLine($"\n    Auto-replied to post {post.Key.Id}");
+                }
+
+                postsPendingApproval.RemoveAll(p => p.Key == post.Key);
+            }
+        }
+
+        private static async Task CheckPostsForAutoReply(List<Subreddit> subreddits)
+        {
+            List<Post> recentPosts = new List<Post>();
+            foreach (Subreddit subreddit in subreddits)
+            {
+                List<Post> subredditPosts = await redditHelper.GetPosts(subreddit, 10);
+                subredditPosts.RemoveAll(p => p.IsSelfPost);
+                subredditPosts.RemoveAll(p => (DateTime.UtcNow - p.CreatedUTC).TotalMinutes > 10); //Only check recent posts
+                //subredditPosts.RemoveAll(p => (DateTime.UtcNow - p.CreatedUTC).TotalMinutes < 3); //Wait till posts are 3 minutes old (gives poster time to add a comment with a MP link or for the ClimbingRouteBot to respond)
+                subredditPosts = RemoveBlacklisted(subredditPosts, new[] { BlacklistLevel.NoPostReplies, BlacklistLevel.OnlyKeywordReplies, BlacklistLevel.Total }); //Remove posts from users who don't want the bot to automatically reply to them
+                subredditPosts = RemoveAlreadyRepliedTo(subredditPosts);
+                recentPosts.AddRange(subredditPosts);
+            }
+
+            foreach (Post post in recentPosts)
+            {
+                try
+                {
+                    string postTitle = WebUtility.HtmlDecode(post.Title);
+
+                    Console.WriteLine($"\tTrying to get an automatic reply for post (/r/{post.SubredditName}): {postTitle}");
+
+                    SearchResult searchResult = MountainProjectDataSearch.ParseRouteFromString(postTitle);
+                    if (!searchResult.IsEmpty())
+                    {
+                        postsPendingApproval.Add(new KeyValuePair<Post, SearchResult>(post, searchResult));
+
+                        //Until we are more confident with automatic results, we're going to request for approval for confidence values greater than 1 (less than 100%)
+                        if (searchResult.Confidence > 1)
+                        {
+                            string locationString = Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
+                            NotifyFoundPost(WebUtility.HtmlDecode(post.Title), post.Shortlink, searchResult.FilteredResult.Name, locationString,
+                                        (searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false), searchResult.FilteredResult.URL, searchResult.FilteredResult.ID);
+                        }
+                    }
+                    else
+                        Console.WriteLine("\tNothing found");
+
+                    LogPostBeenSeen(post);
+                }
+                catch (RateLimitException)
+                {
+                    Console.WriteLine("\tRate limit hit. Postponing reply until next iteration");
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"\tException occurred with post {RedditHelper.GetFullLink(post.Permalink)}");
+                    Console.WriteLine($"\t{e.Message}\n{e.StackTrace}");
                 }
             }
         }
@@ -236,14 +335,14 @@ namespace MountainProjectBot
             {
                 try
                 {
-                    Console.WriteLine($"    Getting reply for comment: {comment.Id}");
+                    Console.WriteLine($"\tGetting reply for comment: {comment.Id}");
 
                     string reply = BotReply.GetReplyForRequest(comment);
 
                     if (!Debugger.IsAttached)
                     {
                         Comment botReplyComment = await redditHelper.ReplyToComment(comment, reply);
-                        Console.WriteLine($"    Replied to comment {comment.Id}");
+                        Console.WriteLine($"\tReplied to comment {comment.Id}");
                         monitoredComments.Add(new CommentMonitor() { ParentComment = comment, BotResponseComment = botReplyComment });
                     }
 
@@ -251,12 +350,12 @@ namespace MountainProjectBot
                 }
                 catch (RateLimitException)
                 {
-                    Console.WriteLine("    Rate limit hit. Postponing reply until next iteration");
+                    Console.WriteLine("\tRate limit hit. Postponing reply until next iteration");
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"    Exception occurred with comment {RedditHelper.GetFullLink(comment.Permalink)}");
-                    Console.WriteLine($"    {e.Message}\n{e.StackTrace}");
+                    Console.WriteLine($"\tException occurred with comment {RedditHelper.GetFullLink(comment.Permalink)}");
+                    Console.WriteLine($"\t{e.Message}\n{e.StackTrace}");
                 }
             }
         }
@@ -277,7 +376,7 @@ namespace MountainProjectBot
             {
                 try
                 {
-                    Console.WriteLine($"    Getting reply for comment: {comment.Id}");
+                    Console.WriteLine($"\tGetting reply for comment: {comment.Id}");
 
                     string reply = BotReply.GetReplyForMPLinks(comment);
 
@@ -290,7 +389,7 @@ namespace MountainProjectBot
                     if (!Debugger.IsAttached)
                     {
                         Comment botReplyComment = await redditHelper.ReplyToComment(comment, reply);
-                        Console.WriteLine($"    Replied to comment {comment.Id}");
+                        Console.WriteLine($"\tReplied to comment {comment.Id}");
                         monitoredComments.Add(new CommentMonitor() { ParentComment = comment, BotResponseComment = botReplyComment });
                     }
 
@@ -298,12 +397,12 @@ namespace MountainProjectBot
                 }
                 catch (RateLimitException)
                 {
-                    Console.WriteLine("    Rate limit hit. Postponing reply until next iteration");
+                    Console.WriteLine("\tRate limit hit. Postponing reply until next iteration");
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"    Exception occurred with comment {RedditHelper.GetFullLink(comment.Permalink)}");
-                    Console.WriteLine($"    {e.Message}\n{e.StackTrace}");
+                    Console.WriteLine($"\tException occurred with comment {RedditHelper.GetFullLink(comment.Permalink)}");
+                    Console.WriteLine($"\t{e.Message}\n{e.StackTrace}");
                 }
             }
         }
@@ -354,6 +453,36 @@ namespace MountainProjectBot
             return result;
         }
 
+        private static List<Post> RemoveBlacklisted(List<Post> posts, BlacklistLevel[] blacklistLevels)
+        {
+            Dictionary<string, BlacklistLevel> usersWithBlacklist = GetBlacklist();
+
+            List<Post> result = posts.ToList();
+            foreach (Post post in posts)
+            {
+                if (usersWithBlacklist.ContainsKey(post.AuthorName))
+                {
+                    if (blacklistLevels.Contains(usersWithBlacklist[post.AuthorName]))
+                        result.Remove(post);
+                }
+            }
+
+            return result;
+        }
+
+        private static async Task<List<KeyValuePair<Post, SearchResult>>> RemoveWhereClimbingRouteBotHasReplied(List<KeyValuePair<Post, SearchResult>> posts)
+        {
+            List<KeyValuePair<Post, SearchResult>> result = posts.ToList();
+            foreach (Post post in posts.Select(p => p.Key))
+            {
+                List<Comment> postComments = await post.GetCommentsAsync(100);
+                if (postComments.Any(c => c.AuthorName == "ClimbingRouteBot"))
+                    result.RemoveAll(p => p.Key == post);
+            }
+
+            return result;
+        }
+
         private static async Task<List<Comment>> RemoveCommentsOnSelfPosts(Subreddit subreddit, List<Comment> comments)
         {
             List<Comment> result = new List<Comment>();
@@ -383,6 +512,25 @@ namespace MountainProjectBot
             File.AppendAllLines(repliedToPath, new string[] { comment.Id });
         }
 
+        private static void LogPostBeenSeen(Post post)
+        {
+            if (!File.Exists(repliedToPostsPath))
+                File.Create(repliedToPostsPath).Close();
+
+            File.AppendAllLines(repliedToPostsPath, new string[] { post.Id });
+        }
+
+        private static List<Post> RemoveAlreadyRepliedTo(List<Post> posts)
+        {
+            if (!File.Exists(repliedToPostsPath))
+                File.Create(repliedToPostsPath).Close();
+
+            string text = File.ReadAllText(repliedToPostsPath);
+            posts.RemoveAll(p => text.Contains(p.Id));
+
+            return posts;
+        }
+
         private static void PingStatus()
         {
             string url = "https://script.google.com/macros/s/AKfycbzjGHLRxHDecvJoqZZCG-ZrEs8oOUTHJuAl0xHa0y_iZ2ntbjs/exec?ping";
@@ -408,6 +556,64 @@ namespace MountainProjectBot
             Console.WriteLine("Press any key to exit");
             Console.Read();
             Environment.Exit(0);
+        }
+
+        public static void NotifyFoundPost(string postTitle, string postUrl, string mpResultTitle, string mpResultLoc, string mpResultGrade, string mpResultUrl, string mpResultID)
+        {
+            if (string.IsNullOrEmpty(requestForApprovalURL))
+                return;
+
+            List<string> parameters = new List<string>
+            {
+                "postTitle=" + Uri.EscapeDataString(postTitle),
+                "postURL=" + Uri.EscapeDataString(postUrl),
+                "mpResultTitle=" + Uri.EscapeDataString(mpResultTitle),
+                "mpResultLocation=" + Uri.EscapeDataString(mpResultLoc),
+                "mpResultGrade=" + Uri.EscapeDataString(mpResultGrade),
+                "mpResultURL=" + Uri.EscapeDataString(mpResultUrl),
+                "mpResultID=" + Uri.EscapeDataString(mpResultID)
+            };
+
+            string postData = string.Join("&", parameters);
+            byte[] data = Encoding.ASCII.GetBytes(postData);
+
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestForApprovalURL);
+            request.Method = "POST";
+            request.ContentType = "application/x-www-form-urlencoded";
+            request.ContentLength = data.Length;
+
+            using (Stream stream = request.GetRequestStream())
+            {
+                stream.Write(data, 0, data.Length);
+            }
+
+            using (HttpWebResponse serverResponse = (HttpWebResponse)request.GetResponse())
+            using (StreamReader reader = new StreamReader(serverResponse.GetResponseStream()))
+            {
+                _ = reader.ReadToEnd(); //For POST requests, we don't care about what we get back
+            }
+        }
+
+        public static List<string> GetApprovedPostUrls()
+        {
+            if (string.IsNullOrEmpty(requestForApprovalURL))
+                return new List<string>();
+
+            string response;
+            HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(requestForApprovalURL);
+            httpRequest.AutomaticDecompression = DecompressionMethods.GZip;
+
+            using (HttpWebResponse serverResponse = (HttpWebResponse)httpRequest.GetResponse())
+            using (StreamReader reader = new StreamReader(serverResponse.GetResponseStream()))
+            {
+                response = reader.ReadToEnd();
+            }
+
+            if (response.Contains("<title>Error</title>") || string.IsNullOrEmpty(response)) //Hit an error when contacting server code
+                return new List<string>();
+
+            JObject json = JObject.Parse(response);
+            return json["approvedPosts"].ToObject<List<string>>();
         }
     }
 }

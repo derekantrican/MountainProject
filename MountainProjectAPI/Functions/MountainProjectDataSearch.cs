@@ -34,7 +34,7 @@ namespace MountainProjectAPI
 
         public static SearchResult Search(string queryText, SearchParameters searchParameters = null)
         {
-            Console.WriteLine($"    Getting info from MountainProject for \"{queryText}\"");
+            Console.WriteLine($"\tGetting info from MountainProject for \"{queryText}\"");
             Stopwatch searchStopwatch = Stopwatch.StartNew();
             SearchResult searchResult;
 
@@ -103,7 +103,7 @@ namespace MountainProjectAPI
                 };
             }
 
-            Console.WriteLine($"    Found {searchResult.AllResults.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms");
+            Console.WriteLine($"\tFound {searchResult.AllResults.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms");
 
             searchResult.TimeTaken = searchStopwatch.Elapsed;
 
@@ -117,10 +117,10 @@ namespace MountainProjectAPI
             List<Tuple<Route, Area, string>> possibleResults = new List<Tuple<Route, Area, string>>();
 
             List<Grade> postGrades = Grade.ParseString(inputString);
-            Console.WriteLine($"    Recognized grade(s): {string.Join(" | ", postGrades)}");
+            Console.WriteLine($"\tRecognized grade(s): {string.Join(" | ", postGrades)}");
 
             List<string> possibleRouteNames = GetPossibleRouteNames(inputString);
-            Console.WriteLine($"    Recognized name(s): {string.Join(" | ", possibleRouteNames)}");
+            Console.WriteLine($"\tRecognized name(s): {string.Join(" | ", possibleRouteNames)}");
             
             foreach (string possibleRouteName in possibleRouteNames)
             {
@@ -618,7 +618,7 @@ namespace MountainProjectAPI
                 int pop2 = matchedObjectsByPopularity[1].Popularity;
                 double popularityPercentDiff = Math.Round((double)(pop1 - pop2) / pop2 * 100, 2);
 
-                Console.WriteLine($"    Filtering based on popularity (result has popularity {popularityPercentDiff}% higher than next closest)");
+                Console.WriteLine($"\tFiltering based on popularity (result has popularity {popularityPercentDiff}% higher than next closest)");
 
                 return matchedObjectsByPopularity.First(); //Return the most popular matched object (this may prioritize areas over routes. May want to check that later)
             }
@@ -638,7 +638,7 @@ namespace MountainProjectAPI
                 int pop2 = resultsByPopularity[1].FilteredResult.Popularity;
                 double popularityPercentDiff = Math.Round((double)(pop1 - pop2) / pop2 * 100, 2);
 
-                Console.WriteLine($"    Filtering based on popularity (result has popularity {popularityPercentDiff}% higher than next closest)");
+                Console.WriteLine($"\tFiltering based on popularity (result has popularity {popularityPercentDiff}% higher than next closest)");
 
                 return resultsByPopularity.First(); //Return the most popular matched object (this may prioritize areas over routes. May want to check that later)
             }
