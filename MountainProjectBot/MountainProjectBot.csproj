@@ -159,7 +159,9 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BotFunctions.cs" />
     <Compile Include="BotReply.cs" />
+    <Compile Include="BotUtilities.cs" />
     <Compile Include="CommentMonitor.cs" />
     <Compile Include="Enums.cs" />
     <Compile Include="Markdown.cs" />
