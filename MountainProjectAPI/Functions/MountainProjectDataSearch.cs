@@ -130,6 +130,12 @@ namespace MountainProjectAPI
                 {
                     if (searchResult.AllResults.Count == 1 && ParentsInString(searchResult.AllResults.First(), inputWithoutName, false, true).Any())
                         possibleResults.Add(new Tuple<Route, Area, string>(searchResult.AllResults.First() as Route, searchResult.RelatedLocation, inputWithoutName));
+                    else if (searchResult.AllResults.Count(r => ParentsInString(r as Route, inputWithoutName, false, true).Any() && Utilities.StringContainsWithFilters(inputString, r.Name)) == 1)
+                    {
+                        Route route = searchResult.AllResults.First(r => ParentsInString(r as Route, inputWithoutName, false, true).Any() &&
+                                                                         Utilities.StringContainsWithFilters(inputString, r.Name)) as Route;
+                        possibleResults.Add(new Tuple<Route, Area, string>(route, searchResult.RelatedLocation, inputWithoutName));
+                    }
                     else if (postGrades.Any())
                     {
                         if (searchResult.AllResults.Any(r => ParentsInString(r, inputWithoutName).Any())) //If some routes have a location in the inputString, work with those
