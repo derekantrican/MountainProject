@@ -11,7 +11,6 @@ namespace MountainProjectAPI
     {
         public Grade()
         {
-
         }
 
         public Grade(GradeSystem system, string value, bool rectify = true)
@@ -37,7 +36,7 @@ namespace MountainProjectAPI
         }
 
         public GradeSystem System { get; set; }
-        public string Value { get;set; }
+        public string Value { get; set; }
         [XmlIgnore]
         public string BaseValue //Todo: note that in some cases there are multiple base values (eg 5.10-11)
         {
@@ -132,7 +131,6 @@ namespace MountainProjectAPI
 
                 input = input.Replace(matchedGradeRange, "");
             }
-
 
             //THIRD, attempt to match remaining grades with a "5." or "V" prefix
             ratingRegex = new Regex(@"5\.\d+[+-]?[a-dA-D]?|[vV]\d+[+-]?");

@@ -1,5 +1,4 @@
-﻿
-namespace MountainProjectAPI
+﻿namespace MountainProjectAPI
 {
     public class Dimension
     {
@@ -11,7 +10,6 @@ namespace MountainProjectAPI
 
         public Dimension()
         {
-
         }
 
         public Dimension(double value, Units units)

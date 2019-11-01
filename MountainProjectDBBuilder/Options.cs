@@ -155,7 +155,6 @@ namespace Mono.Options
 {
     static class StringCoda
     {
-
         public static IEnumerable<string> WrappedLines(string self, params int[] widths)
         {
             IEnumerable<int> w = widths;
@@ -244,7 +243,6 @@ namespace Mono.Options
 
     public class OptionValueCollection : IList, IList<string>
     {
-
         List<string> values = new List<string>();
         OptionContext c;
 
@@ -589,7 +587,6 @@ namespace Mono.Options
 
     public abstract class ArgumentSource
     {
-
         protected ArgumentSource()
         {
         }
@@ -665,7 +662,6 @@ namespace Mono.Options
 
     public class ResponseFileSource : ArgumentSource
     {
-
         public override string[] GetNames()
         {
             return new string[] { "@file" };
@@ -757,7 +753,6 @@ namespace Mono.Options
         {
             get { return roSources; }
         }
-
 
         protected override string GetKeyForItem(Option item)
         {
@@ -854,7 +849,6 @@ namespace Mono.Options
                 throw new NotSupportedException("Category.OnParseComplete should not be invoked.");
             }
         }
-
 
         public new OptionSet Add(Option option)
         {

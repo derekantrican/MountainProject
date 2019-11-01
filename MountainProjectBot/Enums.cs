@@ -1,5 +1,4 @@
-﻿
-namespace MountainProjectBot
+﻿namespace MountainProjectBot
 {
     public class Enums
     {

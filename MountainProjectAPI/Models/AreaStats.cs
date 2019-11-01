@@ -15,7 +15,6 @@ namespace MountainProjectAPI
 
         public AreaStats()
         {
-
         }
 
         public int BouderRoutes { get; set; }

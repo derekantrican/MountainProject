@@ -1,5 +1,4 @@
-﻿
-namespace MountainProjectBot
+﻿namespace MountainProjectBot
 {
     public static class Markdown
     {

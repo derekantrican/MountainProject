@@ -302,7 +302,6 @@ namespace MountainProjectAPI
 
         private static string[] FindWords(params string[] args)
         {
-
             if (args.Length == 0)
             {
                 return new string[] { "" };
