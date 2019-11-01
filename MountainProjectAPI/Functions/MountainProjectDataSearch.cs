@@ -309,13 +309,13 @@ namespace MountainProjectAPI
                     if (caseSensitive)
                     {
                         List<string> parentWords = Utilities.GetWordGroups(Utilities.FilterStringForMatch(parent.Name, false), false);
-                        if (parentWords.Any(p => inputString.Contains(p)))
+                        if (parentWords.Any(p => Utilities.FilterStringForMatch(inputString, false).Contains(p)))
                             matchedParents.Add(parent);
                     }
                     else
                     {
                         List<string> parentWords = Utilities.GetWordGroups(Utilities.FilterStringForMatch(parent.Name.ToLower(), false), false);
-                        if (parentWords.Any(p => inputString.ToLower().Contains(p)))
+                        if (parentWords.Any(p => Utilities.FilterStringForMatch(inputString, false).ToLower().Contains(p)))
                             matchedParents.Add(parent);
                     }
                 }
