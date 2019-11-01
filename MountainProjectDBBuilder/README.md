@@ -1,6 +1,6 @@
 # MountainProjectDBBuilder
 
-[![Build status](https://ci.appveyor.com/api/projects/status/ue7w1eu6y3d7hkvn?svg=true)](https://ci.appveyor.com/project/derekantrican/mountainproject)
+[![Build status](https://ci.appveyor.com/api/projects/status/ue7w1eu6y3d7hkvn?svg=true)](https://ci.appveyor.com/project/derekantrican/mountainproject) [![CodeFactor](https://www.codefactor.io/repository/github/derekantrican/mountainproject/badge/master)](https://www.codefactor.io/repository/github/derekantrican/mountainproject/overview/master)
 
 MountainProject.com is the definitive online "guide book" for climbing routes (at least in America, but also has a fairly good directory for other countries). The problem is that the [Official API](https://www.mountainproject.com/data) is *extremely* limited.
 
