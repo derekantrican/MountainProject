@@ -35,6 +35,9 @@ namespace MountainProjectBot
             if (args.FirstOrDefault(p => p.Contains("repliedto=")) != null)
                 repliedToPath = args.FirstOrDefault(p => p.Contains("repliedto=")).Split('=')[1];
 
+            if (args.FirstOrDefault(p => p.Contains("repliedtoposts=")) != null)
+                repliedToPostsPath = args.FirstOrDefault(p => p.Contains("repliedtoposts=")).Split('=')[1];
+
             if (args.FirstOrDefault(p => p.Contains("blacklisted=")) != null)
                 blacklistedPath = args.FirstOrDefault(p => p.Contains("blacklisted=")).Split('=')[1];
         }
