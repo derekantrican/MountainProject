@@ -64,7 +64,7 @@ namespace MountainProjectBot
 
         public async Task<List<Post>> GetPosts(Subreddit subreddit, int amount = 100)
         {
-            return await subreddit.GetPosts(amount).ToList();
+            return await subreddit.GetPosts(Subreddit.Sort.New, amount).ToList();
         }
 
         public async Task<Dictionary<Subreddit, List<Comment>>> GetRecentComments()
