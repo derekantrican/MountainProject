@@ -4,6 +4,8 @@
 
 This is a reddit bot for connecting [MountainProject.com](https://mountainproject.com) and the climbing-related subreddits.
 
+**See what the bot has responded to:** https://reddit.com/user/MountainProjectBot/
+
 **Feedback:** https://forms.gle/RKiU2Bzy9gXg4VBw8
 
 **Donate to this project:** https://www.paypal.me/derekantrican
