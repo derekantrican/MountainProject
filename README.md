@@ -1,7 +1,10 @@
 # MountainProject
 
-This repository has two main parts:
+This repository has three main parts:
+
+**The MountainProjectAPI (a 3rd-party API for MountainProject.com):**
+https://github.com/derekantrican/MountainProject/tree/master/MountainProjectAPI
 
 **The MountainProjectDBBuilder (a parser/scraper for MountainProject.com):** https://github.com/derekantrican/MountainProject/tree/master/MountainProjectDBBuilder
 
-**The MountainProjectBot (a reddit bot connecting MountainProject.com and the [/r/climbing](https://reddit.com/r/climbing) subreddit):** https://github.com/derekantrican/MountainProject/tree/master/MountainProjectBot
+**The MountainProjectBot (a reddit bot connecting MountainProject.com and the climbing subreddits):** https://github.com/derekantrican/MountainProject/tree/master/MountainProjectBot
