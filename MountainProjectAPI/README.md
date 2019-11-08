@@ -1,5 +1,7 @@
 # MountainProject API
 
+[![Build status](https://ci.appveyor.com/api/projects/status/ue7w1eu6y3d7hkvn?svg=true)](https://ci.appveyor.com/project/derekantrican/mountainproject) [![CodeFactor](https://www.codefactor.io/repository/github/derekantrican/mountainproject/badge/master)](https://www.codefactor.io/repository/github/derekantrican/mountainproject/overview/master)
+
 *This is a C# API for the website [MountainProject.com](https://mountainproject.com). For a brief history of why this exists or other attempts to create a 3rd-party MountainProject API, go here: https://github.com/derekantrican/MountainProject/blob/master/MountainProjectDBBuilder/README.md*
 
 ### How To Implement the API in your Project
