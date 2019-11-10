@@ -94,7 +94,10 @@ namespace MountainProjectBot
             {
                 List<Comment> postComments = await post.GetCommentsAsync(100);
                 if (postComments.Any(c => c.AuthorName == "ClimbingRouteBot"))
+                {
+                    WriteToConsoleWithColor("Skipping reply because ClimbingRouteBot beat us to it", ConsoleColor.Red);
                     result.RemoveAll(p => p.Key == post);
+                }
             }
 
             return result;
@@ -293,5 +296,12 @@ namespace MountainProjectBot
             return json["approvedPosts"].ToObject<List<string>>();
         }
         #endregion Server Calls
+
+        public static void WriteToConsoleWithColor(string text, ConsoleColor color)
+        {
+            Console.ForegroundColor = color;
+            Console.WriteLine(text);
+            Console.ForegroundColor = ConsoleColor.Gray;
+        }
     }
 }

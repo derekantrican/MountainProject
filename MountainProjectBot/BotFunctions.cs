@@ -39,6 +39,7 @@ namespace MountainProjectBot
                     {
                         await RedditHelper.DeleteComment(monitor.BotResponseComment);
                         monitoredComments.Remove(monitor);
+                        BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
                     }
                     else if (updatedParent.Body != oldParentBody) //If the parent comment's request has changed, edit the bot's response
                     {
@@ -49,11 +50,15 @@ namespace MountainProjectBot
                             if (reply != oldResponseBody)
                             {
                                 if (!string.IsNullOrEmpty(reply))
+                                {
                                     await RedditHelper.EditComment(monitor.BotResponseComment, reply);
+                                    BotUtilities.WriteToConsoleWithColor($"Edited comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
+                                }
                                 else
                                 {
                                     await RedditHelper.DeleteComment(monitor.BotResponseComment);
                                     monitoredComments.Remove(monitor);
+                                    BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
                                 }
                             }
 
@@ -66,11 +71,15 @@ namespace MountainProjectBot
                             if (reply != oldResponseBody)
                             {
                                 if (!string.IsNullOrEmpty(reply))
+                                {
                                     await RedditHelper.EditComment(monitor.BotResponseComment, reply);
+                                    BotUtilities.WriteToConsoleWithColor($"Edited comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
+                                }
                                 else
                                 {
                                     await RedditHelper.DeleteComment(monitor.BotResponseComment);
                                     monitoredComments.Remove(monitor);
+                                    BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
                                 }
                             }
 
@@ -80,6 +89,7 @@ namespace MountainProjectBot
                         {
                             await RedditHelper.DeleteComment(monitor.BotResponseComment);
                             monitoredComments.Remove(monitor);
+                            BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
                         }
                     }
                 }
@@ -93,8 +103,12 @@ namespace MountainProjectBot
 
         public static async Task ReplyToApprovedPosts()
         {
-            postsPendingApproval.RemoveAll(p => (DateTime.UtcNow - p.Key.CreatedUTC).TotalMinutes > 15); //Remove posts that have "timed out"
+            int removed = postsPendingApproval.RemoveAll(p => (DateTime.UtcNow - p.Key.CreatedUTC).TotalMinutes > 15); //Remove posts that have "timed out"
+            if (removed > 0)
+                BotUtilities.WriteToConsoleWithColor($"\tRemoved {removed} pending auto-replies that got too old", ConsoleColor.Red);
+
             postsPendingApproval = await BotUtilities.RemoveWhereClimbingRouteBotHasReplied(postsPendingApproval);
+
             if (postsPendingApproval.Count == 0)
                 return;
 
@@ -109,7 +123,7 @@ namespace MountainProjectBot
                 if (!Debugger.IsAttached)
                 {
                     await RedditHelper.CommentOnPost(post.Key, reply);
-                    Console.WriteLine($"\n    Auto-replied to post {post.Key.Id}");
+                    BotUtilities.WriteToConsoleWithColor($"\n\tAuto-replied to post {post.Key.Id}", ConsoleColor.Green);
                 }
 
                 postsPendingApproval.RemoveAll(p => p.Key == post.Key);
@@ -122,11 +136,11 @@ namespace MountainProjectBot
             foreach (Subreddit subreddit in subreddits)
             {
                 List<Post> subredditPosts = await RedditHelper.GetPosts(subreddit, 10);
+                subredditPosts = BotUtilities.RemoveAlreadyRepliedTo(subredditPosts);
                 subredditPosts.RemoveAll(p => p.IsSelfPost);
                 subredditPosts.RemoveAll(p => (DateTime.UtcNow - p.CreatedUTC).TotalMinutes > 10); //Only check recent posts
                 //subredditPosts.RemoveAll(p => (DateTime.UtcNow - p.CreatedUTC).TotalMinutes < 3); //Wait till posts are 3 minutes old (gives poster time to add a comment with a MP link or for the ClimbingRouteBot to respond)
                 subredditPosts = BotUtilities.RemoveBlacklisted(subredditPosts, new[] { BlacklistLevel.NoPostReplies, BlacklistLevel.OnlyKeywordReplies, BlacklistLevel.Total }); //Remove posts from users who don't want the bot to automatically reply to them
-                subredditPosts = BotUtilities.RemoveAlreadyRepliedTo(subredditPosts);
                 recentPosts.AddRange(subredditPosts);
             }
 
@@ -146,6 +160,8 @@ namespace MountainProjectBot
                         //Until we are more confident with automatic results, we're going to request for approval for confidence values greater than 1 (less than 100%)
                         if (searchResult.Confidence > 1)
                         {
+                            BotUtilities.WriteToConsoleWithColor($"\tRequesting approval for post {post.Id}", ConsoleColor.Yellow);
+
                             string locationString = Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
                             BotUtilities.NotifyFoundPost(WebUtility.HtmlDecode(post.Title), post.Shortlink, searchResult.FilteredResult.Name, locationString,
                                                          (searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false), 
@@ -172,9 +188,9 @@ namespace MountainProjectBot
         public static async Task RespondToRequests(List<Comment> recentComments) //Respond to comments that specifically called the bot (!MountainProject)
         {
             List<Comment> botRequestComments = recentComments.Where(c => Regex.IsMatch(c.Body, BOTKEYWORDREGEX)).ToList();
+            botRequestComments = BotUtilities.RemoveAlreadyRepliedTo(botRequestComments);
             botRequestComments.RemoveAll(c => c.IsArchived);
             botRequestComments = BotUtilities.RemoveBlacklisted(botRequestComments, new[] { BlacklistLevel.Total }); //Don't reply to bots
-            botRequestComments = BotUtilities.RemoveAlreadyRepliedTo(botRequestComments);
 
             foreach (Comment comment in botRequestComments)
             {
@@ -187,7 +203,7 @@ namespace MountainProjectBot
                     if (!Debugger.IsAttached)
                     {
                         Comment botReplyComment = await RedditHelper.ReplyToComment(comment, reply);
-                        Console.WriteLine($"\tReplied to comment {comment.Id}");
+                        BotUtilities.WriteToConsoleWithColor($"\tReplied to comment {comment.Id}", ConsoleColor.Green);
                         monitoredComments.Add(new CommentMonitor() { ParentComment = comment, BotResponseComment = botReplyComment });
                     }
 
@@ -210,9 +226,9 @@ namespace MountainProjectBot
             foreach (Subreddit subreddit in subredditsAndRecentComments.Keys.ToList())
             {
                 List<Comment> filteredComments = subredditsAndRecentComments[subreddit].Where(c => c.Body.Contains("mountainproject.com")).ToList();
+                filteredComments = BotUtilities.RemoveAlreadyRepliedTo(filteredComments);
                 filteredComments.RemoveAll(c => c.IsArchived);
                 filteredComments = BotUtilities.RemoveBlacklisted(filteredComments, new[] { BlacklistLevel.OnlyKeywordReplies, BlacklistLevel.Total }); //Remove comments from users who don't want the bot to automatically reply to them
-                filteredComments = BotUtilities.RemoveAlreadyRepliedTo(filteredComments);
                 filteredComments = await BotUtilities.RemoveCommentsOnSelfPosts(subreddit, filteredComments); //Don't reply to self posts (aka text posts)
                 subredditsAndRecentComments[subreddit] = filteredComments;
             }
@@ -234,7 +250,7 @@ namespace MountainProjectBot
                     if (!Debugger.IsAttached)
                     {
                         Comment botReplyComment = await RedditHelper.ReplyToComment(comment, reply);
-                        Console.WriteLine($"\tReplied to comment {comment.Id}");
+                        BotUtilities.WriteToConsoleWithColor($"\tReplied to comment {comment.Id}", ConsoleColor.Green);
                         monitoredComments.Add(new CommentMonitor() { ParentComment = comment, BotResponseComment = botReplyComment });
                     }
 
