@@ -76,15 +76,15 @@ namespace MountainProjectBot
                     await BotFunctions.CheckMonitoredComments();
                     Console.WriteLine($"\tDone checking monitored comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
 
-                    Console.WriteLine("\tReplying to approved posts...");
-                    elapsed = stopwatch.ElapsedMilliseconds;
-                    await BotFunctions.ReplyToApprovedPosts();
-                    Console.WriteLine($"\tDone replying ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
-
                     Console.WriteLine("\tChecking posts for auto-reply...");
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await BotFunctions.CheckPostsForAutoReply(BotFunctions.RedditHelper.Subreddits);
                     Console.WriteLine($"\tDone with auto-reply ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+
+                    Console.WriteLine("\tReplying to approved posts...");
+                    elapsed = stopwatch.ElapsedMilliseconds;
+                    await BotFunctions.ReplyToApprovedPosts();
+                    Console.WriteLine($"\tDone replying ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
 
                     Console.WriteLine("\tGetting recent comments for each subreddit...");
                     elapsed = stopwatch.ElapsedMilliseconds;

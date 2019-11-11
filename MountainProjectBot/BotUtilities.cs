@@ -87,22 +87,6 @@ namespace MountainProjectBot
         }
         #endregion Init
 
-        public static async Task<List<KeyValuePair<Post, SearchResult>>> RemoveWhereClimbingRouteBotHasReplied(List<KeyValuePair<Post, SearchResult>> posts)
-        {
-            List<KeyValuePair<Post, SearchResult>> result = posts.ToList();
-            foreach (Post post in posts.Select(p => p.Key))
-            {
-                List<Comment> postComments = await post.GetCommentsAsync(100);
-                if (postComments.Any(c => c.AuthorName == "ClimbingRouteBot"))
-                {
-                    WriteToConsoleWithColor("Skipping reply because ClimbingRouteBot beat us to it", ConsoleColor.Red);
-                    result.RemoveAll(p => p.Key == post);
-                }
-            }
-
-            return result;
-        }
-
         public static async Task<List<Comment>> RemoveCommentsOnSelfPosts(Subreddit subreddit, List<Comment> comments)
         {
             List<Comment> result = new List<Comment>();

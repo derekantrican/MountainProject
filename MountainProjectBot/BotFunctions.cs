@@ -107,8 +107,6 @@ namespace MountainProjectBot
             if (removed > 0)
                 BotUtilities.WriteToConsoleWithColor($"\tRemoved {removed} pending auto-replies that got too old", ConsoleColor.Red);
 
-            postsPendingApproval = await BotUtilities.RemoveWhereClimbingRouteBotHasReplied(postsPendingApproval);
-
             if (postsPendingApproval.Count == 0)
                 return;
 
