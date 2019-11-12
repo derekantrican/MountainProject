@@ -113,6 +113,8 @@ namespace MountainProjectAPI
         #region Post Title Parsing
         public static SearchResult ParseRouteFromString(string inputString)
         {
+            Stopwatch stopwatch = Stopwatch.StartNew();
+
             SearchResult finalResult = new SearchResult(); //Todo: in the future support returning multiple routes (but only if there are multiple grades in the title? Maybe only if all of the routes' full names are in the title?)
             List<Tuple<Route, Area, string>> possibleResults = new List<Tuple<Route, Area, string>>();
 
@@ -270,9 +272,14 @@ namespace MountainProjectAPI
                 if (location == null)
                     location = ParentsInString(chosenRoute.Item1, chosenRoute.Item3, allowPartialParents: true).FirstOrDefault(p => p.ID != GetOuterParent(chosenRoute.Item1).ID) as Area;
                 
-                finalResult = new SearchResult(chosenRoute.Item1, location) { AllResults = allResults };
-                finalResult.Confidence = confidence;
+                finalResult = new SearchResult(chosenRoute.Item1, location)
+                { 
+                    AllResults = allResults,
+                    Confidence = confidence
+                };
             }
+
+            finalResult.TimeTaken = stopwatch.Elapsed;
 
             return finalResult;
         }
