@@ -322,6 +322,7 @@ namespace MountainProjectAPI
             }
 
             matchedParents = matchedParents.Distinct().ToList();
+            matchedParents = matchedParents.OrderByDescending(p => child.ParentIDs.IndexOf(p.ID)).ToList(); //Sort by closest to child
 
             return matchedParents;
         }
