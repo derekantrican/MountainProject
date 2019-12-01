@@ -18,7 +18,7 @@ namespace MountainProjectBot
         private const string CREDENTIALSNAME = "Credentials.txt";
         private static string requestForApprovalURL = "";
         private static string repliedToPath = "RepliedTo.txt";
-        private static string repliedToPostsPath = @"RepliedToPosts.txt";
+        private static string seenPostsPath = @"RepliedToPosts.txt";
         private static string blacklistedPath = "BlacklistedUsers.txt";
         private static string xmlPath = Path.Combine(@"..\..\MountainProjectDBBuilder\bin\", XMLNAME);
         private static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
@@ -36,7 +36,7 @@ namespace MountainProjectBot
                 repliedToPath = args.FirstOrDefault(p => p.Contains("repliedto=")).Split('=')[1];
 
             if (args.FirstOrDefault(p => p.Contains("repliedtoposts=")) != null)
-                repliedToPostsPath = args.FirstOrDefault(p => p.Contains("repliedtoposts=")).Split('=')[1];
+                seenPostsPath = args.FirstOrDefault(p => p.Contains("repliedtoposts=")).Split('=')[1];
 
             if (args.FirstOrDefault(p => p.Contains("blacklisted=")) != null)
                 blacklistedPath = args.FirstOrDefault(p => p.Contains("blacklisted=")).Split('=')[1];
@@ -173,10 +173,10 @@ namespace MountainProjectBot
 
         public static void LogPostBeenSeen(Post post)
         {
-            if (!File.Exists(repliedToPostsPath))
-                File.Create(repliedToPostsPath).Close();
+            if (!File.Exists(seenPostsPath))
+                File.Create(seenPostsPath).Close();
 
-            File.AppendAllLines(repliedToPostsPath, new string[] { post.Id });
+            File.AppendAllLines(seenPostsPath, new string[] { post.Id });
         }
 
         public static List<Comment> RemoveAlreadyRepliedTo(List<Comment> comments)
@@ -190,12 +190,12 @@ namespace MountainProjectBot
             return comments;
         }
 
-        public static List<Post> RemoveAlreadyRepliedTo(List<Post> posts)
+        public static List<Post> RemoveAlreadySeenPosts(List<Post> posts)
         {
-            if (!File.Exists(repliedToPostsPath))
-                File.Create(repliedToPostsPath).Close();
+            if (!File.Exists(seenPostsPath))
+                File.Create(seenPostsPath).Close();
 
-            string text = File.ReadAllText(repliedToPostsPath);
+            string text = File.ReadAllText(seenPostsPath);
             posts.RemoveAll(p => text.Contains(p.Id));
 
             return posts;

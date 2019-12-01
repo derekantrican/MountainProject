@@ -134,11 +134,27 @@ namespace MountainProjectBot
             foreach (Subreddit subreddit in subreddits)
             {
                 List<Post> subredditPosts = await RedditHelper.GetPosts(subreddit, 10);
-                subredditPosts = BotUtilities.RemoveAlreadyRepliedTo(subredditPosts);
-                subredditPosts.RemoveAll(p => p.IsSelfPost);
-                subredditPosts.RemoveAll(p => (DateTime.UtcNow - p.CreatedUTC).TotalMinutes > 10); //Only check recent posts
-                //subredditPosts.RemoveAll(p => (DateTime.UtcNow - p.CreatedUTC).TotalMinutes < 3); //Wait till posts are 3 minutes old (gives poster time to add a comment with a MP link or for the ClimbingRouteBot to respond)
+                subredditPosts = BotUtilities.RemoveAlreadySeenPosts(subredditPosts);
                 subredditPosts = BotUtilities.RemoveBlacklisted(subredditPosts, new[] { BlacklistLevel.NoPostReplies, BlacklistLevel.OnlyKeywordReplies, BlacklistLevel.Total }); //Remove posts from users who don't want the bot to automatically reply to them
+
+                foreach (Post post in subredditPosts.ToList())
+                {
+                    if (post.IsSelfPost)
+                    {
+                        subredditPosts.Remove(post);
+                        BotUtilities.WriteToConsoleWithColor($"\tSkipping {post.Id} (self-post)", ConsoleColor.Red);
+                        BotUtilities.LogPostBeenSeen(post);
+                    }
+
+                    double ageInMin = (DateTime.UtcNow - post.CreatedUTC).TotalMinutes;
+                    if (ageInMin > 10)
+                    {
+                        subredditPosts.Remove(post);
+                        BotUtilities.WriteToConsoleWithColor($"\tSkipping {post.Id} (too old: {Math.Round(ageInMin,2)} min)", ConsoleColor.Red);
+                        BotUtilities.LogPostBeenSeen(post);
+                    }
+                }
+
                 recentPosts.AddRange(subredditPosts);
             }
 
