@@ -162,9 +162,9 @@ namespace UnitTests
         [DataRow(@"V2-\+", GradeSystem.Hueco, "V2-/+")]
         [DataRow("V2+/-", GradeSystem.Hueco, "V2-/+")]
         [DataRow(@"V2+\-", GradeSystem.Hueco, "V2-/+")]
+        [DataRow(@"5.11c/6c+", GradeSystem.YDS, "5.11c")] //Match YDS grade out of mixed grades
         public void TestRouteGradeParse(string inputGrade, GradeSystem expectedSystem, string expectedValue)
         {
-            Grade expectedGrade = new Grade(expectedSystem, expectedValue);
             Grade parsedGrade = Grade.ParseString(inputGrade)[0]; //Todo: expand test for multiple grades found
 
             Assert.AreEqual(expectedSystem, parsedGrade.System);

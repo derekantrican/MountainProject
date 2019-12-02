@@ -65,7 +65,8 @@ namespace MountainProjectAPI
             List<Grade> result = new List<Grade>();
 
             //FIRST, attempt to match grade ranges with "5." or "V" on both ends of range (eg 5.10-5.11 or V2-V3)
-            Regex ratingRegex = new Regex(@"5\.\d+[a-dA-D]?[\/\\\-]5\.\d+[a-dA-D]?|[vV]\d+[\/\\\-][vV]\d+");
+            string regexString = @"5\.\d+[a-dA-D]?[\/\\\-]5\.\d+[a-dA-D]?|[vV]\d+[\/\\\-][vV]\d+";
+            Regex ratingRegex = new Regex(regexString);
             foreach (Match possibleGradeRange in ratingRegex.Matches(input))
             {
                 string matchedGradeRange = possibleGradeRange.Value;
@@ -99,7 +100,12 @@ namespace MountainProjectAPI
             }
 
             //SECOND, attempt to match other grade ranges (eg 5.10-11, 5.11a/b, V7-/+, etc)
-            ratingRegex = new Regex(@"5\.\d+[a-dA-D]?[\/\\\-](\d+|[a-dA-D])|5\.\d+(-[\/\\]\+|\+[\/\\]-)|[vV]\d+[\/\\\-]\d+|[vV]\d+(-[\/\\]\+|\+[\/\\]-)");
+            regexString = @"5\.\d+[\/\\\-]\d+|" +
+                          @"5\.\d+[a-dA-D][\/\\\-][a-dA-D]|" +
+                          @"5\.\d+(-[\/\\]\+|\+[\/\\]-)|" + 
+                          @"[vV]\d+[\/\\\-]\d+|" +
+                          @"[vV]\d+(-[\/\\]\+|\+[\/\\]-)";
+            ratingRegex = new Regex(regexString);
             foreach (Match possibleGradeRange in ratingRegex.Matches(input))
             {
                 string matchedGradeRange = possibleGradeRange.Value;
@@ -133,7 +139,8 @@ namespace MountainProjectAPI
             }
 
             //THIRD, attempt to match remaining grades with a "5." or "V" prefix
-            ratingRegex = new Regex(@"5\.\d+[+-]?[a-dA-D]?|[vV]\d+[+-]?");
+            regexString = @"5\.\d+[+-]?[a-dA-D]?|[vV]\d+[+-]?";
+            ratingRegex = new Regex(regexString);
             foreach (Match possibleGrade in ratingRegex.Matches(input))
             {
                 string matchedGrade = possibleGrade.Value;
@@ -155,11 +162,11 @@ namespace MountainProjectAPI
 
                 //FOURTH, attempt to match YDS grades with no prefix, but with a subgrade (eg 10b or 9+)
                 //For numbers below 10, if it is followed by a letter grade we won't match it (likely a French grade)
-                string regexString = @"(?<!\\|\/|\d)\d+[\/\\\-]\d+(?!\\|\/|\d)|" + //First format option: 5/7 (where there isn't a date - other slashes or a partial date)
-                                     @"\d+[a-dA-D][\/\\\-][a-dA-D]|" +             //Second format option: 6d/7a
-                                     @"\d+(-[\/\\]\+|\+[\/\\]-)|" +                //Third format option: variations on 6-/+ or 6+/-
-                                     @"\d{2,}[a-dA-D]|" +                          //Fourth format option: 10a (but not single digits, as YDS uses -/+ below 10 but French uses a-d below 10)
-                                     @"\d+[+-]";                                   //Fifth format option: 9- or 9+
+                regexString = @"(?<!\\|\/|\d)\d+[\/\\\-]\d+(?!\\|\/|\d)|" + //First format option: 5/7 (where there isn't a date - other slashes or a partial date)
+                              @"\d+[a-dA-D][\/\\\-][a-dA-D]|" +             //Second format option: 6d/7a
+                              @"\d+(-[\/\\]\+|\+[\/\\]-)|" +                //Third format option: variations on 6-/+ or 6+/-
+                              @"\d{2,}[a-dA-D]|" +                          //Fourth format option: 10a (but not single digits, as YDS uses -/+ below 10 but French uses a-d below 10)
+                              @"\d+[+-]";                                   //Fifth format option: 9- or 9+
 
                 ratingRegex = new Regex(regexString);
                 foreach (Match possibleGrade in ratingRegex.Matches(input))
