@@ -245,24 +245,18 @@ namespace MountainProjectBot
 
         public static string GetBotLinks(VotableThing relatedThing = null)
         {
-            return GetBotLinks(relatedThing.Permalink);
-        }
-
-        private static string GetBotLinks(Uri relatedPermalink = null)
-        {
             List<string> botLinks = new List<string>();
 
-            if (relatedPermalink != null)
+            if (relatedThing != null)
             {
-                string commentLink = WebUtility.HtmlEncode(RedditHelper.GetFullLink(relatedPermalink));
-                botLinks.Add(Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + commentLink));
+                string encodedLink = WebUtility.HtmlEncode(RedditHelper.GetFullLink(relatedThing.Permalink));
+                botLinks.Add(Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + encodedLink));
             }
             else
                 botLinks.Add(Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url"));
 
             botLinks.Add(Markdown.Link("FAQ", "https://github.com/derekantrican/MountainProject/wiki/Bot-FAQ"));
             botLinks.Add(Markdown.Link("Syntax", "https://github.com/derekantrican/MountainProject/wiki/Bot-Syntax"));
-            botLinks.Add(Markdown.Link("Grade Conversion", "https://www.mountainproject.com/international-climbing-grades"));
             botLinks.Add(Markdown.Link("GitHub", "https://github.com/derekantrican/MountainProject"));
             botLinks.Add(Markdown.Link("Donate", "https://www.paypal.me/derekantrican"));
 
