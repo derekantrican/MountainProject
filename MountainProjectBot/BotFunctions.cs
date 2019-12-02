@@ -30,6 +30,15 @@ namespace MountainProjectBot
 
                 try
                 {
+                    if (monitor.BotResponseComment.Score <= -5)
+                    {
+                        await RedditHelper.DeleteComment(monitor.BotResponseComment);
+                        monitoredComments.Remove(monitor);
+                        BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id} (score too low)", ConsoleColor.Green);
+
+                        continue;
+                    }
+
                     if (monitor.Parent is Comment ParentComment)
                     {
                         string oldParentBody = ParentComment.Body;
@@ -41,7 +50,7 @@ namespace MountainProjectBot
                         {
                             await RedditHelper.DeleteComment(monitor.BotResponseComment);
                             monitoredComments.Remove(monitor);
-                            BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
+                            BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id} (parent deleted)", ConsoleColor.Green);
                         }
                         else if (updatedParent.Body != oldParentBody) //If the parent comment's request has changed, edit the bot's response
                         {
@@ -54,13 +63,13 @@ namespace MountainProjectBot
                                     if (!string.IsNullOrEmpty(reply))
                                     {
                                         await RedditHelper.EditComment(monitor.BotResponseComment, reply);
-                                        BotUtilities.WriteToConsoleWithColor($"Edited comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
+                                        BotUtilities.WriteToConsoleWithColor($"Edited comment {monitor.BotResponseComment.Id} (parent edited)", ConsoleColor.Green);
                                     }
                                     else
                                     {
                                         await RedditHelper.DeleteComment(monitor.BotResponseComment);
                                         monitoredComments.Remove(monitor);
-                                        BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
+                                        BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id} (parent doesn't require a response)", ConsoleColor.Green);
                                     }
                                 }
 
@@ -75,13 +84,13 @@ namespace MountainProjectBot
                                     if (!string.IsNullOrEmpty(reply))
                                     {
                                         await RedditHelper.EditComment(monitor.BotResponseComment, reply);
-                                        BotUtilities.WriteToConsoleWithColor($"Edited comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
+                                        BotUtilities.WriteToConsoleWithColor($"Edited comment {monitor.BotResponseComment.Id} (parent edited)", ConsoleColor.Green);
                                     }
                                     else
                                     {
                                         await RedditHelper.DeleteComment(monitor.BotResponseComment);
                                         monitoredComments.Remove(monitor);
-                                        BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
+                                        BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id} (parent doesn't require a response)", ConsoleColor.Green);
                                     }
                                 }
 
@@ -91,7 +100,7 @@ namespace MountainProjectBot
                             {
                                 await RedditHelper.DeleteComment(monitor.BotResponseComment);
                                 monitoredComments.Remove(monitor);
-                                BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
+                                BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id} (parent doesn't require a response)", ConsoleColor.Green);
                             }
                         }
                     }
