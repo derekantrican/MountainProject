@@ -30,7 +30,8 @@ namespace MountainProjectBot
 
                 try
                 {
-                    if (monitor.BotResponseComment.Score <= -5)
+                    Comment botResponseComment = await RedditHelper.GetComment(monitor.BotResponseComment.Permalink);
+                    if (botResponseComment.Score <= -5)
                     {
                         await RedditHelper.DeleteComment(monitor.BotResponseComment);
                         monitoredComments.Remove(monitor);
@@ -104,10 +105,6 @@ namespace MountainProjectBot
                             }
                         }
                     }
-                    else if (monitor.Parent is Post parentPost)
-                    {
-
-                    }
                 }
                 catch (Exception e)
                 {
@@ -136,7 +133,8 @@ namespace MountainProjectBot
 
                 if (!Debugger.IsAttached)
                 {
-                    await RedditHelper.CommentOnPost(post.Key, reply);
+                    Comment botReplyComment = await RedditHelper.CommentOnPost(post.Key, reply);
+                    monitoredComments.Add(new CommentMonitor() { Parent = post.Key, BotResponseComment = botReplyComment, ExpirationMinutes = 24 * 60 });
                     BotUtilities.WriteToConsoleWithColor($"\n\tAuto-replied to post {post.Key.Id}", ConsoleColor.Green);
                 }
 
