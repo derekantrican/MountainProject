@@ -22,7 +22,7 @@ namespace MountainProjectBot
 
         public static async Task CheckMonitoredComments()
         {
-            monitoredComments.RemoveAll(c => (DateTime.Now - c.Created).TotalHours > 1); //Remove any old monitors
+            monitoredComments.RemoveAll(c => (DateTime.Now - c.Created).TotalMinutes > c.ExpirationMinutes); //Remove any old monitors
 
             for (int i = monitoredComments.Count - 1; i >= 0; i--)
             {
