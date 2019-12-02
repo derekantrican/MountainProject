@@ -163,7 +163,13 @@ namespace MountainProjectBot
                                                              g.System == GradeSystem.UIAA ||
                                                              g.System == GradeSystem.Hueco ||
                                                              g.System == GradeSystem.Fontainebleau).ToList();
-                return string.Join(" | ", grades.Select(g => { return g.ToString(false); }));
+
+                if (grades.Count > 0)
+                    return string.Join(" | ", grades.Select(g => { return g.ToString(false); }));
+                else if (route.Grades.Count == 1)
+                    return route.Grades.First().ToString(false);
+                else
+                    return "";
             }
         }
 
