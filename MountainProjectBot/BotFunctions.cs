@@ -22,7 +22,7 @@ namespace MountainProjectBot
 
         public static async Task CheckMonitoredComments()
         {
-            monitoredComments.RemoveAll(c => (DateTime.Now - c.Created).TotalMinutes > c.ExpirationMinutes); //Remove any old monitors
+            monitoredComments.RemoveAll(c => (DateTime.Now - c.Created).TotalHours > c.ExpirationHours); //Remove any old monitors
 
             for (int i = monitoredComments.Count - 1; i >= 0; i--)
             {
@@ -134,7 +134,7 @@ namespace MountainProjectBot
                 if (!Debugger.IsAttached)
                 {
                     Comment botReplyComment = await RedditHelper.CommentOnPost(post.Key, reply);
-                    monitoredComments.Add(new CommentMonitor() { Parent = post.Key, BotResponseComment = botReplyComment, ExpirationMinutes = 24 * 60 });
+                    monitoredComments.Add(new CommentMonitor() { Parent = post.Key, BotResponseComment = botReplyComment });
                     BotUtilities.WriteToConsoleWithColor($"\n\tAuto-replied to post {post.Key.Id}", ConsoleColor.Green);
                 }
 
