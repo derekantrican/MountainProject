@@ -13,7 +13,7 @@ namespace MountainProjectBot
 
         public DateTime Created { get; set; }
         public int ExpirationMinutes { get; set; }
-        public Comment ParentComment { get; set; }
+        public VotableThing Parent { get; set; }
         public Comment BotResponseComment { get; set; }
     }
 }

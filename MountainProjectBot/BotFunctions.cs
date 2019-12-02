@@ -28,74 +28,81 @@ namespace MountainProjectBot
             {
                 CommentMonitor monitor = monitoredComments[i];
 
-                string oldParentBody = monitor.ParentComment.Body;
-                string oldResponseBody = monitor.BotResponseComment.Body;
-
                 try
                 {
-                    Comment updatedParent = await RedditHelper.GetComment(monitor.ParentComment.Permalink);
-                    if (updatedParent.Body == "[deleted]" ||
-                        (updatedParent.IsRemoved.HasValue && updatedParent.IsRemoved.Value)) //If comment is deleted or removed, delete the bot's response
+                    if (monitor.Parent is Comment ParentComment)
                     {
-                        await RedditHelper.DeleteComment(monitor.BotResponseComment);
-                        monitoredComments.Remove(monitor);
-                        BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
-                    }
-                    else if (updatedParent.Body != oldParentBody) //If the parent comment's request has changed, edit the bot's response
-                    {
-                        if (Regex.IsMatch(updatedParent.Body, BOTKEYWORDREGEX))
-                        {
-                            string reply = BotReply.GetReplyForRequest(updatedParent);
+                        string oldParentBody = ParentComment.Body;
+                        string oldResponseBody = monitor.BotResponseComment.Body;
 
-                            if (reply != oldResponseBody)
-                            {
-                                if (!string.IsNullOrEmpty(reply))
-                                {
-                                    await RedditHelper.EditComment(monitor.BotResponseComment, reply);
-                                    BotUtilities.WriteToConsoleWithColor($"Edited comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
-                                }
-                                else
-                                {
-                                    await RedditHelper.DeleteComment(monitor.BotResponseComment);
-                                    monitoredComments.Remove(monitor);
-                                    BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
-                                }
-                            }
-
-                            monitor.ParentComment = updatedParent;
-                        }
-                        else if (updatedParent.Body.Contains("mountainproject.com")) //If the parent comment's MP url has changed, edit the bot's response
-                        {
-                            string reply = BotReply.GetReplyForMPLinks(updatedParent);
-
-                            if (reply != oldResponseBody)
-                            {
-                                if (!string.IsNullOrEmpty(reply))
-                                {
-                                    await RedditHelper.EditComment(monitor.BotResponseComment, reply);
-                                    BotUtilities.WriteToConsoleWithColor($"Edited comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
-                                }
-                                else
-                                {
-                                    await RedditHelper.DeleteComment(monitor.BotResponseComment);
-                                    monitoredComments.Remove(monitor);
-                                    BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
-                                }
-                            }
-
-                            monitor.ParentComment = updatedParent;
-                        }
-                        else  //If the parent comment is no longer a request or contains a MP url, delete the bot's response
+                        Comment updatedParent = await RedditHelper.GetComment(ParentComment.Permalink);
+                        if (updatedParent.Body == "[deleted]" ||
+                            (updatedParent.IsRemoved.HasValue && updatedParent.IsRemoved.Value)) //If comment is deleted or removed, delete the bot's response
                         {
                             await RedditHelper.DeleteComment(monitor.BotResponseComment);
                             monitoredComments.Remove(monitor);
                             BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
                         }
+                        else if (updatedParent.Body != oldParentBody) //If the parent comment's request has changed, edit the bot's response
+                        {
+                            if (Regex.IsMatch(updatedParent.Body, BOTKEYWORDREGEX))
+                            {
+                                string reply = BotReply.GetReplyForRequest(updatedParent);
+
+                                if (reply != oldResponseBody)
+                                {
+                                    if (!string.IsNullOrEmpty(reply))
+                                    {
+                                        await RedditHelper.EditComment(monitor.BotResponseComment, reply);
+                                        BotUtilities.WriteToConsoleWithColor($"Edited comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
+                                    }
+                                    else
+                                    {
+                                        await RedditHelper.DeleteComment(monitor.BotResponseComment);
+                                        monitoredComments.Remove(monitor);
+                                        BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
+                                    }
+                                }
+
+                                monitor.Parent = updatedParent;
+                            }
+                            else if (updatedParent.Body.Contains("mountainproject.com")) //If the parent comment's MP url has changed, edit the bot's response
+                            {
+                                string reply = BotReply.GetReplyForMPLinks(updatedParent);
+
+                                if (reply != oldResponseBody)
+                                {
+                                    if (!string.IsNullOrEmpty(reply))
+                                    {
+                                        await RedditHelper.EditComment(monitor.BotResponseComment, reply);
+                                        BotUtilities.WriteToConsoleWithColor($"Edited comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
+                                    }
+                                    else
+                                    {
+                                        await RedditHelper.DeleteComment(monitor.BotResponseComment);
+                                        monitoredComments.Remove(monitor);
+                                        BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
+                                    }
+                                }
+
+                                monitor.Parent = updatedParent;
+                            }
+                            else  //If the parent comment is no longer a request or contains a MP url, delete the bot's response
+                            {
+                                await RedditHelper.DeleteComment(monitor.BotResponseComment);
+                                monitoredComments.Remove(monitor);
+                                BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id}", ConsoleColor.Green);
+                            }
+                        }
+                    }
+                    else if (monitor.Parent is Post parentPost)
+                    {
+
                     }
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"\tException occured when checking monitor for comment {RedditHelper.GetFullLink(monitor.ParentComment.Permalink)}");
+                    Console.WriteLine($"\tException occured when checking monitor for comment {RedditHelper.GetFullLink(monitor.Parent.Permalink)}");
                     Console.WriteLine($"\t{e.Message}\n{e.StackTrace}");
                 }
             }
@@ -218,7 +225,7 @@ namespace MountainProjectBot
                     {
                         Comment botReplyComment = await RedditHelper.ReplyToComment(comment, reply);
                         BotUtilities.WriteToConsoleWithColor($"\tReplied to comment {comment.Id}", ConsoleColor.Green);
-                        monitoredComments.Add(new CommentMonitor() { ParentComment = comment, BotResponseComment = botReplyComment });
+                        monitoredComments.Add(new CommentMonitor() { Parent = comment, BotResponseComment = botReplyComment });
                     }
 
                     BotUtilities.LogCommentBeenRepliedTo(comment);
@@ -265,7 +272,7 @@ namespace MountainProjectBot
                     {
                         Comment botReplyComment = await RedditHelper.ReplyToComment(comment, reply);
                         BotUtilities.WriteToConsoleWithColor($"\tReplied to comment {comment.Id}", ConsoleColor.Green);
-                        monitoredComments.Add(new CommentMonitor() { ParentComment = comment, BotResponseComment = botReplyComment });
+                        monitoredComments.Add(new CommentMonitor() { Parent = comment, BotResponseComment = botReplyComment });
                     }
 
                     BotUtilities.LogCommentBeenRepliedTo(comment);
