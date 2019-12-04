@@ -238,10 +238,10 @@ namespace MountainProjectAPI
                         {
                             //I think there's an issue with the MountainProject website where Hueco grades are listed as YDS (eg /route/111259770/three-pipe-problem).
                             //I've reported this to them (I think) but for now I'm "coding around it".
-                            if (gradeValue.Contains("5."))
-                                grades.Add(new Grade(GradeSystem.YDS, gradeValue, false));
-                            else if (gradeValue.Contains("V"))
+                            if (gradeValue.Contains("V"))
                                 grades.Add(new Grade(GradeSystem.Hueco, gradeValue, false));
+                            else
+                                grades.Add(new Grade(GradeSystem.YDS, gradeValue, false));
                         }
                         break;
                     case "rateFrench":
