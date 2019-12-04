@@ -220,10 +220,10 @@ namespace MountainProjectAPI
         public static List<Grade> ParseRouteGrades(IHtmlDocument doc)
         {
             List<Grade> grades = new List<Grade>();
-            foreach (IElement spanElement in doc.GetElementsByTagName("span"))
+            IElement gradesSection = doc.GetElementsByTagName("h2").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "inline-block mr-2");
+            foreach (IElement spanElement in gradesSection.GetElementsByTagName("span"))
             {
-                if (spanElement.Attributes["class"] == null ||
-                    string.IsNullOrEmpty(spanElement.GetElementsByTagName("a").FirstOrDefault()?.TextContent))
+                if (spanElement.Attributes["class"] == null || string.IsNullOrEmpty(spanElement.GetElementsByTagName("a").FirstOrDefault()?.TextContent))
                     continue;
 
                 string gradeValue = HttpUtility.HtmlDecode(spanElement.TextContent.Replace(spanElement.GetElementsByTagName("a").FirstOrDefault().TextContent, "")).Trim();
@@ -233,7 +233,7 @@ namespace MountainProjectAPI
                     case "rateHueco":
                         List<Grade> parsedGrades = Grade.ParseString(gradeValue);
                         if (parsedGrades.Count > 0)
-                            grades.Add(Grade.ParseString(gradeValue)[0]);
+                            grades.AddRange(parsedGrades);
                         else
                         {
                             //I think there's an issue with the MountainProject website where Hueco grades are listed as YDS (eg /route/111259770/three-pipe-problem).
@@ -265,10 +265,15 @@ namespace MountainProjectAPI
                 }
             }
 
-            if (grades.Count == 0)
+            string gradeInnerText = Regex.Replace(gradesSection.InnerHtml, "<.*>", "", RegexOptions.Singleline).Trim();
+            if (!string.IsNullOrWhiteSpace(gradeInnerText))
             {
-                IElement gradesSection = doc.GetElementsByTagName("h2").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "inline-block mr-2");
-                grades.Add(new Grade(GradeSystem.Unlabled, HttpUtility.HtmlDecode(gradesSection.TextContent)));
+                if (gradeInnerText.StartsWith("AI") || gradeInnerText.StartsWith("WI") || gradeInnerText.StartsWith("M"))
+                    grades.Add(new Grade(GradeSystem.Ice, HttpUtility.HtmlDecode(gradeInnerText)));
+                else if (gradeInnerText.StartsWith("A") || gradeInnerText.StartsWith("C"))
+                    grades.Add(new Grade(GradeSystem.Aid, HttpUtility.HtmlDecode(gradeInnerText)));
+                else
+                    grades.Add(new Grade(GradeSystem.Unlabled, HttpUtility.HtmlDecode(gradeInnerText)));
             }
 
             return grades;

@@ -32,6 +32,8 @@ namespace MountainProjectAPI
             Britsh,
             Hueco,
             Fontainebleau,
+            Ice,
+            Aid,
             Unlabled
         }
 

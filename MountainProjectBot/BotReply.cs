@@ -158,14 +158,34 @@ namespace MountainProjectBot
                 return route.GetRouteGrade(parameters.GradeSystem).ToString();
             else
             {
-                List<Grade> grades = route.Grades.Where(g => g.System == GradeSystem.YDS ||
-                                                             g.System == GradeSystem.French ||
-                                                             g.System == GradeSystem.UIAA ||
-                                                             g.System == GradeSystem.Hueco ||
-                                                             g.System == GradeSystem.Fontainebleau).ToList();
+                List<Grade> grades = new List<Grade>();
+
+                //Add "American" grades
+                grades.AddRange(route.Grades.Where(g => g.System == GradeSystem.YDS || g.System == GradeSystem.Hueco));
+
+                //Add ice grade (if necessary)
+                Grade iceGrade = route.Grades.Find(g => g.System == GradeSystem.Ice);
+                if ((route.Types.Contains(Route.RouteType.Ice) || route.Types.Contains(Route.RouteType.Snow) || route.Types.Contains(Route.RouteType.Alpine)) &&
+                    iceGrade != null)
+                    grades.Add(iceGrade);
+
+                //Add international grades
+                grades.AddRange(route.Grades.Where(g => g.System == GradeSystem.French || g.System == GradeSystem.UIAA || g.System == GradeSystem.Fontainebleau));
 
                 if (grades.Count > 0)
-                    return string.Join(" | ", grades.Select(g => { return g.ToString(false); }));
+                {
+                    //Convert grades to strings, but "inject" Aid grade if it exists
+                    Grade aidGrade = route.Grades.Find(g => g.System == GradeSystem.Aid);
+                    List<string> gradeStrings = grades.Select(g => 
+                    {
+                        if (g.System == GradeSystem.YDS && aidGrade != null)
+                            return $"{g.ToString(false)} ({aidGrade.ToString(false)})";
+                        else
+                            return g.ToString(false); 
+                    }).ToList();
+
+                    return string.Join(" | ", gradeStrings);
+                }
                 else if (route.Grades.Count == 1)
                     return route.Grades.First().ToString(false);
                 else
