@@ -71,35 +71,35 @@ namespace MountainProjectBot
                 {
                     BotFunctions.RedditHelper.Actions = 0; //Reset number of actions
 
-                    Console.WriteLine("\tChecking monitored comments...");
+                    BotUtilities.WriteToConsoleWithColor("\tChecking monitored comments...", ConsoleColor.Blue);
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await BotFunctions.CheckMonitoredComments();
-                    Console.WriteLine($"\tDone checking monitored comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+                    BotUtilities.WriteToConsoleWithColor($"\tDone checking monitored comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
 
-                    Console.WriteLine("\tChecking posts for auto-reply...");
+                    BotUtilities.WriteToConsoleWithColor("\tChecking posts for auto-reply...", ConsoleColor.Blue);
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await BotFunctions.CheckPostsForAutoReply(BotFunctions.RedditHelper.Subreddits);
-                    Console.WriteLine($"\tDone with auto-reply ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+                    BotUtilities.WriteToConsoleWithColor($"\tDone with auto-reply ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
 
-                    Console.WriteLine("\tReplying to approved posts...");
+                    BotUtilities.WriteToConsoleWithColor("\tReplying to approved posts...", ConsoleColor.Blue);
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await BotFunctions.ReplyToApprovedPosts();
-                    Console.WriteLine($"\tDone replying ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+                    BotUtilities.WriteToConsoleWithColor($"\tDone replying ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
 
-                    Console.WriteLine("\tGetting recent comments for each subreddit...");
+                    BotUtilities.WriteToConsoleWithColor("\tGetting recent comments for each subreddit...", ConsoleColor.Blue);
                     elapsed = stopwatch.ElapsedMilliseconds;
                     Dictionary<Subreddit, List<Comment>> subredditsAndRecentComments = await BotFunctions.RedditHelper.GetRecentComments();
-                    Console.WriteLine($"\tDone getting recent comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+                    BotUtilities.WriteToConsoleWithColor($"\tDone getting recent comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
 
-                    Console.WriteLine("\tChecking for requests (comments with !MountainProject)...");
+                    BotUtilities.WriteToConsoleWithColor("\tChecking for requests (comments with !MountainProject)...", ConsoleColor.Blue);
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await BotFunctions.RespondToRequests(subredditsAndRecentComments.SelectMany(p => p.Value).ToList());
-                    Console.WriteLine($"\tDone with requests ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+                    BotUtilities.WriteToConsoleWithColor($"\tDone with requests ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
 
-                    Console.WriteLine("\tChecking for MP links...");
+                    BotUtilities.WriteToConsoleWithColor("\tChecking for MP links...", ConsoleColor.Blue);
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await BotFunctions.RespondToMPUrls(subredditsAndRecentComments);
-                    Console.WriteLine($"\tDone with MP links ({stopwatch.ElapsedMilliseconds - elapsed} ms)");
+                    BotUtilities.WriteToConsoleWithColor($"\tDone with MP links ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
                 }
                 catch (Exception e)
                 {
