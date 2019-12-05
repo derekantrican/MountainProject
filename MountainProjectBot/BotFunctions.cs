@@ -31,7 +31,7 @@ namespace MountainProjectBot
                 try
                 {
                     Comment botResponseComment = await RedditHelper.GetComment(monitor.BotResponseComment.Permalink);
-                    if (botResponseComment.Score <= -5)
+                    if (botResponseComment.Score <= -3)
                     {
                         await RedditHelper.DeleteComment(monitor.BotResponseComment);
                         monitoredComments.Remove(monitor);
