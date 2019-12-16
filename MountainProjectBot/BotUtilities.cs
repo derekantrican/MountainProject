@@ -222,7 +222,7 @@ namespace MountainProjectBot
             catch { } //Discard any errors
         }
 
-        public static void NotifyFoundPost(string postTitle, string postUrl, string mpResultTitle, string mpResultLoc, string mpResultGrade, string mpResultUrl, string mpResultID)
+        public static void NotifyFoundPost(string postTitle, string postUrl, string mpResultTitle, string mpResultLoc, string mpResultGrade, string mpResultUrl, string mpResultID, bool alreadyApproved = false)
         {
             if (string.IsNullOrEmpty(requestForApprovalURL))
                 return;
@@ -237,6 +237,9 @@ namespace MountainProjectBot
                 "mpResultURL=" + Uri.EscapeDataString(mpResultUrl),
                 "mpResultID=" + Uri.EscapeDataString(mpResultID)
             };
+
+            if (alreadyApproved)
+                parameters.Add("alreadyApproved=true");
 
             string postData = string.Join("&", parameters);
             byte[] data = Encoding.ASCII.GetBytes(postData);

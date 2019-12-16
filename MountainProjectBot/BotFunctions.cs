@@ -187,14 +187,15 @@ namespace MountainProjectBot
 
                         //Until we are more confident with automatic results, we're going to request for approval for confidence values greater than 1 (less than 100%)
                         if (searchResult.Confidence > 1)
-                        {
                             BotUtilities.WriteToConsoleWithColor($"\tRequesting approval for post {post.Id}", ConsoleColor.Yellow);
 
-                            string locationString = Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
-                            BotUtilities.NotifyFoundPost(WebUtility.HtmlDecode(post.Title), post.Shortlink, searchResult.FilteredResult.Name, locationString,
-                                                         (searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false), 
-                                                         searchResult.FilteredResult.URL, searchResult.FilteredResult.ID);
-                        }
+                        string locationString = Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
+
+                        //We notify for all found posts, but the server will only request approval when searchResult.Confidence != 1
+                        BotUtilities.NotifyFoundPost(WebUtility.HtmlDecode(post.Title), post.Shortlink, searchResult.FilteredResult.Name, locationString,
+                                                     (searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false), 
+                                                     searchResult.FilteredResult.URL, searchResult.FilteredResult.ID, 
+                                                     searchResult.Confidence == 1);
                     }
                     else
                         Console.WriteLine("\tNothing found");
