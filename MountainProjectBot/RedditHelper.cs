@@ -119,6 +119,11 @@ namespace MountainProjectBot
             return await redditService.GetPostAsync(new Uri(GetFullLink(postLink)));
         }
 
+        public async Task<List<PrivateMessage>> GetMessages()
+        {
+            return await redditService.User.GetPrivateMessages().ToList();
+        }
+
         public static string GetFullLink(Uri relativeLink)
         {
             return GetFullLink(relativeLink.ToString());
