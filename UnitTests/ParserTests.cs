@@ -154,7 +154,7 @@ namespace UnitTests
         [DataTestMethod]
         [DataRow("/route/111859673/side-dish", new[] { RouteType.Sport })]
         [DataRow("/route/109063052/geflugelfrikadelle", new[] { RouteType.Trad, RouteType.Aid })]
-        [DataRow("/route/116181996/13-above-the-night", new[] { RouteType.Trad, RouteType.Mixed, RouteType.Ice, RouteType.Alpine })] //Many Types
+        [DataRow("/route/116650912/dark-crystal", new[] { RouteType.Trad, RouteType.Mixed, RouteType.Ice })] //Many Types
         [DataRow("/route/110425910/birds-of-a-feather", new[] { RouteType.Sport, RouteType.TopRope })] //Top Rope
         public void TestRouteTypeParse(string url, RouteType[] expectedTypes)
         {
@@ -169,7 +169,7 @@ namespace UnitTests
         [DataTestMethod]
         [DataRow("/route/111859673/side-dish", GradeSystem.YDS, "5.10c")]
         [DataRow("/route/109063052/geflugelfrikadelle", GradeSystem.YDS, "5.12b/c")] //Has a slash
-        [DataRow("/route/116181996/13-above-the-night", GradeSystem.Ice, "WI4 M5")] //No YDS/Heuco present
+        [DataRow("/route/105890633/black-dike", GradeSystem.Ice, "WI4-5 M3")] //No YDS/Heuco present
         [DataRow("/route/105931000/myan-problem", GradeSystem.Hueco, "V-easy")] //Not a usual grade format
         [DataRow("/route/106238998/price-glacier-route", GradeSystem.YDS, "Easy 5th")] //Not a usual grade format
         [DataRow("/route/108170851/new-dawn", GradeSystem.Aid, "A3")] //Includes "Aid rating"
@@ -198,7 +198,7 @@ namespace UnitTests
 
         [DataTestMethod]
         [DataRow("/route/109063052/geflugelfrikadelle", "", 40.0)]
-        [DataRow("/route/116181996/13-above-the-night", "5 pitches, Grade IV", 1000.0)] //Lots of additional info
+        [DataRow("/route/105890633/black-dike", "3 pitches, Grade IV", 400.0)] //Lots of additional info
         [DataRow("/route/110425910/birds-of-a-feather", "", 50.0)] //Had a weird (multiple comma) parsing issue before
         [DataRow("/route/107530893/a-new-beginning", "", null)] //No additional info
         public void TestRouteAdditionalInfoParse(string url, string expectedAdditionalInfo, double? expectedHeightInFeet)
