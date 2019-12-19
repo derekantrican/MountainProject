@@ -189,7 +189,7 @@ namespace MountainProjectBot
                         if (searchResult.Confidence > 1)
                             BotUtilities.WriteToConsoleWithColor($"\tRequesting approval for post {post.Id}", ConsoleColor.Yellow);
 
-                        string locationString = Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
+                        string locationString = Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult, searchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
 
                         //We notify for all found posts, but the server will only request approval when searchResult.Confidence != 1
                         BotUtilities.NotifyFoundPost(WebUtility.HtmlDecode(post.Title), post.Shortlink, searchResult.FilteredResult.Name, locationString,
