@@ -213,9 +213,15 @@ namespace MountainProjectAPI
             return containingString.Contains(innerString);
         }
 
-        public static bool StringContainsWithFilters(string containingString, string innerString)
+        public static bool StringContainsWithFilters(string containingString, string innerString, bool caseInsensitive = false, bool enforceConsistentWords = true)
         {
-            return StringContains(FilterStringForMatch(EnforceWordConsistency(containingString)), FilterStringForMatch(EnforceWordConsistency(innerString)));
+            if (enforceConsistentWords)
+            {
+                return StringContains(FilterStringForMatch(EnforceWordConsistency(containingString)), 
+                                      FilterStringForMatch(EnforceWordConsistency(innerString)), caseInsensitive);
+            }
+            else
+                return StringContains(FilterStringForMatch(containingString), FilterStringForMatch(innerString), caseInsensitive);
         }
 
         public static string GetRedirectURL(string url) //Credit: https://stackoverflow.com/a/28424940/2246411

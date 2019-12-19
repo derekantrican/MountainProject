@@ -132,10 +132,10 @@ namespace MountainProjectAPI
                 {
                     if (searchResult.AllResults.Count == 1 && ParentsInString(searchResult.AllResults.First(), inputWithoutName, false, true).Any())
                         possibleResults.Add(new Tuple<Route, Area, string>(searchResult.AllResults.First() as Route, searchResult.RelatedLocation, inputWithoutName));
-                    else if (searchResult.AllResults.Count(r => ParentsInString(r as Route, inputWithoutName, false, true).Any() && Utilities.StringContainsWithFilters(inputString, r.Name)) == 1)
+                    else if (searchResult.AllResults.Count(r => ParentsInString(r as Route, inputWithoutName, false, true).Any() && Utilities.StringContainsWithFilters(inputString, r.Name, true)) == 1)
                     {
                         Route route = searchResult.AllResults.First(r => ParentsInString(r as Route, inputWithoutName, false, true).Any() &&
-                                                                         Utilities.StringContainsWithFilters(inputString, r.Name)) as Route;
+                                                                         Utilities.StringContainsWithFilters(inputString, r.Name, true)) as Route;
                         possibleResults.Add(new Tuple<Route, Area, string>(route, searchResult.RelatedLocation, inputWithoutName));
                     }
                     else if (postGrades.Any())
@@ -157,10 +157,10 @@ namespace MountainProjectAPI
                             }
                         }
                     }
-                    else if (searchResult.AllResults.Any(r => ParentsInString(r as Route, inputWithoutName, false, true).Any() && Utilities.StringContainsWithFilters(inputString, r.Name)))
+                    else if (searchResult.AllResults.Any(r => ParentsInString(r as Route, inputWithoutName, false, true).Any() && Utilities.StringContainsWithFilters(inputString, r.Name, true)))
                     {
                         List<MPObject> routesWhereParentIsInString = searchResult.AllResults.Where(r => ParentsInString(r as Route, inputWithoutName, false, true).Any() &&
-                                                                                                        Utilities.StringContainsWithFilters(inputString, r.Name)).ToList();
+                                                                                                        Utilities.StringContainsWithFilters(inputString, r.Name, true)).ToList();
                         routesWhereParentIsInString.ForEach(r => possibleResults.Add(new Tuple<Route, Area, string>(r as Route, searchResult.RelatedLocation, inputWithoutName)));
                     }
                 }
@@ -176,7 +176,7 @@ namespace MountainProjectAPI
 
                 //Prioritize routes where the full name is in the input string
                 //(Additionally, we could also prioritize how close - within the input string - the name is to the rating)
-                List<Tuple<Route, Area, string>> filteredResults = possibleResults.Where(p => Utilities.StringContainsWithFilters(inputString, p.Item1.Name)).ToList();
+                List<Tuple<Route, Area, string>> filteredResults = possibleResults.Where(p => Utilities.StringContainsWithFilters(inputString, p.Item1.Name, true)).ToList();
 
                 int highConfidence = 1;
                 int medConfidence = 2;
@@ -291,13 +291,13 @@ namespace MountainProjectAPI
 
             if (caseSensitive)
             {
-                if (child.Parents.Any(p => possibleNames.Any(n => p.Name.Contains(n))))
-                    matchedParents.AddRange(child.Parents.Where(p => possibleNames.Any(n => p.Name.ToLower().Contains(n.ToLower()))));
+                if (child.Parents.Any(p => possibleNames.Any(n => Utilities.StringContainsWithFilters(p.Name, n))))
+                    matchedParents.AddRange(child.Parents.Where(p => possibleNames.Any(n => Utilities.StringContainsWithFilters(p.Name, n, enforceConsistentWords: false))));
             }
             else
             {
-                if (child.Parents.Any(p => possibleNames.Any(n => p.Name.ToLower().Contains(n.ToLower()))))
-                    matchedParents.AddRange(child.Parents.Where(p => possibleNames.Any(n => p.Name.Contains(n))));
+                if (child.Parents.Any(p => possibleNames.Any(n => Utilities.StringContainsWithFilters(p.Name, n, true))))
+                    matchedParents.AddRange(child.Parents.Where(p => possibleNames.Any(n => Utilities.StringContainsWithFilters(p.Name, n, true, false))));
             }
 
             if (allowStateAbbr)
