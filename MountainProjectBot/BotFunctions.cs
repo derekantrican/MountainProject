@@ -30,7 +30,17 @@ namespace MountainProjectBot
 
                 try
                 {
-                    Comment botResponseComment = await RedditHelper.GetComment(monitor.BotResponseComment.Permalink);
+                    Comment botResponseComment = null;
+                    try
+                    {
+                        botResponseComment = await RedditHelper.GetComment(monitor.BotResponseComment.Permalink);
+                    }
+                    catch
+                    {
+                        BotUtilities.WriteToConsoleWithColor("Exception thrown when getting comment. Removing monitor...", ConsoleColor.Red);
+                        monitoredComments.Remove(monitor);
+                    }
+
                     if (botResponseComment.Score <= -3)
                     {
                         await RedditHelper.DeleteComment(monitor.BotResponseComment);
