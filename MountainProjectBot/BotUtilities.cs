@@ -77,13 +77,13 @@ namespace MountainProjectBot
             MountainProjectDataSearch.InitMountainProjectData(xmlPath);
             BotFunctions.RedditHelper = new RedditHelper();
             BotFunctions.RedditHelper.Auth(credentialsPath).Wait();
-            GetRequestServerURL(credentialsPath);
+            requestForApprovalURL = GetRequestServerURL(credentialsPath);
         }
 
-        public static void GetRequestServerURL(string filePath)
+        public static string GetRequestServerURL(string filePath)
         {
             List<string> fileLines = File.ReadAllLines(filePath).ToList();
-            requestForApprovalURL = fileLines.FirstOrDefault(p => p.Contains("requestForApprovalURL")).Split(new[] { ':' }, 2)[1]; //Split on first occurence only because requestForApprovalURL also contains ':'
+            return fileLines.FirstOrDefault(p => p.Contains("requestForApprovalURL")).Split(new[] { ':' }, 2)[1]; //Split on first occurence only because requestForApprovalURL also contains ':'
         }
         #endregion Init
 

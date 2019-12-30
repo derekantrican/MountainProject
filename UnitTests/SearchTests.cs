@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Text;
 using System.Text.RegularExpressions;
 using static MountainProjectAPI.Grade;
 
@@ -216,9 +217,9 @@ namespace UnitTests
         [TestMethod]
         public void TestPostTitleParse()
         {
-            int linkPasses = 0; //Passes where a MP link was expected
             int totalPasses = 0;
             int totalFailures = 0;
+            int yessesWithConfidence1 = 0;
             List<string> failingPostsWithConfidence1 = new List<string>();
 
             StringWriter writer = new StringWriter();
@@ -227,13 +228,34 @@ namespace UnitTests
             MountainProjectDataSearch.InitMountainProjectData(@"..\..\MountainProjectDBBuilder\bin\MountainProjectAreas.xml");
             string[] testCriteria = File.ReadAllLines(@"..\PostTitleTest.txt");
 
+            bool isGoogleSheetsTest = false;
+            //---------Google Sheet test (uncomment only for testing)----------
+            //isGoogleSheetsTest = true;
+            //string requestUrl = BotUtilities.GetRequestServerURL(@"..\..\MountainProjectBot\Credentials.txt") + "PostHistory";
+            //testCriteria = Utilities.GetHtml(requestUrl).Split('\n');
+            //-----------------------------------------------------------------
+
             //Parallel.For(0, testCriteria.Length, i =>
             for (int i = 0; i < testCriteria.Length; i++)
             {
                 string[] lineParts = testCriteria[i].Split('\t');
-                string inputPostTitle = lineParts[0];
-                string expectedMPLink = lineParts[1] == "null" ? null : Utilities.GetSimpleURL(lineParts[1]);
-                string comment = lineParts.Length > 2 ? lineParts[2] : null;
+
+                string inputPostTitle, expectedMPLink, comment;
+                if (isGoogleSheetsTest)
+                {
+                    inputPostTitle = lineParts[1];
+                    expectedMPLink = lineParts[8].ToUpper() != "YES" ? null : Utilities.GetSimpleURL(lineParts[6]);
+                    comment = lineParts.Length > 9 ? $"//{lineParts[9]}" : null;
+                }
+                else
+                {
+                    inputPostTitle = lineParts[0];
+                    expectedMPLink = lineParts[1] == "null" ? null : Utilities.GetSimpleURL(lineParts[1]);
+                    comment = lineParts.Length > 2 ? $"//{lineParts[2]}" : null;
+                }
+
+                //Override input title (uncomment only for debugging)
+                //inputPostTitle = "2 months into climbing, just did my first 2/3! Now to master it and do it smoother.";
 
                 writer.WriteLine($"POST TITLE: {inputPostTitle}");
 
@@ -254,7 +276,7 @@ namespace UnitTests
                         totalFailures++;
 
                         if (result.Confidence == 1)
-                            failingPostsWithConfidence1.Add(inputPostTitle);
+                            failingPostsWithConfidence1.Add($"{inputPostTitle} {comment}");
                     }
                 }
                 else
@@ -266,29 +288,35 @@ namespace UnitTests
                         totalFailures++;
 
                         if (result.Confidence == 1)
-                            failingPostsWithConfidence1.Add(inputPostTitle);
+                            failingPostsWithConfidence1.Add($"{inputPostTitle} {comment}");
                     }
                     else
                     {
                         writer.WriteLine("PASS");
-                        linkPasses++;
                         totalPasses++;
+
+                        if (isGoogleSheetsTest && result.Confidence == 1)
+                            yessesWithConfidence1++;
                     }
                 }
             }/*);*/
 
-            System.Diagnostics.Debug.WriteLine($"Passes: {totalPasses}, Failures: {totalFailures}, Pass percentage: {Math.Round((double)totalPasses / (totalPasses + totalFailures) * 100, 2)}%\n");
+            if (!isGoogleSheetsTest) //Todo: may want to rework how the spreadsheet is setup so that this line is also relevant for GoogleSheetsTest
+                System.Diagnostics.Debug.WriteLine($"Passes: {totalPasses}, Failures: {totalFailures}, Pass percentage: {Math.Round((double)totalPasses / (totalPasses + totalFailures) * 100, 2)}%\n");
+
+            if (isGoogleSheetsTest)
+                System.Diagnostics.Debug.WriteLine($"Yesses that now have confidence 1: {yessesWithConfidence1} (out of {testCriteria.Count(p => p.Split('\t')[8].ToUpper() == "YES")} total yesses)\n");
+
+            if (failingPostsWithConfidence1.Any())
+                System.Diagnostics.Debug.WriteLine($"Failing posts with confidence 1:\n\n{string.Join("\n", failingPostsWithConfidence1)}\n");
+
             System.Diagnostics.Debug.WriteLine(writer.ToString());
             writer.Dispose();
 
-            if (failingPostsWithConfidence1.Any())
-            {
-                System.Diagnostics.Debug.WriteLine("Failing posts with confidence 1:");
-                System.Diagnostics.Debug.WriteLine(string.Join("\n", failingPostsWithConfidence1));
-                Assert.Fail("Some failed matches have a confidence of 1");
-            }
+            Assert.IsTrue(failingPostsWithConfidence1.Count == 0, "Some failed matches have a confidence of 1");
 
-            Assert.IsTrue((double)totalPasses / (totalPasses + totalFailures) > 0.95);
+            if (!isGoogleSheetsTest) //Todo: may want to rework how the spreadsheet is setup so that this line is also relevant for GoogleSheetsTest
+                Assert.IsTrue((double)totalPasses / (totalPasses + totalFailures) > 0.95);
         }
     }
 }

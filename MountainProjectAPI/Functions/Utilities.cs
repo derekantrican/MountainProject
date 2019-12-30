@@ -88,9 +88,8 @@ namespace MountainProjectAPI
             {"Wyoming", "WY"}
         };
 
-        public static IHtmlDocument GetHtmlDoc(string url)
+        public static string GetHtml(string url)
         {
-            HtmlParser parser = new HtmlParser();
             string html = "";
             using (WebClient client = new WebClient() { Encoding = Encoding.UTF8 })
             {
@@ -115,12 +114,11 @@ namespace MountainProjectAPI
                 }
             }
 
-            return parser.ParseDocument(html);
+            return html;
         }
 
-        public static async Task<IHtmlDocument> GetHtmlDocAsync(string url)
+        public static async Task<string> GetHtmlAsync(string url)
         {
-            HtmlParser parser = new HtmlParser();
             string html = "";
             using (WebClient client = new WebClient() { Encoding = Encoding.UTF8 })
             {
@@ -145,6 +143,19 @@ namespace MountainProjectAPI
                 }
             }
 
+            return html;
+        }
+
+        public static IHtmlDocument GetHtmlDoc(string url)
+        {
+            HtmlParser parser = new HtmlParser();
+            return parser.ParseDocument(GetHtml(url));
+        }
+
+        public static async Task<IHtmlDocument> GetHtmlDocAsync(string url)
+        {
+            HtmlParser parser = new HtmlParser();
+            string html = await GetHtmlAsync(url);
             return parser.ParseDocument(html);
         }
 
