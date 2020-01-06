@@ -126,7 +126,7 @@ namespace MountainProjectBot
 
         public static async Task ReplyToApprovedPosts()
         {
-            int removed = postsPendingApproval.RemoveAll(p => (DateTime.UtcNow - p.Key.CreatedUTC).TotalMinutes > 15); //Remove posts that have "timed out"
+            int removed = postsPendingApproval.RemoveAll(p => (DateTime.UtcNow - p.Key.CreatedUTC).TotalMinutes > 30); //Remove posts that have "timed out"
             if (removed > 0)
                 BotUtilities.WriteToConsoleWithColor($"\tRemoved {removed} pending auto-replies that got too old", ConsoleColor.Red);
 
