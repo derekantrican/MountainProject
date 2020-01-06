@@ -222,13 +222,14 @@ namespace MountainProjectBot
             catch { } //Discard any errors
         }
 
-        public static void NotifyFoundPost(string postTitle, string postUrl, string mpResultTitle, string mpResultLoc, string mpResultGrade, string mpResultUrl, string mpResultID, bool alreadyApproved = false)
+        public static void NotifyFoundPost(string postTitle, string postUrl, string mpResultTitle, string mpResultLoc, string mpResultGrade, string mpResultUrl, string mpResultID, string unconfidentReason, bool alreadyApproved = false)
         {
             if (string.IsNullOrEmpty(requestForApprovalURL))
                 return;
 
             List<string> parameters = new List<string>
             {
+                "reason=" + Uri.EscapeDataString(unconfidentReason),
                 "postTitle=" + Uri.EscapeDataString(postTitle),
                 "postURL=" + Uri.EscapeDataString(postUrl),
                 "mpResultTitle=" + Uri.EscapeDataString(mpResultTitle),

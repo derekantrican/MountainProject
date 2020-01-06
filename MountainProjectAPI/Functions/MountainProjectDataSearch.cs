@@ -182,13 +182,17 @@ namespace MountainProjectAPI
                 int medConfidence = 2;
                 int lowConfidence = 3;
                 int confidence = lowConfidence;
+                string unconfidentReason = null;
                 if (filteredResults.Count == 1)
                 {
                     if (ParentsInString(filteredResults.First().Item1, inputString, true).Any() ||
                         Grade.ParseString(inputString, false).Any(g => filteredResults.First().Item1.Grades.Any(p => g.Equals(p))))
                         confidence = highConfidence; //Highest confidence when we also match a location in the string or if we match a full grade
                     else
+                    {
                         confidence = medConfidence; //Medium confidence when we have only found one match with that exact name but can't match a location in the string
+                        unconfidentReason = "Single result found, but no parents or grades matched";
+                    }
                 }
                 else if (filteredResults.Count > 1)
                 {
@@ -197,7 +201,14 @@ namespace MountainProjectAPI
                     if (routesWithMatchingLocations.Any())
                     {
                         filteredResults = routesWithMatchingLocations;
-                        confidence = postGrades.Any() ? highConfidence : medConfidence; //Highest confidence when we have found the location in the string
+
+                        if (postGrades.Any())
+                            confidence = highConfidence; //Highest confidence when we have found the location in the string
+                        else
+                        {
+                            confidence = medConfidence;
+                            unconfidentReason = $"{filteredResults.Count} EXACTLY matching routes (name & location w/o abbrev). No grades matched";
+                        }
                     }
                     else
                     {
@@ -205,7 +216,14 @@ namespace MountainProjectAPI
                         if (routesWithMatchingLocations.Any())
                         {
                             filteredResults = routesWithMatchingLocations;
-                            confidence = postGrades.Any() ? highConfidence : medConfidence; //Highest confidence when we have found the location in the string
+
+                            if (postGrades.Any())
+                                confidence = highConfidence; //Highest confidence when we have found the location in the string
+                            else
+                            {
+                                confidence = medConfidence;
+                                unconfidentReason = $"{filteredResults.Count} EXACTLY matching routes (name & location w/ abbrev). No grades matched";
+                            }
                         }
                         else
                         {
@@ -214,6 +232,7 @@ namespace MountainProjectAPI
                             {
                                 filteredResults = routesWithMatchingLocations;
                                 confidence = medConfidence; //Medium confidence when we have matched only part of a parent's name
+                                unconfidentReason = $"{filteredResults.Count} EXACTLY matching routes (name & PARTIAL location w/ abbrev)";
                             }
                         }
                     }
@@ -226,6 +245,7 @@ namespace MountainProjectAPI
                     {
                         filteredResults = routesWithMatchingLocations;
                         confidence = medConfidence; //Medium confidence when we didn't match a full route name, but have found a parent location in the string
+                        unconfidentReason = $"{filteredResults.Count} PARTIALLY matching routes (name & location w/o abbrev)";
                     }
                     else
                     {
@@ -234,6 +254,7 @@ namespace MountainProjectAPI
                         {
                             filteredResults = routesWithMatchingLocations;
                             confidence = medConfidence; //Medium confidence when we didn't match a full route name, but have found a parent location in the string (including the possibility of the state abbrv)
+                            unconfidentReason = $"{filteredResults.Count} PARTIALLY matching routes (name & location w/ abbrev)";
                         }
                         else
                         {
@@ -242,6 +263,7 @@ namespace MountainProjectAPI
                             {
                                 filteredResults = routesWithMatchingLocations;
                                 confidence = medConfidence; //Medium confidence when we didn't match a full route name and have matched only part of a parent's name in the string
+                                unconfidentReason = $"{filteredResults.Count} PARTIALLY matching routes (name & PARTIAL location w/ abbrev)";
                             }
                         }
                     }
@@ -260,22 +282,25 @@ namespace MountainProjectAPI
                     chosenRoute = filteredResults.OrderByDescending(p => p.Item1.Popularity).First();
                     allResults.AddRange(filteredResults.Select(p => p.Item1));
                     confidence = medConfidence; //Medium confidence when we have matched the string exactly, but there are multiple results
+                    unconfidentReason ??= $"Too many filtered results ({filteredResults.Count})";
                 }
                 else
                 {
                     chosenRoute = possibleResults.OrderByDescending(p => p.Item1.Popularity).First();
                     allResults.AddRange(possibleResults.Select(p => p.Item1));
                     confidence = lowConfidence; //Low confidence when we can't match the string exactly, haven't matched any locations, and there are multiple results
+                    unconfidentReason ??= "No filtered results. Chose most popular partial match instead";
                 }
 
                 location = chosenRoute.Item2;
                 if (location == null)
                     location = ParentsInString(chosenRoute.Item1, chosenRoute.Item3, allowPartialParents: true).FirstOrDefault(p => p.ID != GetOuterParent(chosenRoute.Item1).ID) as Area;
-                
+
                 finalResult = new SearchResult(chosenRoute.Item1, location)
-                { 
+                {
                     AllResults = allResults,
-                    Confidence = confidence
+                    Confidence = confidence,
+                    UnconfidentReason = unconfidentReason
                 };
             }
 

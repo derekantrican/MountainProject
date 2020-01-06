@@ -243,9 +243,9 @@ namespace UnitTests
                 string inputPostTitle, expectedMPLink, comment;
                 if (isGoogleSheetsTest)
                 {
-                    inputPostTitle = lineParts[1];
-                    expectedMPLink = lineParts[8].ToUpper() != "YES" ? null : Utilities.GetSimpleURL(lineParts[6]);
-                    comment = lineParts.Length > 9 ? $"//{lineParts[9]}" : null;
+                    inputPostTitle = lineParts[2];
+                    expectedMPLink = lineParts[9].ToUpper() != "YES" ? null : Utilities.GetSimpleURL(lineParts[7]);
+                    comment = lineParts.Length > 11 ? $"//{lineParts[11]}" : null;
                 }
                 else
                 {

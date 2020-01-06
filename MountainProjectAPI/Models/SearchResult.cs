@@ -32,6 +32,8 @@ namespace MountainProjectAPI
         /// </summary>
         public int Confidence { get; set; }
 
+        public string UnconfidentReason { get; set; }
+
         public bool IsEmpty()
         {
             return FilteredResult == null || AllResults == null || AllResults.Count == 0;

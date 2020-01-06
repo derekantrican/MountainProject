@@ -204,7 +204,7 @@ namespace MountainProjectBot
                         //We notify for all found posts, but the server will only request approval when searchResult.Confidence != 1
                         BotUtilities.NotifyFoundPost(WebUtility.HtmlDecode(post.Title), post.Shortlink, searchResult.FilteredResult.Name, locationString,
                                                      (searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false), 
-                                                     searchResult.FilteredResult.URL, searchResult.FilteredResult.ID, 
+                                                     searchResult.FilteredResult.URL, searchResult.FilteredResult.ID, searchResult.UnconfidentReason,
                                                      searchResult.Confidence == 1);
                     }
                     else
