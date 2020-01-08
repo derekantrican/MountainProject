@@ -69,7 +69,7 @@ namespace UnitTests
                                     searchResult.FilteredResult.URL, "Failed for " + testCriteria_search[i, 0]);
                 }
 
-                Assert.IsTrue(searchResult.TimeTaken.TotalSeconds < 5, $"{query} took too long ({searchResult.TimeTaken.TotalMilliseconds} ms)");
+                Assert.IsTrue(searchResult.TimeSpanTaken().TotalSeconds < 5, $"{query} took too long ({searchResult.TimeTakenMS} ms)");
             }
         }
 
@@ -101,7 +101,7 @@ namespace UnitTests
                 resultLocation = Regex.Replace(resultLocation, @"\[|\]\(.*?\)", ""); //Remove markdown link formatting
 
                 Assert.AreEqual(expectedLocation, resultLocation, "Failed for " + testCriteria_location[i, 0]);
-                Assert.IsTrue(searchResult.TimeTaken.TotalSeconds < 5, $"{query} took too long ({searchResult.TimeTaken.Milliseconds} ms)");
+                Assert.IsTrue(searchResult.TimeSpanTaken().TotalSeconds < 5, $"{query} took too long ({searchResult.TimeTakenMS} ms)");
             }
         }
 

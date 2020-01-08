@@ -105,7 +105,7 @@ namespace MountainProjectAPI
 
             Console.WriteLine($"\tFound {searchResult.AllResults.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms");
 
-            searchResult.TimeTaken = searchStopwatch.Elapsed;
+            searchResult.TimeTakenMS = searchStopwatch.ElapsedMilliseconds;
 
             return searchResult;
         }
@@ -304,7 +304,7 @@ namespace MountainProjectAPI
                 };
             }
 
-            finalResult.TimeTaken = stopwatch.Elapsed;
+            finalResult.TimeTakenMS = stopwatch.ElapsedMilliseconds;
 
             return finalResult;
         }

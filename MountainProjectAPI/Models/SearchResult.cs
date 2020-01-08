@@ -26,7 +26,10 @@ namespace MountainProjectAPI
         public MPObject FilteredResult { get; set; }
         public List<MPObject> AllResults { get; set; }
         public Area RelatedLocation { get; set; }
-        public TimeSpan TimeTaken { get; set; }
+        /// <summary>
+        /// The amount of time taken to search in milliseconds
+        /// </summary>
+        public long TimeTakenMS { get; set; }
         /// <summary>
         /// A value determining the confidence of the result. The LOWER the value, the higher the confidence (1 = 100% confidence)
         /// </summary>
@@ -37,6 +40,11 @@ namespace MountainProjectAPI
         public bool IsEmpty()
         {
             return FilteredResult == null || AllResults == null || AllResults.Count == 0;
+        }
+
+        public TimeSpan TimeSpanTaken()
+        {
+            return TimeSpan.FromMilliseconds(TimeTakenMS);
         }
     }
 }
