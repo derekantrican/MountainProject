@@ -34,6 +34,7 @@ namespace MountainProjectBot
         private static void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
             Exception ex = e.ExceptionObject as Exception;
+            ex = ex.Demystify();
 
             string exceptionString = "";
             exceptionString += $"[{DateTime.Now}] EXCEPTION TYPE: {ex?.GetType()}\n\n";
@@ -41,8 +42,9 @@ namespace MountainProjectBot
             exceptionString += $"[{DateTime.Now}] STACK TRACE: {ex?.StackTrace}\n\n";
             if (ex?.InnerException != null)
             {
-                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION: {ex.InnerException}\n\n";
-                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION STACK TRACE: {ex.InnerException.StackTrace}\n\n";
+                Exception innerEx = ex.InnerException.Demystify();
+                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION: {innerEx.Message}\n\n";
+                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION STACK TRACE: {innerEx.StackTrace}\n\n";
             }
 
             File.AppendAllText($"CRASHREPORT ({DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss")}).log", exceptionString);
