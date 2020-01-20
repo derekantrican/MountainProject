@@ -229,7 +229,7 @@ namespace MountainProjectBot
 
             List<string> parameters = new List<string>
             {
-                "reason=" + Uri.EscapeDataString(unconfidentReason),
+                "reason=" + (string.IsNullOrEmpty(unconfidentReason) ? "" : Uri.EscapeDataString(unconfidentReason)),
                 "postTitle=" + Uri.EscapeDataString(postTitle),
                 "postURL=" + Uri.EscapeDataString(postUrl),
                 "mpResultTitle=" + Uri.EscapeDataString(mpResultTitle),
