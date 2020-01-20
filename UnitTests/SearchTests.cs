@@ -81,7 +81,7 @@ namespace UnitTests
             { "no-rang-na-rang", "South Korea" }, //International
             { "Sweet Dreams", "Blue Mountains, Australia"}, //Australia route (special case for Australia)
             { "Grab Your Balls", "Breakneck, Pennsylvania" }, //https://github.com/derekantrican/MountainProject/issues/12
-            { "Highball aka Pocket Problem", "Grand Ledge (aka Oak Park), Michigan" }, //Parent is 1 less than state (ie Michigan -> Grand Ledge -> Pocket Problem)
+            { "Highball aka Pocket Problem", "Lower Peninsula, Michigan" }, //Parent is 1 less than state (ie Michigan -> Grand Ledge -> Pocket Problem)
             { "Chúc sức khoẻ", "Hữu Lũng, Vietnam" } //Special characters
         };
 
