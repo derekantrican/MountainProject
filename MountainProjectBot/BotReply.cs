@@ -64,11 +64,15 @@ namespace MountainProjectBot
             foreach (Match match in regex.Matches(commentBody))
             {
                 string mpUrl = match.Value;
-                if (!mpUrl.Contains("www."))
-                    mpUrl = "www." + mpUrl;
-
                 if (!mpUrl.Contains("https://"))
+                {
+                    if (!mpUrl.Contains("www."))
+                        mpUrl = "www." + mpUrl;
+
                     mpUrl = "https://" + mpUrl;
+                }
+                else if (!mpUrl.Contains("www."))
+                    mpUrl = mpUrl.Replace("https://", "https://www.");
 
                 try
                 {
