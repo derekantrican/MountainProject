@@ -305,7 +305,7 @@ namespace UnitTests
                 System.Diagnostics.Debug.WriteLine($"Passes: {totalPasses}, Failures: {totalFailures}, Pass percentage: {Math.Round((double)totalPasses / (totalPasses + totalFailures) * 100, 2)}%\n");
 
             if (isGoogleSheetsTest)
-                System.Diagnostics.Debug.WriteLine($"Yesses that now have confidence 1: {yessesWithConfidence1} (out of {testCriteria.Count(p => p.Split('\t')[8].ToUpper() == "YES")} total yesses)\n");
+                System.Diagnostics.Debug.WriteLine($"Yesses that now have confidence 1: {yessesWithConfidence1} (out of {testCriteria.Count(p => p.Split('\t')[9].ToUpper() == "YES")} total yesses)\n");
 
             if (failingPostsWithConfidence1.Any())
                 System.Diagnostics.Debug.WriteLine($"Failing posts with confidence 1:\n\n{string.Join("\n", failingPostsWithConfidence1)}\n");
