@@ -39,6 +39,7 @@ namespace MountainProjectBot
                     {
                         BotUtilities.WriteToConsoleWithColor("Exception thrown when getting comment. Removing monitor...", ConsoleColor.Red);
                         monitoredComments.Remove(monitor);
+                        continue;
                     }
 
                     if (botResponseComment.Score <= -3)
