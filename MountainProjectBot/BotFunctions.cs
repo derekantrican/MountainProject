@@ -194,6 +194,7 @@ namespace MountainProjectBot
                     if (!searchResult.IsEmpty())
                     {
                         postsPendingApproval.Add(new KeyValuePair<Post, SearchResult>(post, searchResult));
+                        BotUtilities.LogPostBeenSeen(post);
 
                         //Until we are more confident with automatic results, we're going to request for approval for confidence values greater than 1 (less than 100%)
                         if (searchResult.Confidence > 1)
@@ -202,15 +203,19 @@ namespace MountainProjectBot
                         string locationString = Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult, searchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
 
                         //We notify for all found posts, but the server will only request approval when searchResult.Confidence != 1
-                        BotUtilities.NotifyFoundPost(WebUtility.HtmlDecode(post.Title), post.Shortlink, searchResult.FilteredResult.Name, locationString,
-                                                     (searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false), 
-                                                     searchResult.FilteredResult.URL, searchResult.FilteredResult.ID, searchResult.UnconfidentReason,
-                                                     searchResult.Confidence == 1);
+                        if (!Debugger.IsAttached)
+                        {
+                            BotUtilities.NotifyFoundPost(postTitle, post.Shortlink, searchResult.FilteredResult.Name, locationString,
+                                                         (searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false), 
+                                                         searchResult.FilteredResult.URL, searchResult.FilteredResult.ID, searchResult.UnconfidentReason,
+                                                         searchResult.Confidence == 1);
+                        }
                     }
                     else
+                    {
                         Console.WriteLine("\tNothing found");
-
-                    BotUtilities.LogPostBeenSeen(post);
+                        BotUtilities.LogPostBeenSeen(post);
+                    }
                 }
                 catch (RateLimitException)
                 {
