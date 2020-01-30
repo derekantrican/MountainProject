@@ -416,7 +416,7 @@ namespace MountainProjectAPI
             result = result.Distinct().ToList();
             result.RemoveAll(p => p.Length < 3); //Remove any short "names" (eg "My")
             result.RemoveAll(p => connectingWords.Contains(p.ToLower())); //Remove any "possible names" that are only a connecting word (eg "the")
-            result.RemoveAll(p => Utilities.IsNumber(p));
+            result.RemoveAll(p => Utilities.IsNumber(p.Replace(" ", "")));
 
             //Todo: experiment with using all "word combinations". IE once we have parsed our list of "possibleRouteNames", expand the list to
             //be all combinations of those words (respecting order and not "cross-contaminating groups"). EG "Climbed Matthes Crest"
