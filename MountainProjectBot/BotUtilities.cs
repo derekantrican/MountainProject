@@ -3,6 +3,7 @@ using Newtonsoft.Json.Linq;
 using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -40,6 +41,9 @@ namespace MountainProjectBot
 
             if (args.FirstOrDefault(p => p.Contains("blacklisted=")) != null)
                 blacklistedPath = args.FirstOrDefault(p => p.Contains("blacklisted=")).Split('=')[1];
+
+            if (args.FirstOrDefault(p => p.Contains("dryrun")) != null || Debugger.IsAttached)
+                BotFunctions.DryRun = true;
         }
 
         public static bool HasAllRequiredFiles()

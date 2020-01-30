@@ -19,6 +19,7 @@ namespace MountainProjectBot
         private static List<KeyValuePair<Post, SearchResult>> postsPendingApproval = new List<KeyValuePair<Post, SearchResult>>();
 
         public static RedditHelper RedditHelper;
+        public static bool DryRun { get; set; }
 
         public static async Task CheckMonitoredComments()
         {
@@ -142,7 +143,7 @@ namespace MountainProjectBot
                 reply += Markdown.HRule;
                 reply += BotReply.GetBotLinks(post.Key);
 
-                if (!Debugger.IsAttached)
+                if (!DryRun)
                 {
                     Comment botReplyComment = await RedditHelper.CommentOnPost(post.Key, reply);
                     monitoredComments.Add(new CommentMonitor() { Parent = post.Key, BotResponseComment = botReplyComment });
@@ -204,7 +205,7 @@ namespace MountainProjectBot
                         string locationString = Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult, searchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
 
                         //We notify for all found posts, but the server will only request approval when searchResult.Confidence != 1
-                        if (!Debugger.IsAttached)
+                        if (!DryRun)
                         {
                             BotUtilities.NotifyFoundPost(postTitle, post.Shortlink, searchResult.FilteredResult.Name, locationString,
                                                          (searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false), 
@@ -245,7 +246,7 @@ namespace MountainProjectBot
 
                     string reply = BotReply.GetReplyForRequest(comment);
 
-                    if (!Debugger.IsAttached)
+                    if (!DryRun)
                     {
                         Comment botReplyComment = await RedditHelper.ReplyToComment(comment, reply);
                         BotUtilities.WriteToConsoleWithColor($"\tReplied to comment {comment.Id}", ConsoleColor.Green);
@@ -292,7 +293,7 @@ namespace MountainProjectBot
                         continue;
                     }
 
-                    if (!Debugger.IsAttached)
+                    if (!DryRun)
                     {
                         Comment botReplyComment = await RedditHelper.ReplyToComment(comment, reply);
                         BotUtilities.WriteToConsoleWithColor($"\tReplied to comment {comment.Id}", ConsoleColor.Green);

@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -120,6 +121,14 @@ namespace MountainProjectBot
                 Console.WriteLine($"Loop elapsed time: {stopwatch.ElapsedMilliseconds} ms");
                 //Console.WriteLine("Sleeping for 10 seconds...");
                 //Thread.Sleep(10000); //Sleep for 10 seconds so as not to overload reddit
+
+                //Only run through once for a dry run
+                if (BotFunctions.DryRun)
+                {
+                    Console.WriteLine("All files updated. The program will now exit...");
+                    Thread.Sleep(3000);
+                    Environment.Exit(0);
+                }
             }
         }
     }
