@@ -56,7 +56,7 @@ namespace MountainProjectBot
                     xmlPath = XMLNAME;
                 else
                 {
-                    Console.WriteLine("The xml has not been built");
+                    Console.WriteLine($"The xml can not be found here or at {xmlPath}");
                     return false;
                 }
             }
@@ -67,7 +67,7 @@ namespace MountainProjectBot
                     credentialsPath = CREDENTIALSNAME;
                 else
                 {
-                    Console.WriteLine("The credentials file does not exist");
+                    Console.WriteLine($"The credentials file can not be found here or at {credentialsPath}");
                     return false;
                 }
             }
