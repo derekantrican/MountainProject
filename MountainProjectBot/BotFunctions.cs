@@ -3,7 +3,6 @@ using RedditSharp;
 using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -49,15 +48,19 @@ namespace MountainProjectBot
                         monitoredComments.Remove(monitor);
                         BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id} (score too low)", ConsoleColor.Green);
 
+                        //If we've made a bad reply, update the Google sheet to reflect that
+                        if (monitor.Parent is Post parentPost)
+                            BotUtilities.LogBadReply(parentPost);
+
                         continue;
                     }
 
-                    if (monitor.Parent is Comment ParentComment)
+                    if (monitor.Parent is Comment parentComment)
                     {
-                        string oldParentBody = ParentComment.Body;
+                        string oldParentBody = parentComment.Body;
                         string oldResponseBody = monitor.BotResponseComment.Body;
 
-                        Comment updatedParent = await RedditHelper.GetComment(ParentComment.Permalink);
+                        Comment updatedParent = await RedditHelper.GetComment(parentComment.Permalink);
                         if (updatedParent.Body == "[deleted]" ||
                             (updatedParent.IsRemoved.HasValue && updatedParent.IsRemoved.Value)) //If comment is deleted or removed, delete the bot's response
                         {

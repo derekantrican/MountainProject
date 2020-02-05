@@ -213,15 +213,7 @@ namespace MountainProjectBot
 
             try
             {
-                HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(url);
-                httpRequest.AutomaticDecompression = DecompressionMethods.GZip;
-
-                using (HttpWebResponse licensingResponse = (HttpWebResponse)httpRequest.GetResponse())
-                using (Stream stream = licensingResponse.GetResponseStream())
-                using (StreamReader reader = new StreamReader(stream))
-                {
-                    string response = reader.ReadToEnd();
-                }
+                DoPOST(url, new List<string>());
             }
             catch { } //Discard any errors
         }
@@ -246,10 +238,56 @@ namespace MountainProjectBot
             if (alreadyApproved)
                 parameters.Add("alreadyApproved=true");
 
-            string postData = string.Join("&", parameters);
+            DoPOST(requestForApprovalURL, parameters);
+        }
+
+        public static void LogBadReply(Post redditPost)
+        {
+            if (string.IsNullOrEmpty(requestForApprovalURL))
+                return;
+
+            List<string> parameters = new List<string>
+            {
+                "badReply=" + redditPost.Shortlink
+            };
+
+            DoPOST(requestForApprovalURL, parameters);
+        }
+
+        public static List<string> GetApprovedPostUrls()
+        {
+            if (string.IsNullOrEmpty(requestForApprovalURL))
+                return new List<string>();
+
+            string response = DoGET(requestForApprovalURL);
+            if (response.Contains("<title>Error</title>") || string.IsNullOrEmpty(response)) //Hit an error when contacting server code
+                return new List<string>();
+
+            JObject json = JObject.Parse(response);
+            return json["approvedPosts"].ToObject<List<string>>();
+        }
+
+        private static string DoGET(string url)
+        {
+            string response;
+            HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(url);
+            httpRequest.AutomaticDecompression = DecompressionMethods.GZip;
+
+            using (HttpWebResponse serverResponse = (HttpWebResponse)httpRequest.GetResponse())
+            using (StreamReader reader = new StreamReader(serverResponse.GetResponseStream()))
+            {
+                response = reader.ReadToEnd();
+            }
+
+            return response;
+        }
+
+        private static void DoPOST(string url, List<string> parameters = null)
+        {
+            string postData = parameters != null ? string.Join("&", parameters) : "";
             byte[] data = Encoding.ASCII.GetBytes(postData);
 
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(requestForApprovalURL);
+            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
             request.Method = "POST";
             request.ContentType = "application/x-www-form-urlencoded";
             request.ContentLength = data.Length;
@@ -264,28 +302,6 @@ namespace MountainProjectBot
             {
                 _ = reader.ReadToEnd(); //For POST requests, we don't care about what we get back
             }
-        }
-
-        public static List<string> GetApprovedPostUrls()
-        {
-            if (string.IsNullOrEmpty(requestForApprovalURL))
-                return new List<string>();
-
-            string response;
-            HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(requestForApprovalURL);
-            httpRequest.AutomaticDecompression = DecompressionMethods.GZip;
-
-            using (HttpWebResponse serverResponse = (HttpWebResponse)httpRequest.GetResponse())
-            using (StreamReader reader = new StreamReader(serverResponse.GetResponseStream()))
-            {
-                response = reader.ReadToEnd();
-            }
-
-            if (response.Contains("<title>Error</title>") || string.IsNullOrEmpty(response)) //Hit an error when contacting server code
-                return new List<string>();
-
-            JObject json = JObject.Parse(response);
-            return json["approvedPosts"].ToObject<List<string>>();
         }
         #endregion Server Calls
 
