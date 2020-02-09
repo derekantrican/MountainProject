@@ -8,6 +8,7 @@ using System.Xml.Serialization;
 using System.Threading.Tasks;
 using Mono.Options;
 using MountainProjectAPI;
+using System.Collections.Concurrent;
 
 namespace MountainProjectDBBuilder
 {
@@ -182,7 +183,7 @@ namespace MountainProjectDBBuilder
                 Parsers.TotalTimer = totalTimer;
                 Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
                 List<Area> destAreas = Parsers.GetDestAreas();
-                List<Task> areaTasks = new List<Task>();
+                ConcurrentBag<Task> areaTasks = new ConcurrentBag<Task>();
                 Parallel.ForEach(destAreas, destArea =>
                 {
                     areaTasks.Add(Parsers.ParseAreaAsync(destArea));
