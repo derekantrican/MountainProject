@@ -216,7 +216,7 @@ namespace MountainProjectBot
 
             try
             {
-                DoPOST(url, new List<string>());
+                DoGET(url);
             }
             catch { } //Discard any errors
         }
