@@ -43,7 +43,10 @@ namespace MountainProjectBot
                 blacklistedPath = args.FirstOrDefault(p => p.Contains("blacklisted=")).Split('=')[1];
 
             if (args.FirstOrDefault(p => p.Contains("dryrun")) != null || Debugger.IsAttached)
+            {
+                WriteToConsoleWithColor("============== STARTING IN \"DRY RUN\" MODE ==============", ConsoleColor.Blue);
                 BotFunctions.DryRun = true;
+            }
         }
 
         public static bool HasAllRequiredFiles()
@@ -309,7 +312,7 @@ namespace MountainProjectBot
         {
             Console.ForegroundColor = color;
             Console.WriteLine(text);
-            Console.ForegroundColor = ConsoleColor.Gray;
+            Console.ResetColor();
         }
     }
 }
