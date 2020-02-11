@@ -37,18 +37,37 @@ namespace MountainProjectBot
             Exception ex = e.ExceptionObject as Exception;
             ex = ex.Demystify();
 
+            string exceptionString;
+            if (ex is AggregateException aggregateException)
+            {
+                exceptionString = ExceptionDetailsToString(ex, false);
+
+                foreach (Exception exceptionPart in aggregateException.Flatten().InnerExceptions)
+                    exceptionString += ExceptionDetailsToString(exceptionPart);
+            }
+            else
+                exceptionString = ExceptionDetailsToString(ex);
+
+            File.AppendAllText($"CRASHREPORT ({DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss")}).log", exceptionString);
+        }
+
+        private static string ExceptionDetailsToString(Exception ex, bool inner = true)
+        {
+            ex = ex.Demystify();
+
             string exceptionString = "";
-            exceptionString += $"[{DateTime.Now}] EXCEPTION TYPE: {ex?.GetType()}\n\n";
-            exceptionString += $"[{DateTime.Now}] EXCEPTION MESSAGE: {ex?.Message}\n\n";
+            exceptionString += $"[{DateTime.Now}] EXCEPTION TYPE: {ex?.GetType()}\n";
+            exceptionString += $"[{DateTime.Now}] EXCEPTION MESSAGE: {ex?.Message}\n";
             exceptionString += $"[{DateTime.Now}] STACK TRACE: {ex?.StackTrace}\n\n";
-            if (ex?.InnerException != null)
+            if (ex?.InnerException != null && inner)
             {
                 Exception innerEx = ex.InnerException.Demystify();
-                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION: {innerEx.Message}\n\n";
+                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION TYPE: {innerEx.GetType()}\n";
+                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION: {innerEx.Message}\n";
                 exceptionString += $"[{DateTime.Now}] INNER EXCEPTION STACK TRACE: {innerEx.StackTrace}\n\n";
             }
 
-            File.AppendAllText($"CRASHREPORT ({DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss")}).log", exceptionString);
+            return exceptionString;
         }
         #endregion Error Handling
 
