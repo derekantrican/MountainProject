@@ -7,10 +7,10 @@ assignees: ''
 
 ---
 
-**What happened: **
+**What happened:**
 
-**What did you expect: **
+**What did you expect:**
 
-**Do you have a link to the route/area page on MountainProject: **
+**Do you have a link to the route/area page on MountainProject:**
 
-**Any additional info (screenshots, etc): **
+**Any additional info (screenshots, etc):**
