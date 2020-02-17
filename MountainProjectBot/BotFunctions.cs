@@ -42,7 +42,7 @@ namespace MountainProjectBot
                         continue;
                     }
 
-                    if (botResponseComment.Score <= -3)
+                    if (monitor.Parent is Post && botResponseComment.Score <= -3)
                     {
                         await RedditHelper.DeleteComment(monitor.BotResponseComment);
                         monitoredComments.Remove(monitor);
