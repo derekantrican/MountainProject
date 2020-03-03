@@ -44,10 +44,10 @@ namespace UnitTests
                 "Massachusetts",
                 "Michigan",
                 "Minnesota",
-                //"Mississippi", //Listed under "In Progress" on MountainProject
+                "Mississippi",
                 "Missouri",
                 "Montana",
-                //"Nebraska",    //Listed under "In Progress" on MountainProject
+                "Nebraska",
                 "Nevada",
                 "New Hampshire",
                 "New Jersey",
@@ -198,7 +198,7 @@ namespace UnitTests
 
         [DataTestMethod]
         [DataRow("/route/109063052/geflugelfrikadelle", "", 40.0)]
-        [DataRow("/route/105890633/black-dike", "3 pitches, Grade IV", 400.0)] //Lots of additional info
+        [DataRow("/route/105890633/black-dike", "3 pitches, Grade IV", 500.0)] //Lots of additional info
         [DataRow("/route/110425910/birds-of-a-feather", "", 50.0)] //Had a weird (multiple comma) parsing issue before
         [DataRow("/route/107530893/a-new-beginning", "", null)] //No additional info
         public void TestRouteAdditionalInfoParse(string url, string expectedAdditionalInfo, double? expectedHeightInFeet)
