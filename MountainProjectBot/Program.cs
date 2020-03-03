@@ -16,9 +16,11 @@ namespace MountainProjectBot
 {
     class Program
     {
+        private static OutputCapture outputCapture;
         static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
+            outputCapture = new OutputCapture();
 
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
@@ -48,6 +50,11 @@ namespace MountainProjectBot
             else
                 exceptionString = ExceptionDetailsToString(ex);
 
+            exceptionString += $"[{DateTime.Now}] 50 RECENT LOG LINES:\n\n";
+            string[] logLines = outputCapture.Captured.ToString().Split('\n');
+            foreach (string line in logLines.Skip(Math.Max(0, logLines.Count() - 50)))
+                exceptionString += $"{line}\n";
+
             File.AppendAllText($"CRASHREPORT ({DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss")}).log", exceptionString);
         }
 
@@ -59,12 +66,23 @@ namespace MountainProjectBot
             exceptionString += $"[{DateTime.Now}] EXCEPTION TYPE: {ex?.GetType()}\n";
             exceptionString += $"[{DateTime.Now}] EXCEPTION MESSAGE: {ex?.Message}\n";
             exceptionString += $"[{DateTime.Now}] STACK TRACE: {ex?.StackTrace}\n\n";
+
+            if (ex is TaskCanceledException taskCanceledException)
+                exceptionString += $"[{DateTime.Now}] IS CANCELLATION REQUESTED: {taskCanceledException.CancellationToken.IsCancellationRequested}\n";
+
+            exceptionString += "\n";
+
             if (ex?.InnerException != null && inner)
             {
                 Exception innerEx = ex.InnerException.Demystify();
                 exceptionString += $"[{DateTime.Now}] INNER EXCEPTION TYPE: {innerEx.GetType()}\n";
                 exceptionString += $"[{DateTime.Now}] INNER EXCEPTION: {innerEx.Message}\n";
-                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION STACK TRACE: {innerEx.StackTrace}\n\n";
+                exceptionString += $"[{DateTime.Now}] INNER EXCEPTION STACK TRACE: {innerEx.StackTrace}\n";
+
+                if (innerEx is TaskCanceledException innerTaskCanceledException)
+                    exceptionString += $"[{DateTime.Now}] IS CANCELLATION REQUESTED: {innerTaskCanceledException.CancellationToken.IsCancellationRequested}\n";
+
+                exceptionString += "\n";
             }
 
             return exceptionString;
@@ -142,13 +160,41 @@ namespace MountainProjectBot
                 //Thread.Sleep(10000); //Sleep for 10 seconds so as not to overload reddit
 
                 //Only run through once for a dry run
-                if (BotFunctions.DryRun)
+                if (BotFunctions.DryRun && !Debugger.IsAttached)
                 {
                     Console.WriteLine("All files updated. The program will now exit...");
                     Thread.Sleep(3000);
                     Environment.Exit(0);
                 }
             }
+        }
+    }
+
+    public class OutputCapture : TextWriter, IDisposable //Todo: this should eventually be moved to a "Common" location
+    {
+        private TextWriter stdOutWriter;
+        public TextWriter Captured { get; private set; }
+        public override Encoding Encoding { get { return Encoding.ASCII; } }
+
+        public OutputCapture()
+        {
+            this.stdOutWriter = Console.Out;
+            Console.SetOut(this);
+            Captured = new StringWriter();
+        }
+
+        override public void Write(string output)
+        {
+            // Capture the output and also send it to StdOut
+            Captured.Write(output);
+            stdOutWriter.Write(output);
+        }
+
+        override public void WriteLine(string output)
+        {
+            // Capture the output and also send it to StdOut
+            Captured.WriteLine(output);
+            stdOutWriter.WriteLine(output);
         }
     }
 }
