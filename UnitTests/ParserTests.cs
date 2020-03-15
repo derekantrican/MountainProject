@@ -266,6 +266,7 @@ namespace UnitTests
         [DataRow("Mount Nemo", "Mt. Nemo")]
         [DataRow("Mr. Masters", "Mr. Masters")]
         [DataRow("Mister Masters", "Mr. Masters")]
+        [DataRow("Lone Pine", "Lone Pine")] //Don't convert "Lone" into "L1"
         public void TestWordConsistency(string inputString, string expectedConversion)
         {
             string convertedString = Utilities.EnforceWordConsistency(inputString);

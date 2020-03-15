@@ -504,11 +504,14 @@ namespace MountainProjectAPI
         {
             List<Match> result = new List<Match>();
 
-            string allNumbersRegex = $"{string.Join("|", multiplierWords.Keys)}|" +
-                                     $"{string.Join("|", doubleNumbers.Keys)}|" +
-                                     $"{string.Join("|", teenNumbers.Keys)}|" +
-                                     $"{string.Join("|", singleNumbers.Keys)}|" +
-                                     @"\d+";
+            string lookBehindChars = @"^|\s|-";
+            string lookAheadChars = @",|-|\.|\?|!|\s|$";
+
+            string allNumbersRegex = $"{string.Join("|", multiplierWords.Keys.Select(p => $"(?<={lookBehindChars}){p}(?={lookAheadChars})"))}|" +
+                                     $"{string.Join("|", doubleNumbers.Keys.Select(p => $"(?<={lookBehindChars}){p}(?={lookAheadChars})"))}|" +
+                                     $"{string.Join("|", teenNumbers.Keys.Select(p => $"(?<={lookBehindChars}){p}(?={lookAheadChars})"))}|" +
+                                     $"{string.Join("|", singleNumbers.Keys.Select(p => $"(?<={lookBehindChars}){p}(?={lookAheadChars})"))}|" +
+                                     $@"(?<={lookBehindChars})\d+(?={lookAheadChars})";
 
             foreach (Match match in Regex.Matches(input, allNumbersRegex, RegexOptions.IgnoreCase))
                 result.Add(match);
