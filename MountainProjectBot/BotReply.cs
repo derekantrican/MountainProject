@@ -226,7 +226,7 @@ namespace MountainProjectBot
 
         private static string GetPopularRoutes(Area area, ResultParameters parameters)
         {
-            string result = "Popular routes:\n";
+            string result = "";
 
             List<Route> popularRoutes = new List<Route>();
             if (area.PopularRouteIDs.Count == 0) //MountainProject doesn't list any popular routes. Figure out some ourselves
@@ -246,9 +246,7 @@ namespace MountainProjectBot
             if (string.IsNullOrEmpty(result))
                 return "";
 
-            result += Markdown.NewLine;
-
-            return result;
+            return "Popular routes:" + Markdown.NewLine + result + Markdown.NewLine;
         }
 
         private static string GetRouteAdditionalInfo(Route route, ResultParameters parameters, bool showGrade = true, bool showHeight = true)
