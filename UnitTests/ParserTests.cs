@@ -178,9 +178,10 @@ namespace UnitTests
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            Grade routeGrade = Parsers.ParseRouteGrades(Utilities.GetHtmlDoc(url)).Find(p => p.System == expectedGradeSystem && p.Value == expectedValue);
+            List<Grade> parsedGrades = Parsers.ParseRouteGrades(Utilities.GetHtmlDoc(url));
+            Grade gradeMatchingExpected = parsedGrades.Find(p => p.System == expectedGradeSystem && p.Value == expectedValue);
 
-            Assert.IsNotNull(routeGrade);
+            Assert.IsNotNull(gradeMatchingExpected);
         }
 
         [DataTestMethod]
