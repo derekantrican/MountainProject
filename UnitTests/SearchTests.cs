@@ -32,7 +32,7 @@ namespace UnitTests
             { "Lifeline, Portland", "/route/113696621/lifeline" }, //Location that will likely match something else first ("Portland" should be UK but more likely matches Oregon)
             { "Sin Gaz", "/route/108244424/sin-gaz" }, //The text "singaz" is contained by a higher popularity route. This is more a test for "DetermineBestMatch"
             { "East Ridge", "/route/105848762/east-ridge" }, //"East Ridge" is contained in the text "Northeast Ridges and Valleys"
-            { "East Ridge, Mt Temple", "/route/106997654/east-ridge" }, //Todo: in the future support "Mt" vs "Mount"
+            { "East Ridge, Mt Temple", "/route/106997654/east-ridge" },
             { "East Face of Pingora", "/route/105827735/east-face-left-side-cracks" }, //Location also has a route called "Northeast face" with a higher priority
             { "Five gallon buckets", "/route/105789060/5-gallon-buckets" }, //Number words/Numbers interchangable
             { "5 gallon buckets", "/route/105789060/5-gallon-buckets" }, //Number words/Numbers interchangable
@@ -244,14 +244,14 @@ namespace UnitTests
                 if (isGoogleSheetsTest)
                 {
                     inputPostTitle = lineParts[2];
-                    expectedMPLink = lineParts[9].ToUpper() != "YES" ? null : Utilities.GetSimpleURL(lineParts[7]);
-                    comment = lineParts.Length > 11 ? $"//{lineParts[11]}" : null;
+                    expectedMPLink = lineParts[9].ToUpper() == "YES" ? Utilities.GetSimpleURL(lineParts[7]) : !string.IsNullOrEmpty(lineParts[10]) ? $"{Utilities.MPBASEURL}/{lineParts[10]}" : null;
+                    comment = lineParts.Length > 11 && !string.IsNullOrEmpty(lineParts[11]) ? $"//{lineParts[11]}" : null;
                 }
                 else
                 {
                     inputPostTitle = lineParts[0];
                     expectedMPLink = lineParts[1] == "null" ? null : Utilities.GetSimpleURL(lineParts[1]);
-                    comment = lineParts.Length > 2 ? $"//{lineParts[2]}" : null;
+                    comment = lineParts.Length > 2 && !string.IsNullOrEmpty(lineParts[2]) ? $"//{lineParts[2]}" : null;
                 }
 
                 //Override input title (uncomment only for debugging)
@@ -301,14 +301,18 @@ namespace UnitTests
                 }
             }/*);*/
 
-            if (!isGoogleSheetsTest) //Todo: may want to rework how the spreadsheet is setup so that this line is also relevant for GoogleSheetsTest
+            if (!isGoogleSheetsTest)
+            {
                 System.Diagnostics.Debug.WriteLine($"Passes: {totalPasses}, Failures: {totalFailures}, Pass percentage: {Math.Round((double)totalPasses / (totalPasses + totalFailures) * 100, 2)}%\n");
-
-            if (isGoogleSheetsTest)
+            }
+            else
+            {
                 System.Diagnostics.Debug.WriteLine($"Yesses that now have confidence 1: {yessesWithConfidence1} (out of {testCriteria.Count(p => p.Split('\t')[9].ToUpper() == "YES")} total yesses)\n");
+                System.Diagnostics.Debug.WriteLine($"Passes: {totalPasses}, Failures: {totalFailures}\n");
+            }
 
             if (failingPostsWithConfidence1.Any())
-                System.Diagnostics.Debug.WriteLine($"Failing posts with confidence 1:\n\n{string.Join("\n", failingPostsWithConfidence1)}\n");
+                System.Diagnostics.Debug.WriteLine($"Failing posts with confidence 1 ({failingPostsWithConfidence1.Count()}):\n\n{string.Join("\n", failingPostsWithConfidence1)}\n");
 
             System.Diagnostics.Debug.WriteLine(writer.ToString());
             writer.Dispose();

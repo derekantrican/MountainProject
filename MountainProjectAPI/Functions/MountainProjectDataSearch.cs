@@ -170,9 +170,13 @@ namespace MountainProjectAPI
 
             if (possibleResults.Any())
             {
-                //Todo: prioritize routes where the grade matches exactly (eg 5.11a matches 5.11a rather than matching 5.11a-b)
+                //Todo: prioritize routes where the grade matches exactly (eg 5.11a matches 5.11a rather than matching 5.11a-b). Also prioritize 5.11a towards 5.11a-b (or vice-versa) rather than 5.11c
+
                 //Todo: for matching parents in string, maybe give higher priority to results that match MORE parents. EG "Once Upon a Time - Black Mountain, California" gives
                 //  2 routes named "Once upon a time" in California. But only one is also at "Black Mountain"
+
+                //Todo: rather than trying to match the whole route name in filteredResults, we should just prioritize matching the largest string of words in a row (in the case of "Birthing Experience
+                //  V1 Bishop, CA" we should prioritize "The Womb (Birthing Experience)" over routes just named "Bishop")
 
                 //Prioritize routes where the full name is in the input string
                 //(Additionally, we could also prioritize how close - within the input string - the name is to the rating)
