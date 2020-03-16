@@ -43,7 +43,8 @@ namespace UnitTests
             { "Mister Masters", "/route/105733163/mister-masters" }, //"Mr"/"Mister" interchangable
             { "Mr Masters", "/route/105733163/mister-masters" }, //"Mr"/"Mister" interchangable
             { "Landjäger", "/route/117251258/landjager" }, //Diacritical marks optional
-            { "Landjager", "/route/117251258/landjager" } //Diacritical marks optional
+            { "Landjager", "/route/117251258/landjager" }, //Diacritical marks optional
+            { "Alexisizer", "/route/106657518/alexisizer" }, //There is an "Alexisizer" area and a "Alexisizer" route. This is to make sure the route is picked
         };
 
         [TestMethod]

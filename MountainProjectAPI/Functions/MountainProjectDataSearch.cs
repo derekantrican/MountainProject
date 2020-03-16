@@ -589,39 +589,42 @@ namespace MountainProjectAPI
             if (allMatches.Count == 0)
                 return null;
 
+            //=============== CHOOSE THE BEST MATCH ===============
             //First priority: items where the name matches the search query exactly CASE SENSITIVE
-            List<MPObject> matchingItems = allMatches.Where(p => Utilities.StringsEqual(searchQuery, p.Name, false)).ToList();
-            if (matchingItems.Any())
-                return FilterByPopularity(matchingItems);
+            List<MPObject> filteredItems = allMatches.Where(p => Utilities.StringsEqual(searchQuery, p.Name, false)).ToList();
 
             //Second priority: items where the name matches the search query exactly (but case-insensitive)
-            matchingItems = allMatches.Where(p => Utilities.StringsEqual(searchQuery, p.Name)).ToList();
-            if (matchingItems.Any())
-                return FilterByPopularity(matchingItems);
+            if (!filteredItems.Any())
+                filteredItems = allMatches.Where(p => Utilities.StringsEqual(searchQuery, p.Name)).ToList();
 
             //Third priority: items where the name matches the FILTERED (no symbols or spaces, case insensitive) search query exactly
-            matchingItems = allMatches.Where(p => Utilities.StringsEqual(Utilities.FilterStringForMatch(searchQuery), p.NameForMatch)).ToList();
-            if (matchingItems.Any())
-                return FilterByPopularity(matchingItems);
+            if (!filteredItems.Any())
+                filteredItems = allMatches.Where(p => Utilities.StringsEqual(Utilities.FilterStringForMatch(searchQuery), p.NameForMatch)).ToList();
 
             //[IN THE FUTURE]Fourth priority: items with a levenshtein distance less than 3
 
             //Fifth priority: items where the name contains the search query CASE SENSITIVE
-            matchingItems = allMatches.Where(p => Utilities.StringContains(p.Name, searchQuery, false)).ToList();
-            if (matchingItems.Any())
-                return FilterByPopularity(matchingItems);
+            if (!filteredItems.Any())
+                filteredItems = allMatches.Where(p => Utilities.StringContains(p.Name, searchQuery, false)).ToList();
 
             //Sixth priority: items where the name contains the search query (case-insensitive)
-            matchingItems = allMatches.Where(p => Utilities.StringContains(p.Name, searchQuery)).ToList();
-            if (matchingItems.Any())
-                return FilterByPopularity(matchingItems);
+            if (!filteredItems.Any())
+                filteredItems = allMatches.Where(p => Utilities.StringContains(p.Name, searchQuery)).ToList();
 
             //Seventh priority: items where the name contains the FITLERED search query (case-insensitive)
-            matchingItems = allMatches.Where(p => Utilities.StringContains(p.NameForMatch, Utilities.FilterStringForMatch(searchQuery))).ToList();
-            if (matchingItems.Any())
-                return FilterByPopularity(matchingItems);
+            if (!filteredItems.Any())
+                filteredItems = allMatches.Where(p => Utilities.StringContains(p.NameForMatch, Utilities.FilterStringForMatch(searchQuery))).ToList();
 
-            //Finally, if we haven't matched anything above, just filter by priority
+            //=============== RESULTS PROCESSING ===============
+            //Remove parents where the child was also matched (eg "Alexisizer" area vs "Alexisizer" route)
+            filteredItems.RemoveAll(parent => filteredItems.Find(child => child.ParentIDs.Contains(parent.ID)) != null);
+
+            //=============== RETURN RESULTS ===============
+            //Return the most popular filtered item
+            if (filteredItems.Any())
+                return FilterByPopularity(filteredItems);
+
+            //Otherwise, if we haven't matched anything above, just return the most popular item out of allMatches
             return FilterByPopularity(allMatches);
         }
 
