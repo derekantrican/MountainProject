@@ -3,6 +3,7 @@ using MountainProjectAPI;
 using MountainProjectBot;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -44,7 +45,7 @@ namespace UnitTests
             { "Mr Masters", "/route/105733163/mister-masters" }, //"Mr"/"Mister" interchangable
             { "Landjäger", "/route/117251258/landjager" }, //Diacritical marks optional
             { "Landjager", "/route/117251258/landjager" }, //Diacritical marks optional
-            { "Alexisizer", "/route/106657518/alexisizer" }, //There is an "Alexisizer" area and a "Alexisizer" route. This is to make sure the route is picked
+            { "Alexisizer", "/route/106657518/alexisizer" }, //There is an "Alexisizer" area and an "Alexisizer" route. This is to make sure the route is picked
         };
 
         [TestMethod]
@@ -218,6 +219,8 @@ namespace UnitTests
         [TestMethod]
         public void TestPostTitleParse()
         {
+            Stopwatch totalStopwatch = Stopwatch.StartNew();
+
             int totalPasses = 0;
             int totalFailures = 0;
             int yessesWithConfidence1 = 0;
@@ -236,9 +239,10 @@ namespace UnitTests
             //testCriteria = Utilities.GetHtml(requestUrl).Split('\n');
             //-----------------------------------------------------------------
 
-            //Parallel.For(0, testCriteria.Length, i =>
             for (int i = 0; i < testCriteria.Length; i++)
             {
+                Stopwatch routeStopwatch = Stopwatch.StartNew();
+
                 string[] lineParts = testCriteria[i].Split('\t');
 
                 string inputPostTitle, expectedMPLink, comment;
@@ -300,22 +304,26 @@ namespace UnitTests
                             yessesWithConfidence1++;
                     }
                 }
-            }/*);*/
+
+                writer.WriteLine($"Time taken: {routeStopwatch.Elapsed}");
+            }
+
+            Debug.WriteLine($"Test completed in {totalStopwatch.Elapsed}\n");
 
             if (!isGoogleSheetsTest)
             {
-                System.Diagnostics.Debug.WriteLine($"Passes: {totalPasses}, Failures: {totalFailures}, Pass percentage: {Math.Round((double)totalPasses / (totalPasses + totalFailures) * 100, 2)}%\n");
+                Debug.WriteLine($"Passes: {totalPasses}, Failures: {totalFailures}, Pass percentage: {Math.Round((double)totalPasses / (totalPasses + totalFailures) * 100, 2)}%\n");
             }
             else
             {
-                System.Diagnostics.Debug.WriteLine($"Yesses that now have confidence 1: {yessesWithConfidence1} (out of {testCriteria.Count(p => p.Split('\t')[9].ToUpper() == "YES")} total yesses)\n");
-                System.Diagnostics.Debug.WriteLine($"Passes: {totalPasses}, Failures: {totalFailures}\n");
+                Debug.WriteLine($"Yesses that now have confidence 1: {yessesWithConfidence1} (out of {testCriteria.Count(p => p.Split('\t')[9].ToUpper() == "YES")} total yesses)\n");
+                Debug.WriteLine($"Passes: {totalPasses}, Failures: {totalFailures}\n");
             }
 
             if (failingPostsWithConfidence1.Any())
-                System.Diagnostics.Debug.WriteLine($"Failing posts with confidence 1 ({failingPostsWithConfidence1.Count()}):\n\n{string.Join("\n", failingPostsWithConfidence1)}\n");
+                Debug.WriteLine($"Failing posts with confidence 1 ({failingPostsWithConfidence1.Count()}):\n\n{string.Join("\n", failingPostsWithConfidence1)}\n");
 
-            System.Diagnostics.Debug.WriteLine(writer.ToString());
+            Debug.WriteLine(writer.ToString());
             writer.Dispose();
 
             Assert.IsTrue(failingPostsWithConfidence1.Count == 0, "Some failed matches have a confidence of 1");

@@ -189,7 +189,7 @@ namespace MountainProjectAPI
                 string unconfidentReason = null;
                 if (filteredResults.Count == 1)
                 {
-                    if (ParentsInString(filteredResults.First().Item1, inputString, true).Any() ||
+                    if (ParentsInString(filteredResults.First().Item1, filteredResults.First().Item3, true).Any() ||
                         Grade.ParseString(inputString, false).Any(g => filteredResults.First().Item1.Grades.Any(p => g.Equals(p))))
                         confidence = highConfidence; //Highest confidence when we also match a location in the string or if we match a full grade
                     else
