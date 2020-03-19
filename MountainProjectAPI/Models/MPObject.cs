@@ -53,9 +53,9 @@ namespace MountainProjectAPI
             get
             {
                 if (this is Route)
-                    return $"{Utilities.MPBASEURL}/route/{ID}";
+                    return $"{Utilities.MPROUTEURL}/{ID}";
                 else if (this is Area)
-                    return $"{Utilities.MPBASEURL}/area/{ID}";
+                    return $"{Utilities.MPAREAURL}/{ID}";
 
                 return null;
             }

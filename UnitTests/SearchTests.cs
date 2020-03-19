@@ -216,9 +216,14 @@ namespace UnitTests
             }
         }
 
+        //[DataTestMethod]
+        //[DataRow(false, false)] //This would be preferred but causes duplicate runs: https://github.com/microsoft/testfx/issues/488
         [TestMethod]
-        public void TestPostTitleParse()
+        public void TestPostTitleParse(/*bool outputExtraInfo, bool isGoogleSheetsTest*/)
         {
+            bool outputExtraInfo = false;
+            bool isGoogleSheetsTest = false;
+
             Stopwatch totalStopwatch = Stopwatch.StartNew();
 
             int totalPasses = 0;
@@ -228,16 +233,17 @@ namespace UnitTests
 
             StringWriter writer = new StringWriter();
             Console.SetOut(writer);
+            MountainProjectDataSearch.OutputExtraInfo = outputExtraInfo;
 
             MountainProjectDataSearch.InitMountainProjectData(@"..\..\MountainProjectDBBuilder\bin\MountainProjectAreas.xml");
-            string[] testCriteria = File.ReadAllLines(@"..\PostTitleTest.txt");
-
-            bool isGoogleSheetsTest = false;
-            //---------Google Sheet test (uncomment only for testing)----------
-            //isGoogleSheetsTest = true;
-            //string requestUrl = BotUtilities.GetRequestServerURL(@"..\..\MountainProjectBot\Credentials.txt") + "PostHistory";
-            //testCriteria = Utilities.GetHtml(requestUrl).Split('\n');
-            //-----------------------------------------------------------------
+            string[] testCriteria;
+            if (isGoogleSheetsTest)
+            {
+                string requestUrl = BotUtilities.GetRequestServerURL(@"..\..\MountainProjectBot\Credentials.txt") + "PostHistory";
+                testCriteria = Utilities.GetHtml(requestUrl).Split('\n');
+            }
+            else
+                testCriteria = File.ReadAllLines(@"..\PostTitleTest.txt");
 
             for (int i = 0; i < testCriteria.Length; i++)
             {
@@ -249,7 +255,7 @@ namespace UnitTests
                 if (isGoogleSheetsTest)
                 {
                     inputPostTitle = lineParts[2];
-                    expectedMPLink = lineParts[9].ToUpper() == "YES" ? Utilities.GetSimpleURL(lineParts[7]) : !string.IsNullOrEmpty(lineParts[10]) ? $"{Utilities.MPBASEURL}/{lineParts[10]}" : null;
+                    expectedMPLink = lineParts[9].ToUpper() == "YES" ? Utilities.GetSimpleURL(lineParts[7]) : !string.IsNullOrEmpty(lineParts[10]) ? $"{Utilities.MPROUTEURL}/{lineParts[10]}" : null;
                     comment = lineParts.Length > 11 && !string.IsNullOrEmpty(lineParts[11]) ? $"//{lineParts[11]}" : null;
                 }
                 else
@@ -260,7 +266,7 @@ namespace UnitTests
                 }
 
                 //Override input title (uncomment only for debugging)
-                //inputPostTitle = "2 months into climbing, just did my first 2/3! Now to master it and do it smoother.";
+                //inputPostTitle = "Happy Star Wars Day! Had to practice my mental game for this one: \"Jedi Mind Tricks\" (v4). One of the Best.";
 
                 writer.WriteLine($"POST TITLE: {inputPostTitle}");
 
@@ -271,13 +277,12 @@ namespace UnitTests
                 {
                     if (route == null)
                     {
-                        writer.WriteLine("PASS");
+                        writer.WriteLine($"PASS (Confidence: {result.Confidence})");
                         totalPasses++;
                     }
                     else
                     {
-                        writer.WriteLine($"FAILED FOR: {inputPostTitle}");
-                        writer.WriteLine($"EXPECTED: {expectedMPLink} , ACTUAL: {route?.URL} {comment}");
+                        writer.WriteLine($"FAILED. EXPECTED: {expectedMPLink} , ACTUAL: {route?.URL} {comment}");
                         totalFailures++;
 
                         if (result.Confidence == 1)
@@ -288,8 +293,7 @@ namespace UnitTests
                 {
                     if (route == null || route.URL != expectedMPLink)
                     {
-                        writer.WriteLine($"FAILED FOR: {inputPostTitle}");
-                        writer.WriteLine($"EXPECTED: {expectedMPLink} , ACTUAL: {route?.URL} {comment}");
+                        writer.WriteLine($"FAILED. EXPECTED: {expectedMPLink} , ACTUAL: {route?.URL} {comment}");
                         totalFailures++;
 
                         if (result.Confidence == 1)
@@ -297,7 +301,7 @@ namespace UnitTests
                     }
                     else
                     {
-                        writer.WriteLine("PASS");
+                        writer.WriteLine($"PASS (Confidence: {result.Confidence})");
                         totalPasses++;
 
                         if (isGoogleSheetsTest && result.Confidence == 1)
@@ -305,10 +309,12 @@ namespace UnitTests
                     }
                 }
 
-                writer.WriteLine($"Time taken: {routeStopwatch.Elapsed}");
+                if (outputExtraInfo)
+                    writer.WriteLine($"Time taken: {routeStopwatch.Elapsed}");
             }
 
-            Debug.WriteLine($"Test completed in {totalStopwatch.Elapsed}\n");
+            if (outputExtraInfo)
+                Debug.WriteLine($"Test completed in {totalStopwatch.Elapsed}\n");
 
             if (!isGoogleSheetsTest)
             {

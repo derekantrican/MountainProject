@@ -14,6 +14,8 @@ namespace MountainProjectAPI
     public static class Utilities
     {
         public const string MPBASEURL = "https://www.mountainproject.com";
+        public const string MPROUTEURL = "https://www.mountainproject.com/route";
+        public const string MPAREAURL = "https://www.mountainproject.com/area";
         public const string ALLLOCATIONSURL = "https://www.mountainproject.com/route-guide";
         public const string INTERNATIONALURL = "https://www.mountainproject.com/area/105907743/international";
         public const string AUSTRALIAURL = "https://www.mountainproject.com/area/105907756/australia";
@@ -199,18 +201,50 @@ namespace MountainProjectAPI
                 return Regex.Replace(input, @"[^\p{L}0-9 ]", "");
         }
 
-        public static bool StringsEqual(string inputString, string targetString, bool caseInsensitive = true)
+        public static bool StringStartsWith(string containingString, string innerString, bool caseInsensitive = true)
         {
-            string input = inputString;
-            string target = targetString;
+            if (caseInsensitive)
+            {
+                innerString = innerString.ToLower();
+                containingString = containingString.ToLower();
+            }
+
+            return containingString.StartsWith(innerString);
+        }
+
+        public static bool StringStartsWithFiltered(string containingString, string innerString, bool caseInsensitive = true, bool enforceConsistentWords = true)
+        {
+            if (enforceConsistentWords)
+            {
+                return StringStartsWith(EnforceWordConsistency(containingString), EnforceWordConsistency(innerString), caseInsensitive);
+            }
+            else
+                return StringStartsWith(containingString, innerString, caseInsensitive);
+        }
+
+        public static bool StringsEqual(string firstString, string secondString, bool caseInsensitive = true)
+        {
+            string first = firstString;
+            string second = secondString;
 
             if (caseInsensitive)
             {
-                input = input.ToLower();
-                target = target.ToLower();
+                first = first.ToLower();
+                second = second.ToLower();
             }
 
-            return target == input;
+            return first == second;
+        }
+
+        public static bool StringsEqualWithFilters(string firstString, string secondString, bool caseInsensitive = true, bool enforceConsistentWords = true)
+        {
+            if (enforceConsistentWords)
+            {
+                return StringsEqual(FilterStringForMatch(EnforceWordConsistency(firstString)),
+                                    FilterStringForMatch(EnforceWordConsistency(secondString)), caseInsensitive);
+            }
+            else
+                return StringsEqual(FilterStringForMatch(firstString), FilterStringForMatch(secondString), caseInsensitive);
         }
 
         public static bool StringContains(string containingString, string innerString, bool caseInsensitive = true)
@@ -296,7 +330,7 @@ namespace MountainProjectAPI
 
         public static string GetID(string mpURL)
         {
-            return mpURL.Replace($"{MPBASEURL}/route/", "").Replace($"{MPBASEURL}/area/", "").Split('/')[0];
+            return mpURL.Replace($"{MPROUTEURL}/", "").Replace($"{MPAREAURL}/", "").Split('/')[0];
         }
 
         public static string GetSimpleURL(string mpUrl)
@@ -307,6 +341,16 @@ namespace MountainProjectAPI
         public static bool IsNumber(string inputString)
         {
             return int.TryParse(inputString, out _);
+        }
+
+        public static List<string> GetWords(string input, bool removeEmpty = true)
+        {
+            List<string> words = Regex.Split(input, @"[^\p{L}0-9'’]").ToList();
+
+            if (removeEmpty)
+                words.RemoveAll(s => string.IsNullOrEmpty(s));
+
+            return words;
         }
 
         public static List<string> GetWordGroups(string phrase, bool allowSingleWords = true)

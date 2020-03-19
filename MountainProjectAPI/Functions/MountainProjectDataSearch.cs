@@ -10,12 +10,13 @@ namespace MountainProjectAPI
 {
     public static class MountainProjectDataSearch
     {
+        public static bool OutputExtraInfo = true;
         public static List<Area> DestAreas = new List<Area>();
 
         #region Public Methods
         public static void InitMountainProjectData(string xmlPath)
         {
-            Console.WriteLine("Deserializing info from MountainProject");
+            WriteToConsole("Deserializing info from MountainProject");
 
             using (FileStream fileStream = new FileStream(xmlPath, FileMode.Open))
             {
@@ -25,16 +26,16 @@ namespace MountainProjectAPI
 
             if (DestAreas.Count == 0)
             {
-                Console.WriteLine("Problem deserializing MountainProject info");
+                WriteToConsole("Problem deserializing MountainProject info");
                 Environment.Exit(13); //Invalid data
             }
 
-            Console.WriteLine("MountainProject Info deserialized successfully");
+            WriteToConsole("MountainProject Info deserialized successfully");
         }
 
         public static SearchResult Search(string queryText, SearchParameters searchParameters = null)
         {
-            Console.WriteLine($"\tGetting info from MountainProject for \"{queryText}\"");
+            WriteToConsole($"\tGetting info from MountainProject for \"{queryText}\"");
             Stopwatch searchStopwatch = Stopwatch.StartNew();
             SearchResult searchResult;
 
@@ -103,7 +104,7 @@ namespace MountainProjectAPI
                 };
             }
 
-            Console.WriteLine($"\tFound {searchResult.AllResults.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms");
+            WriteToConsole($"\tFound {searchResult.AllResults.Count} matching results from MountainProject in {searchStopwatch.ElapsedMilliseconds} ms");
 
             searchResult.TimeTakenMS = searchStopwatch.ElapsedMilliseconds;
 
@@ -119,10 +120,10 @@ namespace MountainProjectAPI
             List<Tuple<Route, Area, string>> possibleResults = new List<Tuple<Route, Area, string>>();
 
             List<Grade> postGrades = Grade.ParseString(inputString);
-            Console.WriteLine($"\tRecognized grade(s): {string.Join(" | ", postGrades)}");
+            WriteToConsole($"\tRecognized grade(s): {string.Join(" | ", postGrades)}");
 
             List<string> possibleRouteNames = GetPossibleRouteNames(inputString);
-            Console.WriteLine($"\tRecognized name(s): {string.Join(" | ", possibleRouteNames)}");
+            WriteToConsole($"\tRecognized name(s): {string.Join(" | ", possibleRouteNames)}");
             
             foreach (string possibleRouteName in possibleRouteNames)
             {
@@ -318,15 +319,25 @@ namespace MountainProjectAPI
             List<MPObject> matchedParents = new List<MPObject>();
             List<string> possibleNames = GetPossibleRouteNames(inputString);
 
-            if (caseSensitive)
+            foreach (Area parent in child.Parents)
             {
-                if (child.Parents.Any(p => possibleNames.Any(n => Utilities.StringContainsWithFilters(p.Name, n))))
-                    matchedParents.AddRange(child.Parents.Where(p => possibleNames.Any(n => Utilities.StringContainsWithFilters(p.Name, n, enforceConsistentWords: false))));
-            }
-            else
-            {
-                if (child.Parents.Any(p => possibleNames.Any(n => Utilities.StringContainsWithFilters(p.Name, n, true))))
-                    matchedParents.AddRange(child.Parents.Where(p => possibleNames.Any(n => Utilities.StringContainsWithFilters(p.Name, n, true, false))));
+                List<string> parentWords = Utilities.GetWords(parent.Name);
+
+                foreach (string possibleName in possibleNames)
+                {
+                    List<string> possibleNameWords = Utilities.GetWords(possibleName);
+
+                    bool allMatchingWordsValid = possibleNameWords.All(possibleNameWord =>
+                    {
+                        string containingParentWord = parentWords.Find(parentWord => Utilities.StringsEqualWithFilters(possibleNameWord, parentWord, !caseSensitive) /*|| Utilities.StringStartsWithFiltered(n, p)*/);
+                        return containingParentWord != null;
+                    });
+
+                    if (Utilities.StringContainsWithFilters(parent.Name, possibleName, !caseSensitive) && allMatchingWordsValid)
+                    {
+                        matchedParents.Add(parent);
+                    }
+                }
             }
 
             if (allowStateAbbr)
@@ -386,7 +397,7 @@ namespace MountainProjectAPI
             connectingWords = connectingWords.Concat(locationWords).ToArray();
 
             string possibleRouteName = "";
-            foreach (string word in Regex.Split(postTitle, @"[^\p{L}0-9'’]"))
+            foreach (string word in Utilities.GetWords(postTitle, false))
             {
                 if ((!string.IsNullOrWhiteSpace(word) && char.IsUpper(word[0]) && word.Length > 1) ||
                     (connectingWords.Contains(word.ToLower()) && !string.IsNullOrWhiteSpace(possibleRouteName)) || Utilities.IsNumber(word))
@@ -658,7 +669,7 @@ namespace MountainProjectAPI
                 int pop2 = matchedObjectsByPopularity[1].Popularity;
                 double popularityPercentDiff = Math.Round((double)(pop1 - pop2) / pop2 * 100, 2);
 
-                Console.WriteLine($"\tFiltering based on popularity (result has popularity {popularityPercentDiff}% higher than next closest)");
+                WriteToConsole($"\tFiltering based on popularity (result has popularity {popularityPercentDiff}% higher than next closest)");
 
                 return matchedObjectsByPopularity.First(); //Return the most popular matched object (this may prioritize areas over routes. May want to check that later)
             }
@@ -678,7 +689,7 @@ namespace MountainProjectAPI
                 int pop2 = resultsByPopularity[1].FilteredResult.Popularity;
                 double popularityPercentDiff = Math.Round((double)(pop1 - pop2) / pop2 * 100, 2);
 
-                Console.WriteLine($"\tFiltering based on popularity (result has popularity {popularityPercentDiff}% higher than next closest)");
+                WriteToConsole($"\tFiltering based on popularity (result has popularity {popularityPercentDiff}% higher than next closest)");
 
                 return resultsByPopularity.First(); //Return the most popular matched object (this may prioritize areas over routes. May want to check that later)
             }
@@ -777,6 +788,12 @@ namespace MountainProjectAPI
             }
 
             return results;
+        }
+
+        private static void WriteToConsole(string message)
+        {
+            if (OutputExtraInfo)
+                Console.WriteLine(message);
         }
         #endregion Helper Methods
     }
