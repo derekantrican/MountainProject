@@ -178,12 +178,15 @@ namespace MountainProjectBot
             File.AppendAllLines(repliedToPath, new string[] { comment.Id });
         }
 
-        public static void LogPostBeenSeen(Post post)
+        public static void LogPostBeenSeen(Post post, string reason = "")
         {
             if (!File.Exists(seenPostsPath))
                 File.Create(seenPostsPath).Close();
 
-            File.AppendAllLines(seenPostsPath, new string[] { post.Id });
+            if (!string.IsNullOrEmpty(reason))
+                File.AppendAllLines(seenPostsPath, new string[] { $"{post.Id}\t{reason}" });
+            else
+                File.AppendAllLines(seenPostsPath, new string[] { post.Id });
         }
 
         public static List<Comment> RemoveAlreadyRepliedTo(List<Comment> comments)
@@ -202,8 +205,8 @@ namespace MountainProjectBot
             if (!File.Exists(seenPostsPath))
                 File.Create(seenPostsPath).Close();
 
-            string text = File.ReadAllText(seenPostsPath);
-            posts.RemoveAll(p => text.Contains(p.Id));
+            string[] lines = File.ReadAllLines(seenPostsPath);
+            posts.RemoveAll(p => lines.Any(l => l.StartsWith(p.Id)));
 
             return posts;
         }

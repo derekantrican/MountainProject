@@ -172,7 +172,7 @@ namespace MountainProjectBot
                     {
                         subredditPosts.Remove(post);
                         BotUtilities.WriteToConsoleWithColor($"\tSkipping {post.Id} (self-post)", ConsoleColor.Red);
-                        BotUtilities.LogPostBeenSeen(post);
+                        BotUtilities.LogPostBeenSeen(post, "self-post");
                     }
 
                     double ageInMin = (DateTime.UtcNow - post.CreatedUTC).TotalMinutes;
@@ -180,7 +180,7 @@ namespace MountainProjectBot
                     {
                         subredditPosts.Remove(post);
                         BotUtilities.WriteToConsoleWithColor($"\tSkipping {post.Id} (too old: {Math.Round(ageInMin,2)} min)", ConsoleColor.Red);
-                        BotUtilities.LogPostBeenSeen(post);
+                        BotUtilities.LogPostBeenSeen(post, $"too old ({Math.Round(ageInMin, 2)} min)");
                     }
                 }
 
@@ -199,7 +199,7 @@ namespace MountainProjectBot
                     if (!searchResult.IsEmpty())
                     {
                         postsPendingApproval.Add(new KeyValuePair<Post, SearchResult>(post, searchResult));
-                        BotUtilities.LogPostBeenSeen(post);
+                        BotUtilities.LogPostBeenSeen(post, searchResult.Confidence == 1 ? "auto-replying" : "pending approval");
 
                         //Until we are more confident with automatic results, we're going to request for approval for confidence values greater than 1 (less than 100%)
                         if (searchResult.Confidence > 1)
@@ -219,7 +219,7 @@ namespace MountainProjectBot
                     else
                     {
                         Console.WriteLine("\tNothing found");
-                        BotUtilities.LogPostBeenSeen(post);
+                        BotUtilities.LogPostBeenSeen(post, "nothing found");
                     }
                 }
                 catch (RateLimitException)
