@@ -90,6 +90,17 @@ namespace MountainProjectAPI
             {"Wyoming", "WY"}
         };
 
+        public static Dictionary<string, string> AreaNicknames = new Dictionary<string, string>
+        {
+            { "105841134", @"\bRRG\b" }, //Red River Gorge
+            { "105855991", @"\bNRG\b" }, //New River Gorge
+            { "106031921", @"\bLRC\b" }, //Little Rock City
+            { "106094862", @"\bHP ?40\b" }, //Horse Pens 40
+            { "105739277", @"\bLCC\b" }, //Little Cottonwood Canyon
+            { "106008886", @"\bFont\b" }, //Fontainebleau
+            { "105720495", @"\bJTree\b" }, //Joshua Tree
+        };
+
         public static string GetHtml(string url)
         {
             string html = "";
@@ -247,7 +258,7 @@ namespace MountainProjectAPI
                 return StringsEqual(FilterStringForMatch(firstString), FilterStringForMatch(secondString), caseInsensitive);
         }
 
-        public static bool StringContains(string containingString, string innerString, bool caseInsensitive = true)
+        public static bool StringContains(string containingString, string innerString, bool caseInsensitive = true, bool useRegex = false)
         {
             if (caseInsensitive)
             {
@@ -255,7 +266,10 @@ namespace MountainProjectAPI
                 containingString = containingString.ToLower();
             }
 
-            return containingString.Contains(innerString);
+            if (useRegex)
+                return Regex.IsMatch(innerString, containingString);
+            else
+                return containingString.Contains(innerString);
         }
 
         public static bool StringContainsWithFilters(string containingString, string innerString, bool caseInsensitive = false, bool enforceConsistentWords = true)

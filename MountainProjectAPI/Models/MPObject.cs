@@ -21,31 +21,13 @@ namespace MountainProjectAPI
             this.Parents = new List<MPObject>();
         }
 
-        private string name { get; set; }
-        public string Name
-        {
-            get
-            {
-                return name;
-            }
-            set
-            {
-                if (Regex.Match(value, ", The", RegexOptions.IgnoreCase).Success)
-                {
-                    value = value.Replace(", The", "");
-                    value = "The " + value;
-                }
-
-                name = value.Trim();
-
-                //Remove any special characters (spaces, apostrophes, etc) and leave only letter characters (of any language)
-                //Ideally, we would do this during MountainProjectDataSearch.StringMatch but Regex.Replace takes a significant 
-                //amount of time. So running it during the DBBuild saves time for the Reddit bot
-                NameForMatch = Utilities.FilterStringForMatch(Utilities.EnforceWordConsistency(name));
-            }
-        }
-
+        public string Name { get; set; }
         public string NameForMatch { get; set; }
+        public string ID { get; set; }
+        public int Popularity { get; set; }
+        public List<string> ParentIDs { get; set; }
+        [XmlIgnore]
+        public List<MPObject> Parents { get; set; }
 
         [XmlIgnore]
         public string URL
@@ -60,12 +42,6 @@ namespace MountainProjectAPI
                 return null;
             }
         }
-
-        public string ID { get; set; }
-        public int Popularity { get; set; }
-        public List<string> ParentIDs { get; set; }
-        [XmlIgnore]
-        public List<MPObject> Parents { get; set; }
 
         public override string ToString()
         {

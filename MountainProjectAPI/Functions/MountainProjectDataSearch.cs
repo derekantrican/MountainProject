@@ -180,7 +180,7 @@ namespace MountainProjectAPI
                 //  V1 Bishop, CA" we should prioritize "The Womb (Birthing Experience)" over routes just named "Bishop")
 
                 //Prioritize routes where the full name is in the input string
-                //(Additionally, we could also prioritize how close - within the input string - the name is to the rating)
+                //(Additionally, we could also prioritize how close - within the input string - the name is to the grade)
                 List<Tuple<Route, Area, string>> filteredResults = possibleResults.Where(p => Utilities.StringContainsWithFilters(inputString, p.Item1.Name, true)).ToList();
 
                 int highConfidence = 1;
@@ -334,6 +334,10 @@ namespace MountainProjectAPI
                     });
 
                     if (Utilities.StringContainsWithFilters(parent.Name, possibleName, !caseSensitive) && allMatchingWordsValid)
+                    {
+                        matchedParents.Add(parent);
+                    }
+                    else if (Utilities.AreaNicknames.ContainsKey(parent.ID) && possibleNameWords.Any(p => Regex.IsMatch(p, Utilities.AreaNicknames[parent.ID])))
                     {
                         matchedParents.Add(parent);
                     }
@@ -710,7 +714,7 @@ namespace MountainProjectAPI
             foreach (Area destArea in destAreas)
             {
                 //Controls whether dest area names should be matched (should the keyword "Alabama" match the state or a route named "Sweet Home Alabama")
-                if (allowDestAreaMatch && Utilities.StringContains(destArea.NameForMatch, input))
+                if (allowDestAreaMatch && Utilities.StringContains(destArea.NameForMatch, input, useRegex: destArea.NameForMatch.Contains("|")))
                     matchedObjects.Add(destArea);
 
                 List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, destArea.SubAreas);
@@ -731,7 +735,7 @@ namespace MountainProjectAPI
 
             foreach (Area subDestArea in subAreas)
             {
-                if (Utilities.StringContains(subDestArea.NameForMatch, input))
+                if (Utilities.StringContains(subDestArea.NameForMatch, input, useRegex: subDestArea.NameForMatch.Contains("|")))
                     matchedObjects.Add(subDestArea);
 
                 if (subDestArea.SubAreas != null &&
@@ -768,7 +772,7 @@ namespace MountainProjectAPI
 
             foreach (Route route in routes)
             {
-                if (Utilities.StringContains(route.NameForMatch, input))
+                if (Utilities.StringContains(route.NameForMatch, input, useRegex: route.NameForMatch.Contains("|")))
                     matchedObjects.Add(route);
             }
 
@@ -782,7 +786,7 @@ namespace MountainProjectAPI
             Dictionary<MPObject, Area> results = new Dictionary<MPObject, Area>();
             foreach (MPObject result in listToFilter)
             {
-                Area matchingParent = result.Parents.ToList().FirstOrDefault(p => Utilities.StringContains(p.NameForMatch, location)) as Area;
+                Area matchingParent = result.Parents.ToList().FirstOrDefault(p => Utilities.StringContains(p.NameForMatch, location, useRegex: p.NameForMatch.Contains("|"))) as Area;
                 if (matchingParent != null)
                     results.Add(result, matchingParent);
             }

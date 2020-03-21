@@ -73,7 +73,10 @@ namespace MountainProjectAPI
             IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL);
 
             if (string.IsNullOrEmpty(inputArea.Name))
-                inputArea.Name = Utilities.CleanExtraPartsFromName(ParseAreaNameFromSidebar(doc));
+            {
+                inputArea.Name = FilterName(Utilities.CleanExtraPartsFromName(ParseAreaNameFromSidebar(doc)));
+                inputArea.NameForMatch = FilterNameForMatch(inputArea.Name, inputArea.ID);
+            }
 
             Console.WriteLine($"Current Area: {inputArea.Name}");
 
@@ -184,7 +187,10 @@ namespace MountainProjectAPI
             IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL);
 
             if (string.IsNullOrEmpty(inputRoute.Name))
-                inputRoute.Name = ParseNameFromHeader(doc);
+            {
+                inputRoute.Name = FilterName(ParseNameFromHeader(doc));
+                inputRoute.NameForMatch = FilterNameForMatch(inputRoute.Name, inputRoute.ID);
+            }
 
             inputRoute.Types = ParseRouteTypes(doc);
             inputRoute.Popularity = ParsePopularity(doc);
@@ -375,6 +381,31 @@ namespace MountainProjectAPI
         #endregion Parse Route
 
         #region Common Parse Methods
+        public static string FilterName(string name)
+        {
+            if (Regex.Match(name, ", The", RegexOptions.IgnoreCase).Success)
+            {
+                name = name.Replace(", The", "");
+                name = "The " + name;
+            }
+
+            return name.Trim();
+        }
+
+        public static string FilterNameForMatch(string name, string id)
+        {
+            string nameForMatch;
+
+            //Remove any special characters (spaces, apostrophes, etc) and leave only letter characters (of any language)
+            //Ideally, we would do this during Utilties.StringContains but Regex.Replace takes a significant 
+            //amount of time. So running it during the DBBuild saves time for the Reddit bot
+            nameForMatch = Utilities.FilterStringForMatch(Utilities.EnforceWordConsistency(name));
+            if (id != null && Utilities.AreaNicknames.ContainsKey(id))
+                nameForMatch = $"\\b{nameForMatch}\\b|\\b{Utilities.AreaNicknames[id]}\\b";
+
+            return nameForMatch;
+        }
+
         public static List<string> GetParentIDs(IHtmlDocument doc)
         {
             List<string> result = new List<string>();
