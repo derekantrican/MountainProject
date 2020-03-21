@@ -51,7 +51,7 @@ namespace UnitTests
         [TestMethod]
         public void TestSearch()
         {
-            MountainProjectDataSearch.InitMountainProjectData(@"..\..\MountainProjectDBBuilder\bin\MountainProjectAreas.xml");
+            InitMPData();
 
             for (int i = 0; i < testCriteria_search.GetLength(0); i++)
             {
@@ -90,7 +90,7 @@ namespace UnitTests
         [TestMethod]
         public void TestLocationString()
         {
-            MountainProjectDataSearch.InitMountainProjectData(@"..\..\MountainProjectDBBuilder\bin\MountainProjectAreas.xml");
+            InitMPData();
 
             for (int i = 0; i < testCriteria_location.GetLength(0); i++)
             {
@@ -118,7 +118,7 @@ namespace UnitTests
         [TestMethod]
         public void TestCommentBodyParse()
         {
-            MountainProjectDataSearch.InitMountainProjectData(@"..\..\MountainProjectDBBuilder\bin\MountainProjectAreas.xml");
+            InitMPData();
 
             for (int i = 0; i < testCriteria_keyword.GetLength(0); i++)
             {
@@ -201,7 +201,7 @@ namespace UnitTests
         [TestMethod]
         public void TestGradeEquality()
         {
-            MountainProjectDataSearch.InitMountainProjectData(@"..\..\MountainProjectDBBuilder\bin\MountainProjectAreas.xml");
+            InitMPData();
 
             for (int i = 0; i < testCriteria_gradeEquality.GetLength(0); i++)
             {
@@ -235,7 +235,7 @@ namespace UnitTests
             Console.SetOut(writer);
             MountainProjectDataSearch.OutputExtraInfo = outputExtraInfo;
 
-            MountainProjectDataSearch.InitMountainProjectData(@"..\..\MountainProjectDBBuilder\bin\MountainProjectAreas.xml");
+            InitMPData();
             string[] testCriteria;
             if (isGoogleSheetsTest)
             {
@@ -336,6 +336,14 @@ namespace UnitTests
 
             if (!isGoogleSheetsTest) //Todo: may want to rework how the spreadsheet is setup so that this line is also relevant for GoogleSheetsTest
                 Assert.IsTrue((double)totalPasses / (totalPasses + totalFailures) > 0.95);
+        }
+
+        private void InitMPData()
+        {
+            //The MountainProject data will actually persist between unit tests if multiple unit tests are run at once. Doing it this way
+            //ensures that the delay time to init the MountainProject data is only part of the first test
+            if (MountainProjectDataSearch.DestAreas.Count == 0)
+                MountainProjectDataSearch.InitMountainProjectData(@"..\..\MountainProjectDBBuilder\bin\MountainProjectAreas.xml");
         }
     }
 }
