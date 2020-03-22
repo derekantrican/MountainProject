@@ -401,7 +401,7 @@ namespace MountainProjectAPI
             //amount of time. So running it during the DBBuild saves time for the Reddit bot
             nameForMatch = Utilities.FilterStringForMatch(Utilities.EnforceWordConsistency(name));
             if (id != null && Utilities.AreaNicknames.ContainsKey(id))
-                nameForMatch = $"\\b{nameForMatch}\\b|\\b{Utilities.AreaNicknames[id]}\\b";
+                nameForMatch = $"\\b{nameForMatch}\\b|{Utilities.AreaNicknames[id]}";
 
             return nameForMatch;
         }
