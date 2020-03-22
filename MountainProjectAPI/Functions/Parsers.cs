@@ -73,13 +73,11 @@ namespace MountainProjectAPI
             IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL);
 
             if (string.IsNullOrEmpty(inputArea.Name))
-            {
                 inputArea.Name = FilterName(Utilities.CleanExtraPartsFromName(ParseAreaNameFromSidebar(doc)));
-                inputArea.NameForMatch = FilterNameForMatch(inputArea.Name, inputArea.ID);
-            }
 
             Console.WriteLine($"Current Area: {inputArea.Name}");
 
+            inputArea.NameForMatch = FilterNameForMatch(inputArea.Name, inputArea.ID);
             inputArea.Statistics = PopulateStatistics(doc);
             inputArea.Popularity = ParsePopularity(doc);
             inputArea.ParentIDs = GetParentIDs(doc);
@@ -187,11 +185,9 @@ namespace MountainProjectAPI
             IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL);
 
             if (string.IsNullOrEmpty(inputRoute.Name))
-            {
                 inputRoute.Name = FilterName(ParseNameFromHeader(doc));
-                inputRoute.NameForMatch = FilterNameForMatch(inputRoute.Name, inputRoute.ID);
-            }
 
+            inputRoute.NameForMatch = FilterNameForMatch(inputRoute.Name, inputRoute.ID);
             inputRoute.Types = ParseRouteTypes(doc);
             inputRoute.Popularity = ParsePopularity(doc);
             inputRoute.Rating = ParseRouteRating(doc);
