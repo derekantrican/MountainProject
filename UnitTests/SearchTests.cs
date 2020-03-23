@@ -46,6 +46,8 @@ namespace UnitTests
             { "Landjäger", "/route/117251258/landjager" }, //Diacritical marks optional
             { "Landjager", "/route/117251258/landjager" }, //Diacritical marks optional
             { "Alexisizer", "/route/106657518/alexisizer" }, //There is an "Alexisizer" area and an "Alexisizer" route. This is to make sure the route is picked
+            { "Wood, HP40", "/route/106286494/the-wood" }, //Test for nickname "HP40"
+            { "Golden, RRG", "/route/108521478/golden-ticket" }, //Test for nickname "RRG"
         };
 
         [TestMethod]

@@ -93,6 +93,10 @@ namespace MountainProjectAPI
         public static Dictionary<string, string> AreaNicknames = new Dictionary<string, string>
         {
             { "105841134", @"\bRRG\b" }, //Red River Gorge
+            { "112439039", @"\bBRRP\b" }, //Bald Rock Recreational Preserve
+            { "113747976", @"\bCDCA\b" }, //Cathedral Domain Climbing Area
+            { "110230324", @"\bMFRP\b" }, //Miller Fork Recreational Preserve
+            { "106585368", @"\bPMRP\b" }, //Pendergrass-Murray Recreational Preserve
             { "105855991", @"\bNRG\b" }, //New River Gorge
             { "106031921", @"\bLRC\b" }, //Little Rock City
             { "106094862", @"\bHP ?40\b" }, //Horse Pens 40
