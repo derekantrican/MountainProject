@@ -203,7 +203,7 @@ namespace MountainProjectAPI
 
             Console.WriteLine($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
 
-            if (TotalTimer != null)
+            if (TotalTimer != null && !double.IsNaN(Progress))
             {
                 long elapsedMS = TotalTimer.ElapsedMilliseconds;
                 TimeSpan estTimeRemaining = TimeSpan.FromMilliseconds((elapsedMS / Progress) - elapsedMS);

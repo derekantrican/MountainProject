@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using Mono.Options;
 using MountainProjectAPI;
 using System.Collections.Concurrent;
+using System.Xml;
+using System.ServiceModel.Syndication;
 
 namespace MountainProjectDBBuilder
 {
@@ -26,6 +28,7 @@ namespace MountainProjectDBBuilder
         static OutputCapture outputCapture;
         static Stopwatch totalTimer = new Stopwatch();
         static Mode programMode = Mode.None;
+        static bool buildAll = true;
 
         static void Main(string[] args)
         {
@@ -71,6 +74,11 @@ namespace MountainProjectDBBuilder
                         "parse",
                         "Parse an input string",
                         (arg) => { programMode = Mode.Parse; }
+                    },
+                    { 
+                        "onlyNew",
+                        "Only add new items since the last time the database was built",
+                        (arg) => { buildAll = false; }
                     }
                 };
 
@@ -181,15 +189,79 @@ namespace MountainProjectDBBuilder
                 Console.WriteLine("Starting DB Build...");
 
                 Parsers.TotalTimer = totalTimer;
-                Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
                 List<Area> destAreas = Parsers.GetDestAreas();
-                ConcurrentBag<Task> areaTasks = new ConcurrentBag<Task>();
-                Parallel.ForEach(destAreas, destArea =>
-                {
-                    areaTasks.Add(Parsers.ParseAreaAsync(destArea));
-                });
 
-                Task.WaitAll(areaTasks.ToArray());
+                if (!buildAll && File.Exists(serializationPath))
+                {
+                    DateTime lastBuild = File.GetLastWriteTime(serializationPath);
+                    string rssUrl = $"https://www.mountainproject.com/rss/new?selectedIds={string.Join(",", destAreas.Select(p => p.ID))}&routes=on&areas=on";
+                    SyndicationFeed feed = null;
+                    using (XmlReader reader = XmlReader.Create(rssUrl))
+                    {
+                        feed = SyndicationFeed.Load(reader);
+                    }
+
+                    IEnumerable<string> newlyAddedItemUrls = feed.Items.Where(p => p.PublishDate > lastBuild).OrderBy(p => p.PublishDate).Select(p => p.Links[0].Uri.ToString());
+                    MountainProjectDataSearch.InitMountainProjectData(serializationPath);
+
+                    foreach (string newItemUrl in newlyAddedItemUrls)
+                    {
+                        string newId = Utilities.GetID(newItemUrl);
+
+                        if (MountainProjectDataSearch.GetItemWithMatchingID(newId) != null) //Item has already been added (probably via a recursive area add)
+                            continue;
+
+                        MPObject newItem;
+                        if (newItemUrl.Contains(Utilities.MPAREAURL))
+                        {
+                            newItem = new Area { ID = newId };
+                            Parsers.ParseAreaAsync(newItem as Area).Wait();
+                        }
+                        else
+                        {
+                            newItem = new Route { ID = newId };
+                            Parsers.ParseRouteAsync(newItem as Route).Wait();
+                        }
+
+                        Area currentParent = null;
+                        bool itemAddedViaRecursiveParse = false;
+                        foreach (string parentId in newItem.ParentIDs) //Make sure all parents are populated
+                        {
+                            MPObject matchingItem = MountainProjectDataSearch.GetItemWithMatchingID(parentId);
+                            if (matchingItem == null)
+                            {
+                                Area newArea = new Area { ID = parentId };
+                                Parsers.ParseAreaAsync(newArea).Wait();
+                                currentParent.SubAreas.Add(newArea);
+                                itemAddedViaRecursiveParse = true;
+                                break;
+                            }
+                            else
+                                currentParent = matchingItem as Area;
+                        }
+
+                        if (!itemAddedViaRecursiveParse)
+                        {
+                            if (newItem is Area)
+                                (MountainProjectDataSearch.GetItemWithMatchingID(newItem.ParentIDs.Last()) as Area).SubAreas.Add(newItem as Area);
+                            else
+                                (MountainProjectDataSearch.GetItemWithMatchingID(newItem.ParentIDs.Last()) as Area).Routes.Add(newItem as Route);
+                        }
+                    }
+
+                    destAreas = MountainProjectDataSearch.DestAreas;
+                }
+                else
+                {
+                    Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
+                    ConcurrentBag<Task> areaTasks = new ConcurrentBag<Task>();
+                    Parallel.ForEach(destAreas, destArea =>
+                    {
+                        areaTasks.Add(Parsers.ParseAreaAsync(destArea));
+                    });
+
+                    Task.WaitAll(areaTasks.ToArray());
+                }
 
                 totalTimer.Stop();
                 Console.WriteLine(outputCapture.Captured.ToString());
@@ -197,7 +269,11 @@ namespace MountainProjectDBBuilder
                 Console.WriteLine();
                 Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
                 SerializeResults(destAreas);
-                SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
+
+                if (buildAll)
+                    SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
+                else
+                    SendReport($"MountainProjectDBBuilder database updated SUCCESSFULLY in {totalTimer.Elapsed}", "");
             }
             catch (Exception ex)
             {
