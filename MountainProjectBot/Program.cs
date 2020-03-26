@@ -50,9 +50,9 @@ namespace MountainProjectBot
             else
                 exceptionString = ExceptionDetailsToString(ex);
 
-            exceptionString += $"[{DateTime.Now}] 50 RECENT LOG LINES:\n\n";
+            exceptionString += $"[{DateTime.Now}] 500 RECENT LOG LINES:\n\n";
             string[] logLines = outputCapture.Captured.ToString().Split('\n');
-            foreach (string line in logLines.Skip(Math.Max(0, logLines.Count() - 50)))
+            foreach (string line in logLines.Skip(Math.Max(0, logLines.Count() - 500)))
                 exceptionString += $"{line}\n";
 
             File.AppendAllText($"CRASHREPORT ({DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss")}).log", exceptionString);
