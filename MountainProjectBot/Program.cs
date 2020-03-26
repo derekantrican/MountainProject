@@ -152,7 +152,10 @@ namespace MountainProjectBot
                         Console.WriteLine($"\tIssue connecting to reddit: {e.Message}");
                     }
                     else //If it isn't one of the errors above, it might be more serious. So throw it to be caught as an unhandled exception
+                    {
+                        BotUtilities.WriteToConsoleWithColor($"Exception ({e.GetType()}: {e.Message}) thrown at \n\n{e.StackTrace}", ConsoleColor.Red);
                         throw;
+                    }
                 }
 
                 Console.WriteLine($"Loop elapsed time: {stopwatch.ElapsedMilliseconds} ms");
