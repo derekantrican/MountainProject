@@ -103,7 +103,8 @@ namespace MountainProjectAPI
             { "105739277", @"\bLCC\b" }, //Little Cottonwood Canyon
             { "106008886", @"\bFont\b" }, //Fontainebleau
             { "105720495", @"\bJTree\b" }, //Joshua Tree
-            { "105946429", @"\BC\b" }, //British Columbia
+            { "105946429", @"\bBC\b" }, //British Columbia
+            { "106007071", @"\bUK\b" }, //United Kingdom
         };
 
         public static string GetHtml(string url)
