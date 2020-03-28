@@ -188,92 +188,10 @@ namespace MountainProjectDBBuilder
                 totalTimer.Start();
                 Console.WriteLine("Starting DB Build...");
 
-                Parsers.TotalTimer = totalTimer;
-                List<Area> destAreas = Parsers.GetDestAreas();
-
                 if (!buildAll && File.Exists(serializationPath))
-                {
-                    DateTime lastBuild = File.GetLastWriteTime(serializationPath);
-                    string rssUrl = $"https://www.mountainproject.com/rss/new?selectedIds={string.Join(",", destAreas.Select(p => p.ID))}&routes=on&areas=on";
-                    SyndicationFeed feed = null;
-                    using (XmlReader reader = XmlReader.Create(rssUrl))
-                    {
-                        feed = SyndicationFeed.Load(reader);
-                    }
-
-                    IEnumerable<string> newlyAddedItemUrls = feed.Items.Where(p => p.PublishDate > lastBuild).OrderBy(p => p.PublishDate).Select(p => p.Links[0].Uri.ToString());
-                    MountainProjectDataSearch.InitMountainProjectData(serializationPath);
-
-                    foreach (string newItemUrl in newlyAddedItemUrls)
-                    {
-                        string newId = Utilities.GetID(newItemUrl);
-
-                        if (MountainProjectDataSearch.GetItemWithMatchingID(newId) != null) //Item has already been added (probably via a recursive area add)
-                            continue;
-
-                        MPObject newItem;
-                        if (newItemUrl.Contains(Utilities.MPAREAURL))
-                        {
-                            newItem = new Area { ID = newId };
-                            Parsers.ParseAreaAsync(newItem as Area).Wait();
-                        }
-                        else
-                        {
-                            newItem = new Route { ID = newId };
-                            Parsers.ParseRouteAsync(newItem as Route).Wait();
-                        }
-
-                        Area currentParent = null;
-                        bool itemAddedViaRecursiveParse = false;
-                        foreach (string parentId in newItem.ParentIDs) //Make sure all parents are populated
-                        {
-                            MPObject matchingItem = MountainProjectDataSearch.GetItemWithMatchingID(parentId);
-                            if (matchingItem == null)
-                            {
-                                Area newArea = new Area { ID = parentId };
-                                Parsers.ParseAreaAsync(newArea).Wait();
-                                currentParent.SubAreas.Add(newArea);
-                                itemAddedViaRecursiveParse = true;
-                                break;
-                            }
-                            else
-                                currentParent = matchingItem as Area;
-                        }
-
-                        if (!itemAddedViaRecursiveParse)
-                        {
-                            if (newItem is Area)
-                                (MountainProjectDataSearch.GetItemWithMatchingID(newItem.ParentIDs.Last()) as Area).SubAreas.Add(newItem as Area);
-                            else
-                                (MountainProjectDataSearch.GetItemWithMatchingID(newItem.ParentIDs.Last()) as Area).Routes.Add(newItem as Route);
-                        }
-                    }
-
-                    destAreas = MountainProjectDataSearch.DestAreas;
-                }
+                    AddNewItems();
                 else
-                {
-                    Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
-                    ConcurrentBag<Task> areaTasks = new ConcurrentBag<Task>();
-                    Parallel.ForEach(destAreas, destArea =>
-                    {
-                        areaTasks.Add(Parsers.ParseAreaAsync(destArea));
-                    });
-
-                    Task.WaitAll(areaTasks.ToArray());
-                }
-
-                totalTimer.Stop();
-                Console.WriteLine(outputCapture.Captured.ToString());
-                Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
-                Console.WriteLine();
-                Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
-                SerializeResults(destAreas);
-
-                if (buildAll)
-                    SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
-                else
-                    SendReport($"MountainProjectDBBuilder database updated SUCCESSFULLY in {totalTimer.Elapsed}", "");
+                    BuildFullDB();
             }
             catch (Exception ex)
             {
@@ -290,6 +208,103 @@ namespace MountainProjectDBBuilder
                 File.AppendAllText(logPath, outputCapture.Captured.ToString());
                 outputCapture.Dispose();
             }
+        }
+
+        private static void BuildFullDB()
+        {
+            Parsers.TotalTimer = totalTimer;
+            List<Area> destAreas = Parsers.GetDestAreas();
+
+            Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
+            ConcurrentBag<Task> areaTasks = new ConcurrentBag<Task>();
+            Parallel.ForEach(destAreas, destArea =>
+            {
+                areaTasks.Add(Parsers.ParseAreaAsync(destArea));
+            });
+
+            Task.WaitAll(areaTasks.ToArray());
+
+            totalTimer.Stop();
+            Console.WriteLine(outputCapture.Captured.ToString());
+            Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
+            Console.WriteLine();
+            Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
+            SerializeResults(destAreas);
+
+            SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
+        }
+
+        private static void AddNewItems()
+        {
+            Parsers.TotalTimer = totalTimer;
+            List<Area> destAreas = Parsers.GetDestAreas();
+
+            DateTime lastBuild = File.GetLastWriteTime(serializationPath);
+            string rssUrl = $"https://www.mountainproject.com/rss/new?selectedIds={string.Join(",", destAreas.Select(p => p.ID))}&routes=on&areas=on";
+            SyndicationFeed feed = null;
+            using (XmlReader reader = XmlReader.Create(rssUrl))
+            {
+                feed = SyndicationFeed.Load(reader);
+            }
+
+            IEnumerable<string> newlyAddedItemUrls = feed.Items.Where(p => p.PublishDate > lastBuild).OrderBy(p => p.PublishDate).Select(p => p.Links[0].Uri.ToString());
+            MountainProjectDataSearch.InitMountainProjectData(serializationPath);
+
+            foreach (string newItemUrl in newlyAddedItemUrls)
+            {
+                string newId = Utilities.GetID(newItemUrl);
+
+                if (MountainProjectDataSearch.GetItemWithMatchingID(newId) != null) //Item has already been added (probably via a recursive area add)
+                    continue;
+
+                MPObject newItem;
+                if (newItemUrl.Contains(Utilities.MPAREAURL))
+                {
+                    newItem = new Area { ID = newId };
+                    Parsers.ParseAreaAsync(newItem as Area).Wait();
+                }
+                else
+                {
+                    newItem = new Route { ID = newId };
+                    Parsers.ParseRouteAsync(newItem as Route).Wait();
+                }
+
+                Area currentParent = null;
+                bool itemAddedViaRecursiveParse = false;
+                foreach (string parentId in newItem.ParentIDs) //Make sure all parents are populated
+                {
+                    MPObject matchingItem = MountainProjectDataSearch.GetItemWithMatchingID(parentId);
+                    if (matchingItem == null)
+                    {
+                        Area newArea = new Area { ID = parentId };
+                        Parsers.ParseAreaAsync(newArea).Wait();
+                        currentParent.SubAreas.Add(newArea);
+                        itemAddedViaRecursiveParse = true;
+                        break;
+                    }
+                    else
+                        currentParent = matchingItem as Area;
+                }
+
+                if (!itemAddedViaRecursiveParse)
+                {
+                    if (newItem is Area)
+                        (MountainProjectDataSearch.GetItemWithMatchingID(newItem.ParentIDs.Last()) as Area).SubAreas.Add(newItem as Area);
+                    else
+                        (MountainProjectDataSearch.GetItemWithMatchingID(newItem.ParentIDs.Last()) as Area).Routes.Add(newItem as Route);
+                }
+            }
+
+            destAreas = MountainProjectDataSearch.DestAreas;
+
+            totalTimer.Stop();
+            Console.WriteLine(outputCapture.Captured.ToString());
+            Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
+            Console.WriteLine();
+            Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
+            SerializeResults(destAreas);
+
+            SendReport($"MountainProjectDBBuilder database updated SUCCESSFULLY in {totalTimer.Elapsed}", $"New items:\n\n{string.Join("\n", newlyAddedItemUrls)}");
         }
 
         private static void SerializeResults(List<Area> inputAreas)
