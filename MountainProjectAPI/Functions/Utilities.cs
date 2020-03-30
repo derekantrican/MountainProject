@@ -105,6 +105,7 @@ namespace MountainProjectAPI
             { "105720495", @"\bJTree\b" }, //Joshua Tree
             { "105946429", @"\bBC\b" }, //British Columbia
             { "106007071", @"\bUK\b" }, //United Kingdom
+            { "105843226", @"\bORG\b" }, //Owens River Gorge
         };
 
         public static string GetHtml(string url)
