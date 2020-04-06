@@ -106,6 +106,7 @@ namespace MountainProjectAPI
             { "105946429", @"\bBC\b" }, //British Columbia
             { "106007071", @"\bUK\b" }, //United Kingdom
             { "105843226", @"\bORG\b" }, //Owens River Gorge
+            { "105903004", @"\bHCR\b" }, //Horseshoe Canyon Ranch
         };
 
         public static string GetHtml(string url)
@@ -351,7 +352,7 @@ namespace MountainProjectAPI
 
         public static string GetID(string mpURL)
         {
-            return mpURL.Replace($"{MPROUTEURL}/", "").Replace($"{MPAREAURL}/", "").Split('/')[0];
+            return mpURL?.Replace($"{MPROUTEURL}/", "").Replace($"{MPAREAURL}/", "").Split('/')[0];
         }
 
         public static string GetSimpleURL(string mpUrl)
