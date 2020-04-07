@@ -304,7 +304,7 @@ namespace MountainProjectDBBuilder
             Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
             SerializeResults(destAreas);
 
-            SendReport($"MountainProjectDBBuilder database updated SUCCESSFULLY in {totalTimer.Elapsed}", $"New items:\n\n{string.Join("\n", newlyAddedItemUrls)}");
+            SendReport($"MountainProjectDBBuilder database updated SUCCESSFULLY in {totalTimer.Elapsed}", $"{newlyAddedItemUrls.Count()} new items:\n\n{string.Join("\n", newlyAddedItemUrls)}");
         }
 
         private static void SerializeResults(List<Area> inputAreas)
