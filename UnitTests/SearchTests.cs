@@ -279,12 +279,12 @@ namespace UnitTests
                 {
                     if (route == null)
                     {
-                        writer.WriteLine($"PASS (Confidence: {result.Confidence})");
+                        writer.WriteLine($"PASS (Correctly guessed no match)");
                         totalPasses++;
                     }
                     else
                     {
-                        writer.WriteLine($"FAILED. EXPECTED: {expectedMPLink} , ACTUAL: {route?.URL} {comment}");
+                        writer.WriteLine($"FAILED (confidence {result.Confidence}). EXPECTED: , ACTUAL: {route?.URL} {comment}");
                         totalFailures++;
 
                         if (result.Confidence == 1)
@@ -295,7 +295,7 @@ namespace UnitTests
                 {
                     if (route == null || route.URL != expectedMPLink)
                     {
-                        writer.WriteLine($"FAILED. EXPECTED: {expectedMPLink} , ACTUAL: {route?.URL} {comment}");
+                        writer.WriteLine($"FAILED (confidence {result.Confidence}). EXPECTED: {expectedMPLink} , ACTUAL: {route?.URL} {comment}");
                         totalFailures++;
 
                         if (result.Confidence == 1)
@@ -303,7 +303,7 @@ namespace UnitTests
                     }
                     else
                     {
-                        writer.WriteLine($"PASS (Confidence: {result.Confidence})");
+                        writer.WriteLine($"PASS (confidence: {result.Confidence})");
                         totalPasses++;
 
                         if (isGoogleSheetsTest && result.Confidence == 1)

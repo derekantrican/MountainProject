@@ -409,7 +409,7 @@ namespace MountainProjectAPI
                 else if (!string.IsNullOrWhiteSpace(possibleRouteName))
                 {
                     possibleRouteName = possibleRouteName.Trim();
-                    result.Add(possibleRouteName);
+                    result.Add(Utilities.TrimWordsEnd(possibleRouteName, locationWords));
 
                     //If there is a "location word" in the possibleRouteName, add the separate parts to the result as well
                     Regex locationWordsRegex = new Regex(@"(\s+" + string.Join(@"\s+)|(\s+", locationWords) + @"\s+)");
@@ -424,7 +424,7 @@ namespace MountainProjectAPI
             if (!string.IsNullOrWhiteSpace(possibleRouteName) && possibleRouteName != "V")
             {
                 possibleRouteName = possibleRouteName.Trim();
-                result.Add(possibleRouteName);
+                result.Add(Utilities.TrimWordsEnd(possibleRouteName, locationWords));
 
                 //If there is a "location word" in the possibleRouteName, add the separate parts to the result as well
                 Regex locationWordsRegex = new Regex(@"(\s+" + string.Join(@"\s+)|(\s+", locationWords) + @"\s+)");
