@@ -147,7 +147,8 @@ namespace MountainProjectBot
                     if (e is RedditHttpException ||
                         e is HttpRequestException ||
                         e is WebException ||
-                        e is TaskCanceledException)
+                        e is TaskCanceledException ||
+                        e is OperationCanceledException)
                     {
                         Console.WriteLine($"\tIssue connecting to reddit: {e.Message}");
                     }
