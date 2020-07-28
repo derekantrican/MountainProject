@@ -224,7 +224,7 @@ namespace UnitTests
         public void TestPostTitleParse(/*bool outputExtraInfo, bool isGoogleSheetsTest*/)
         {
             bool outputExtraInfo = false;
-            bool isGoogleSheetsTest = false;
+            bool isGoogleSheetsTest = true;
 
             Stopwatch totalStopwatch = Stopwatch.StartNew();
 
@@ -239,12 +239,12 @@ namespace UnitTests
 
             InitMPData();
             string[] testCriteria;
-            //if (isGoogleSheetsTest) //Todo: should implement a different way to get post history from Google Sheets
-            //{
-            //    string requestUrl = BotUtilities.GetRequestServerURL(@"..\..\MountainProjectBot\Credentials.txt") + "PostHistory";
-            //    testCriteria = Utilities.GetHtml(requestUrl).Split('\n');
-            //}
-            //else
+            if (isGoogleSheetsTest)
+            {
+                string requestUrl = BotUtilities.GetCredentialValue(@"..\..\MountainProjectBot\Credentials.txt", "spreadsheetURL") + "PostHistory";
+                testCriteria = Utilities.GetHtml(requestUrl).Split('\n');
+            }
+            else
                 testCriteria = File.ReadAllLines(@"..\PostTitleTest.txt");
 
             for (int i = 0; i < testCriteria.Length; i++)
