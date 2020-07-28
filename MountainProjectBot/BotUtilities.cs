@@ -272,7 +272,7 @@ namespace MountainProjectBot
                                 string htmlPicker = "<html><form>";
                                 foreach (MPObject option in approvalRequest.SearchResult.AllResults)
                                 {
-                                    htmlPicker += $"<input type=\"radio\" name=\"options\" value=\"{option.ID}\">" +
+                                    htmlPicker += $"<input type=\"radio\" name=\"options\" value=\"{option.ID}\"{(approvalRequest.SearchResult.AllResults.IndexOf(option) == 0 ? " checked=\"true\"" : "")}>" +
                                                   $"<a href=\"{option.URL}\">{option.Name} ({(option as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})</a>" +
                                                   $" ({Regex.Replace(BotReply.GetLocationString(option, approvalRequest.SearchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("\n", "")})<br>";
                                 }
@@ -311,7 +311,7 @@ namespace MountainProjectBot
                 }
             }
 
-            return $"<h1 style=\"font-size:15vw\">" + result + "</h1>";
+            return $"<h1 style=\"font-size:15vw\">{result}</h1>";
         }
 
         public static void RequestApproval(Post post, SearchResult searchResult)
