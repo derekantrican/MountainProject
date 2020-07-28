@@ -8,6 +8,7 @@ using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using static MountainProjectBot.Enums;
 
@@ -18,11 +19,14 @@ namespace MountainProjectBot
         private const string XMLNAME = "MountainProjectAreas.xml";
         private const string CREDENTIALSNAME = "Credentials.txt";
         private static string requestForApprovalURL = "";
+        private static string webServerUrl = "";
         private static string repliedToPath = "RepliedTo.txt";
         private static string seenPostsPath = @"RepliedToPosts.txt";
         private static string blacklistedPath = "BlacklistedUsers.txt";
         private static string xmlPath = Path.Combine(@"..\..\MountainProjectDBBuilder\bin\", XMLNAME);
         private static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
+
+        private static Server approvalServer;
 
         #region Init
         public static void ParseCommandLineArguments(string[] args)
@@ -84,13 +88,16 @@ namespace MountainProjectBot
             MountainProjectDataSearch.InitMountainProjectData(xmlPath);
             BotFunctions.RedditHelper = new RedditHelper();
             BotFunctions.RedditHelper.Auth(credentialsPath).Wait();
-            requestForApprovalURL = GetRequestServerURL(credentialsPath);
+            requestForApprovalURL = GetCredentialValue(credentialsPath, "requestForApprovalURL");
+            webServerUrl = GetCredentialValue(credentialsPath, "webServerURL");
+
+            StartApprovalServer();
         }
 
-        public static string GetRequestServerURL(string filePath)
+        public static string GetCredentialValue(string filePath, string credential)
         {
             List<string> fileLines = File.ReadAllLines(filePath).ToList();
-            return fileLines.FirstOrDefault(p => p.Contains("requestForApprovalURL")).Split(new[] { ':' }, 2)[1]; //Split on first occurence only because requestForApprovalURL also contains ':'
+            return fileLines.FirstOrDefault(p => p.StartsWith(credential)).Split(new[] { ':' }, 2)[1]; //Split on first occurence only because requestForApprovalURL also contains ':'
         }
         #endregion Init
 
@@ -224,25 +231,128 @@ namespace MountainProjectBot
             catch { } //Discard any errors
         }
 
-        public static void NotifyFoundPost(string postTitle, string postUrl, string mpResultTitle, string mpResultLoc, string mpResultGrade, string mpResultUrl, string mpResultID, string unconfidentReason, bool alreadyApproved = false)
+        public static void StartApprovalServer()
         {
-            if (string.IsNullOrEmpty(requestForApprovalURL))
+            approvalServer = new Server(9999);
+            approvalServer.HandleRequest = HandleRequestToApprovalServer;
+            approvalServer.ExceptionHandling = (Exception ex) => WriteToConsoleWithColor($"Sever error: ({ex.GetType()}): {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red);
+            approvalServer.Start();
+        }
+
+        private static string HandleRequestToApprovalServer(ServerRequest request)
+        {
+            string result = $"Path '{request.Path}' not understood";
+
+            if (request.RequestMethod == HttpMethod.Get && !request.IsFaviconRequest && !request.IsDefaultPageRequest)
+            {
+                Dictionary<string, string> parameters = request.GetParameters();
+                if (parameters.ContainsKey("postid") && (parameters.ContainsKey("approve") || parameters.ContainsKey("approveall") || parameters.ContainsKey("approveother")))
+                {
+                    if (BotFunctions.PostsPendingApproval.ContainsKey(parameters["postid"]))
+                    {
+                        ApprovalRequest approvalRequest = BotFunctions.PostsPendingApproval[parameters["postid"]];
+
+                        if (parameters.ContainsKey("approveother"))
+                        {
+                            if (parameters.ContainsKey("option"))
+                            {
+                                MPObject matchingOption = approvalRequest.SearchResult.AllResults.Find(p => p.ID == parameters["option"]);
+                                if (matchingOption == null)
+                                {
+                                    result = $"Option '{parameters["option"]}' not found";
+                                }
+                                else
+                                {
+                                    approvalRequest.SearchResult.FilteredResult = matchingOption;
+                                    approvalRequest.ApproveFiltered = true;
+                                }
+                            }
+                            else
+                            {
+                                string htmlPicker = "<html><form>";
+                                foreach (MPObject option in approvalRequest.SearchResult.AllResults)
+                                {
+                                    htmlPicker += $"<input type=\"radio\" name=\"options\" value=\"{option.ID}\">" +
+                                                  $"<a href=\"{option.URL}\">{option.Name} ({(option as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})</a>" +
+                                                  $" ({Regex.Replace(BotReply.GetLocationString(option, approvalRequest.SearchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("\n", "")})<br>";
+                                }
+
+                                htmlPicker += "<br><input type=\"button\" onclick=\"choose()\" value=\"Choose\"></form><script>" +
+                                              "function choose(){" +
+                                              "  var options = document.forms[0];" +
+                                              "  for (var i = 0; i < options.length; i++){" +
+                                              "    if (options[i].checked){" +
+                                              $"      window.location.replace(\"{(Debugger.IsAttached ? "http://localhost" : webServerUrl)}:{approvalServer.Port}?approveother&postid={parameters["postid"]}&option=\" + options[i].value);" +
+                                              "      break;" +
+                                              "    }" +
+                                              "  }" +
+                                              "}" +
+                                              "</script></html>";
+
+                                return htmlPicker;
+                            }
+                        }
+                        else if (parameters.ContainsKey("approve"))
+                        {
+                            approvalRequest.ApproveFiltered = true;
+                        }
+                        else if (parameters.ContainsKey("approveall"))
+                        {
+                            approvalRequest.ApproveAll = true;
+                        }
+
+                        BotFunctions.PostsPendingApproval[parameters["postid"]] = approvalRequest;
+                        result = "Approved";
+                    }
+                    else
+                    {
+                        result = $"Post '{parameters["postid"]}' not found";
+                    }
+                }
+            }
+
+            return $"<h1 style=\"font-size:15vw\">" + result + "</h1>";
+        }
+
+        public static void RequestApproval(Post post, SearchResult searchResult)
+        {
+            if (string.IsNullOrEmpty(requestForApprovalURL) || string.IsNullOrEmpty(webServerUrl))
                 return;
+
+            string messageText = $"**Possible AutoReply found:**\n" +
+                                 $"{searchResult.UnconfidentReason}\n\n" +
+                                 $"**PostTitle:** {post.Title}\n" +
+                                 $"**PostURL:** <{post.Shortlink}>\n\n";
+
+            if (searchResult.AllResults.Count > 1)
+            {
+                messageText += $"**All results found:**\n";
+                foreach (MPObject result in searchResult.AllResults /*Todo: Make sure this is ordered by the likely response*/)
+                {
+                    messageText += $"\t- [{result.Name} ({(result as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})](<{result.URL}>)\n";
+                }
+
+                messageText += "\n" +
+                               $"**Filtered Result:** [{searchResult.FilteredResult.Name} ({(searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})](<{searchResult.FilteredResult.URL}>)\n" +
+                               $"{Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult, searchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "")}\n\n" +
+                               $"[[APPROVE FILTERED]](<{(Debugger.IsAttached ? "http://localhost" : webServerUrl)}:{approvalServer.Port}?approve&postid={post.Id}>)  " +
+                               $"[[APPROVE ALL]](<{(Debugger.IsAttached ? "http://localhost" : webServerUrl)}:{approvalServer.Port}?approveall&postid={post.Id}>)  " +
+                               $"[[APPROVE OTHER]](<{(Debugger.IsAttached ? "http://localhost" : webServerUrl)}:{approvalServer.Port}?approveother&postid={post.Id}>)";
+            }
+            else
+            {
+                messageText += $"**MPResult:** {searchResult.FilteredResult.Name} ({(searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})\n" +
+                               $"{Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult, searchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "")}\n" +
+                               $"<{searchResult.FilteredResult.URL}>\n\n" +
+                               $"[[APPROVE]](<{(Debugger.IsAttached ? "http://localhost" : webServerUrl)}:{approvalServer.Port}?approve&postid={post.Id}>)";
+            }
 
             List<string> parameters = new List<string>
             {
-                "reason=" + (string.IsNullOrEmpty(unconfidentReason) ? "" : Uri.EscapeDataString(unconfidentReason)),
-                "postTitle=" + Uri.EscapeDataString(postTitle),
-                "postURL=" + Uri.EscapeDataString(postUrl),
-                "mpResultTitle=" + Uri.EscapeDataString(mpResultTitle),
-                "mpResultLocation=" + Uri.EscapeDataString(mpResultLoc),
-                "mpResultGrade=" + Uri.EscapeDataString(mpResultGrade),
-                "mpResultURL=" + Uri.EscapeDataString(mpResultUrl),
-                "mpResultID=" + Uri.EscapeDataString(mpResultID)
+                $"username=MountainProjectBot",
+                $"avatar_url={Uri.EscapeDataString("https://i.imgur.com/iMhyiUP.png")}",
+                $"content={Uri.EscapeDataString(messageText)}",
             };
-
-            if (alreadyApproved)
-                parameters.Add("alreadyApproved=true");
 
             DoPOST(requestForApprovalURL, parameters);
         }
@@ -258,19 +368,6 @@ namespace MountainProjectBot
             };
 
             DoPOST(requestForApprovalURL, parameters);
-        }
-
-        public static List<string> GetApprovedPostUrls()
-        {
-            if (string.IsNullOrEmpty(requestForApprovalURL))
-                return new List<string>();
-
-            string response = DoGET(requestForApprovalURL);
-            if (response.Contains("<title>Error</title>") || string.IsNullOrEmpty(response)) //Hit an error when contacting server code
-                return new List<string>();
-
-            JObject json = JObject.Parse(response);
-            return json["approvedPosts"].ToObject<List<string>>();
         }
 
         private static string DoGET(string url)
@@ -316,6 +413,19 @@ namespace MountainProjectBot
             Console.ForegroundColor = color;
             Console.WriteLine(text);
             Console.ResetColor();
+        }
+    }
+
+    public class ApprovalRequest
+    {
+        public Post RedditPost { get; set; }
+        public SearchResult SearchResult { get; set; }
+        public bool ApproveFiltered { get; set; }
+        public bool ApproveAll { get; set; }
+
+        public bool HasApproval
+        {
+            get { return ApproveFiltered || ApproveAll; }
         }
     }
 }

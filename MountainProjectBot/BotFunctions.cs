@@ -2,6 +2,7 @@
 using RedditSharp;
 using RedditSharp.Things;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net;
@@ -15,9 +16,9 @@ namespace MountainProjectBot
     {
         private const string BOTKEYWORDREGEX = @"(?i)!mountain\s*project";
         private static List<CommentMonitor> monitoredComments = new List<CommentMonitor>();
-        private static List<KeyValuePair<Post, SearchResult>> postsPendingApproval = new List<KeyValuePair<Post, SearchResult>>();
 
-        public static RedditHelper RedditHelper;
+        public static RedditHelper RedditHelper { get; set; }
+        public static ConcurrentDictionary<string, ApprovalRequest> PostsPendingApproval { get; set; } = new ConcurrentDictionary<string, ApprovalRequest>();
         public static bool DryRun { get; set; }
 
         public static async Task CheckMonitoredComments()
@@ -131,29 +132,50 @@ namespace MountainProjectBot
 
         public static async Task ReplyToApprovedPosts()
         {
-            int removed = postsPendingApproval.RemoveAll(p => (DateTime.UtcNow - p.Key.CreatedUTC).TotalMinutes > 30); //Remove posts that have "timed out"
+            int removed = 0;
+            foreach (string approvalRequestId in PostsPendingApproval.Keys) //Remove approval requests that have "timed out"
+            {
+                if ((DateTime.UtcNow - PostsPendingApproval[approvalRequestId].RedditPost.CreatedUTC).TotalMinutes > 30)
+                {
+                    PostsPendingApproval.TryRemove(approvalRequestId, out _);
+                    removed++;
+                }
+            }
+
             if (removed > 0)
                 BotUtilities.WriteToConsoleWithColor($"\tRemoved {removed} pending auto-replies that got too old", ConsoleColor.Red);
 
-            if (postsPendingApproval.Count == 0)
+            if (PostsPendingApproval.Count == 0)
                 return;
 
-            List<string> approvedUrls = BotUtilities.GetApprovedPostUrls();
-            List<KeyValuePair<Post, SearchResult>> approvedPosts = postsPendingApproval.Where(p => approvedUrls.Contains(p.Key.Shortlink) || p.Value.Confidence == 1).ToList();
-            foreach (KeyValuePair<Post, SearchResult> post in approvedPosts)
+            List<ApprovalRequest> approvedPosts = PostsPendingApproval.Where(p => p.Value.HasApproval || p.Value.SearchResult.Confidence == 1).Select(p => p.Value).ToList();
+            foreach (ApprovalRequest approvalRequest in approvedPosts)
             {
-                string reply = BotReply.GetFormattedString(post.Value);
-                reply += Markdown.HRule;
-                reply += BotReply.GetBotLinks(post.Key);
+                string reply = "";
+                if (approvalRequest.ApproveFiltered)
+                {
+                    reply += BotReply.GetFormattedString(approvalRequest.SearchResult);
+                    reply += Markdown.HRule;
+                }
+                else if (approvalRequest.ApproveAll)
+                {
+                    foreach (MPObject mpObject in approvalRequest.SearchResult.AllResults)
+                    {
+                        reply += BotReply.GetFormattedString(new SearchResult(mpObject, approvalRequest.SearchResult.RelatedLocation));
+                        reply += Markdown.HRule;
+                    }
+                }
+
+                reply += BotReply.GetBotLinks(approvalRequest.RedditPost);
 
                 if (!DryRun)
                 {
-                    Comment botReplyComment = await RedditHelper.CommentOnPost(post.Key, reply);
-                    monitoredComments.Add(new CommentMonitor() { Parent = post.Key, BotResponseComment = botReplyComment });
-                    BotUtilities.WriteToConsoleWithColor($"\n\tAuto-replied to post {post.Key.Id}", ConsoleColor.Green);
+                    Comment botReplyComment = await RedditHelper.CommentOnPost(approvalRequest.RedditPost, reply);
+                    monitoredComments.Add(new CommentMonitor() { Parent = approvalRequest.RedditPost, BotResponseComment = botReplyComment });
+                    BotUtilities.WriteToConsoleWithColor($"\tAuto-replied to post {approvalRequest.RedditPost.Id}", ConsoleColor.Green);
                 }
 
-                postsPendingApproval.RemoveAll(p => p.Key == post.Key);
+                PostsPendingApproval.TryRemove(approvalRequest.RedditPost.Id, out _);
             }
         }
 
@@ -176,7 +198,7 @@ namespace MountainProjectBot
                     }
 
                     double ageInMin = (DateTime.UtcNow - post.CreatedUTC).TotalMinutes;
-                    if (ageInMin > 10)
+                    if (ageInMin > 30)
                     {
                         subredditPosts.Remove(post);
                         BotUtilities.WriteToConsoleWithColor($"\tSkipping {post.Id} (too old: {Math.Round(ageInMin,2)} min)", ConsoleColor.Red);
@@ -198,22 +220,32 @@ namespace MountainProjectBot
                     SearchResult searchResult = MountainProjectDataSearch.ParseRouteFromString(postTitle);
                     if (!searchResult.IsEmpty())
                     {
-                        postsPendingApproval.Add(new KeyValuePair<Post, SearchResult>(post, searchResult));
+                        PostsPendingApproval.TryAdd(post.Id, new ApprovalRequest
+                        {
+                            RedditPost = post,
+                            SearchResult = searchResult
+                        });
+
                         BotUtilities.LogPostBeenSeen(post, searchResult.Confidence == 1 ? "auto-replying" : "pending approval");
 
-                        //Until we are more confident with automatic results, we're going to request for approval for confidence values greater than 1 (less than 100%)
-                        if (searchResult.Confidence > 1)
-                            BotUtilities.WriteToConsoleWithColor($"\tRequesting approval for post {post.Id}", ConsoleColor.Yellow);
-
-                        string locationString = Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult, searchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
-
-                        //We notify for all found posts, but the server will only request approval when searchResult.Confidence != 1
                         if (!DryRun)
                         {
-                            BotUtilities.NotifyFoundPost(postTitle, post.Shortlink, searchResult.FilteredResult.Name, locationString,
-                                                         (searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false), 
-                                                         searchResult.FilteredResult.URL, searchResult.FilteredResult.ID, searchResult.UnconfidentReason,
-                                                         searchResult.Confidence == 1);
+                            if (searchResult.Confidence == 1)
+                            {
+                                string reply = BotReply.GetFormattedString(searchResult);
+                                reply += Markdown.HRule;
+                                reply += BotReply.GetBotLinks(post);
+
+                                Comment botReplyComment = await RedditHelper.CommentOnPost(post, reply);
+                                monitoredComments.Add(new CommentMonitor() { Parent = post, BotResponseComment = botReplyComment });
+                                BotUtilities.WriteToConsoleWithColor($"\n\tAuto-replied to post {post.Id}", ConsoleColor.Green);
+                            }
+                            else
+                            {
+                                //Until we are more confident with automatic results, we're going to request for approval for confidence values greater than 1 (less than 100%)
+                                BotUtilities.WriteToConsoleWithColor($"\tRequesting approval for post {post.Id}", ConsoleColor.Yellow);
+                                BotUtilities.RequestApproval(post, searchResult);
+                            }
                         }
                     }
                     else
