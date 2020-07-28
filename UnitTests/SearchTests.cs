@@ -239,12 +239,12 @@ namespace UnitTests
 
             InitMPData();
             string[] testCriteria;
-            if (isGoogleSheetsTest)
-            {
-                string requestUrl = BotUtilities.GetRequestServerURL(@"..\..\MountainProjectBot\Credentials.txt") + "PostHistory";
-                testCriteria = Utilities.GetHtml(requestUrl).Split('\n');
-            }
-            else
+            //if (isGoogleSheetsTest) //Todo: should implement a different way to get post history from Google Sheets
+            //{
+            //    string requestUrl = BotUtilities.GetRequestServerURL(@"..\..\MountainProjectBot\Credentials.txt") + "PostHistory";
+            //    testCriteria = Utilities.GetHtml(requestUrl).Split('\n');
+            //}
+            //else
                 testCriteria = File.ReadAllLines(@"..\PostTitleTest.txt");
 
             for (int i = 0; i < testCriteria.Length; i++)
