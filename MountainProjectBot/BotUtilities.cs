@@ -18,14 +18,15 @@ namespace MountainProjectBot
     {
         private const string XMLNAME = "MountainProjectAreas.xml";
         private const string CREDENTIALSNAME = "Credentials.txt";
-        private static string requestForApprovalURL = "";
-        private static string webServerUrl = "";
         private static string repliedToPath = "RepliedTo.txt";
         private static string seenPostsPath = @"RepliedToPosts.txt";
         private static string blacklistedPath = "BlacklistedUsers.txt";
         private static string xmlPath = Path.Combine(@"..\..\MountainProjectDBBuilder\bin\", XMLNAME);
         private static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
 
+        private static string requestForApprovalURL = "";
+        private static string webServerURL = "";
+        private static string spreadsheetHistoryURL = "";
         private static Server approvalServer;
 
         #region Init
@@ -89,7 +90,8 @@ namespace MountainProjectBot
             BotFunctions.RedditHelper = new RedditHelper();
             BotFunctions.RedditHelper.Auth(credentialsPath).Wait();
             requestForApprovalURL = GetCredentialValue(credentialsPath, "requestForApprovalURL");
-            webServerUrl = GetCredentialValue(credentialsPath, "webServerURL");
+            webServerURL = GetCredentialValue(credentialsPath, "webServerURL");
+            spreadsheetHistoryURL = GetCredentialValue(credentialsPath, "spreadsheetURL");
 
             StartApprovalServer();
         }
@@ -282,7 +284,7 @@ namespace MountainProjectBot
                                               "  var options = document.forms[0];" +
                                               "  for (var i = 0; i < options.length; i++){" +
                                               "    if (options[i].checked){" +
-                                              $"      window.location.replace(\"{(Debugger.IsAttached ? "http://localhost" : webServerUrl)}:{approvalServer.Port}?approveother&postid={parameters["postid"]}&option=\" + options[i].value);" +
+                                              $"      window.location.replace(\"{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approveother&postid={parameters["postid"]}&option=\" + options[i].value);" +
                                               "      break;" +
                                               "    }" +
                                               "  }" +
@@ -314,10 +316,13 @@ namespace MountainProjectBot
             return $"<h1 style=\"font-size:15vw\">{result}</h1>";
         }
 
-        public static void RequestApproval(Post post, SearchResult searchResult)
+        public static void RequestApproval(ApprovalRequest approvalRequest)
         {
-            if (string.IsNullOrEmpty(requestForApprovalURL) || string.IsNullOrEmpty(webServerUrl))
+            if (string.IsNullOrEmpty(requestForApprovalURL) || string.IsNullOrEmpty(webServerURL))
                 return;
+
+            Post post = approvalRequest.RedditPost;
+            SearchResult searchResult = approvalRequest.SearchResult;
 
             string messageText = $"**Possible AutoReply found:**\n" +
                                  $"{searchResult.UnconfidentReason}\n\n" +
@@ -335,16 +340,16 @@ namespace MountainProjectBot
                 messageText += "\n" +
                                $"**Filtered Result:** [{searchResult.FilteredResult.Name} ({(searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})](<{searchResult.FilteredResult.URL}>)\n" +
                                $"{Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult, searchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "")}\n\n" +
-                               $"[[APPROVE FILTERED]](<{(Debugger.IsAttached ? "http://localhost" : webServerUrl)}:{approvalServer.Port}?approve&postid={post.Id}>)  " +
-                               $"[[APPROVE ALL]](<{(Debugger.IsAttached ? "http://localhost" : webServerUrl)}:{approvalServer.Port}?approveall&postid={post.Id}>)  " +
-                               $"[[APPROVE OTHER]](<{(Debugger.IsAttached ? "http://localhost" : webServerUrl)}:{approvalServer.Port}?approveother&postid={post.Id}>)";
+                               $"[[APPROVE FILTERED]](<{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approve&postid={post.Id}>)  " +
+                               $"[[APPROVE ALL]](<{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approveall&postid={post.Id}>)  " +
+                               $"[[APPROVE OTHER]](<{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approveother&postid={post.Id}>)";
             }
             else
             {
                 messageText += $"**MPResult:** {searchResult.FilteredResult.Name} ({(searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})\n" +
                                $"{Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult, searchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "")}\n" +
                                $"<{searchResult.FilteredResult.URL}>\n\n" +
-                               $"[[APPROVE]](<{(Debugger.IsAttached ? "http://localhost" : webServerUrl)}:{approvalServer.Port}?approve&postid={post.Id}>)";
+                               $"[[APPROVE]](<{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approve&postid={post.Id}>)";
             }
 
             List<string> parameters = new List<string>
@@ -357,9 +362,33 @@ namespace MountainProjectBot
             DoPOST(requestForApprovalURL, parameters);
         }
 
+        public static void LogOrUpdateSpreadsheet(ApprovalRequest approvalRequest)
+        {
+            if (string.IsNullOrEmpty(spreadsheetHistoryURL))
+                return;
+
+            string locationString = Regex.Replace(BotReply.GetLocationString(approvalRequest.SearchResult.FilteredResult, approvalRequest.SearchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
+            List<string> parameters = new List<string>
+            {
+                $"reason={(string.IsNullOrEmpty(approvalRequest.SearchResult.UnconfidentReason) ? "" : Uri.EscapeDataString(approvalRequest.SearchResult.UnconfidentReason))}",
+                $"postTitle={Uri.EscapeDataString(WebUtility.HtmlDecode(approvalRequest.RedditPost.Title))}",
+                $"postURL={Uri.EscapeDataString(approvalRequest.RedditPost.Shortlink)}",
+                $"mpResultTitle={Uri.EscapeDataString(approvalRequest.SearchResult.FilteredResult.Name)}",
+                $"mpResultLocation={Uri.EscapeDataString(locationString)}",
+                $"mpResultGrade={Uri.EscapeDataString((approvalRequest.SearchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false))}",
+                $"mpResultURL={Uri.EscapeDataString(approvalRequest.SearchResult.FilteredResult.URL)}",
+                $"mpResultID={Uri.EscapeDataString(approvalRequest.SearchResult.FilteredResult.ID)}",
+            };
+
+            if (approvalRequest.SearchResult.Confidence == 1 || approvalRequest.IsApproved)
+                parameters.Add("alreadyApproved=true");
+
+            DoPOST(spreadsheetHistoryURL, parameters);
+        }
+
         public static void LogBadReply(Post redditPost)
         {
-            if (string.IsNullOrEmpty(requestForApprovalURL))
+            if (string.IsNullOrEmpty(spreadsheetHistoryURL))
                 return;
 
             List<string> parameters = new List<string>
@@ -367,7 +396,7 @@ namespace MountainProjectBot
                 "badReply=" + redditPost.Shortlink
             };
 
-            DoPOST(requestForApprovalURL, parameters);
+            DoPOST(spreadsheetHistoryURL, parameters);
         }
 
         private static string DoGET(string url)
@@ -423,7 +452,7 @@ namespace MountainProjectBot
         public bool ApproveFiltered { get; set; }
         public bool ApproveAll { get; set; }
 
-        public bool HasApproval
+        public bool IsApproved
         {
             get { return ApproveFiltered || ApproveAll; }
         }

@@ -137,7 +137,13 @@ namespace MountainProjectBot
             {
                 if ((DateTime.UtcNow - PostsPendingApproval[approvalRequestId].RedditPost.CreatedUTC).TotalMinutes > 30)
                 {
-                    PostsPendingApproval.TryRemove(approvalRequestId, out _);
+                    //Try to remove until we are able (another thread may be accessing it at this time)
+                    bool removeSuccess = PostsPendingApproval.TryRemove(approvalRequestId, out _);
+                    while (!removeSuccess)
+                    {
+                        removeSuccess = PostsPendingApproval.TryRemove(approvalRequestId, out _);
+                    }
+
                     removed++;
                 }
             }
@@ -145,10 +151,7 @@ namespace MountainProjectBot
             if (removed > 0)
                 BotUtilities.WriteToConsoleWithColor($"\tRemoved {removed} pending auto-replies that got too old", ConsoleColor.Red);
 
-            if (PostsPendingApproval.Count == 0)
-                return;
-
-            List<ApprovalRequest> approvedPosts = PostsPendingApproval.Where(p => p.Value.HasApproval || p.Value.SearchResult.Confidence == 1).Select(p => p.Value).ToList();
+            List<ApprovalRequest> approvedPosts = PostsPendingApproval.Where(p => p.Value.IsApproved).Select(p => p.Value).ToList();
             foreach (ApprovalRequest approvalRequest in approvedPosts)
             {
                 string reply = "";
@@ -173,9 +176,15 @@ namespace MountainProjectBot
                     Comment botReplyComment = await RedditHelper.CommentOnPost(approvalRequest.RedditPost, reply);
                     monitoredComments.Add(new CommentMonitor() { Parent = approvalRequest.RedditPost, BotResponseComment = botReplyComment });
                     BotUtilities.WriteToConsoleWithColor($"\tAuto-replied to post {approvalRequest.RedditPost.Id}", ConsoleColor.Green);
+                    BotUtilities.LogOrUpdateSpreadsheet(approvalRequest);
                 }
 
-                PostsPendingApproval.TryRemove(approvalRequest.RedditPost.Id, out _);
+                //Try to remove until we are able (another thread may be accessing it at this time)
+                bool removeSuccess = PostsPendingApproval.TryRemove(approvalRequest.RedditPost.Id, out _);
+                while (!removeSuccess)
+                {
+                    removeSuccess = PostsPendingApproval.TryRemove(approvalRequest.RedditPost.Id, out _);
+                }
             }
         }
 
@@ -220,11 +229,13 @@ namespace MountainProjectBot
                     SearchResult searchResult = MountainProjectDataSearch.ParseRouteFromString(postTitle);
                     if (!searchResult.IsEmpty())
                     {
-                        PostsPendingApproval.TryAdd(post.Id, new ApprovalRequest
+                        ApprovalRequest approvalRequest = new ApprovalRequest
                         {
                             RedditPost = post,
                             SearchResult = searchResult
-                        });
+                        };
+
+                        PostsPendingApproval.TryAdd(post.Id, approvalRequest);
 
                         BotUtilities.LogPostBeenSeen(post, searchResult.Confidence == 1 ? "auto-replying" : "pending approval");
 
@@ -244,8 +255,10 @@ namespace MountainProjectBot
                             {
                                 //Until we are more confident with automatic results, we're going to request for approval for confidence values greater than 1 (less than 100%)
                                 BotUtilities.WriteToConsoleWithColor($"\tRequesting approval for post {post.Id}", ConsoleColor.Yellow);
-                                BotUtilities.RequestApproval(post, searchResult);
+                                BotUtilities.RequestApproval(approvalRequest);
                             }
+
+                            BotUtilities.LogOrUpdateSpreadsheet(approvalRequest);
                         }
                     }
                     else
