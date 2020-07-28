@@ -324,7 +324,8 @@ namespace MountainProjectBot
             Post post = approvalRequest.RedditPost;
             SearchResult searchResult = approvalRequest.SearchResult;
 
-            string messageText = $"**Possible AutoReply found:**\n" +
+            string messageText = "--------------------------------" +
+                                 $"**Possible AutoReply found:**\n" +
                                  $"{searchResult.UnconfidentReason}\n\n" +
                                  $"**PostTitle:** {post.Title}\n" +
                                  $"**PostURL:** <{post.Shortlink}>\n\n";
@@ -351,6 +352,8 @@ namespace MountainProjectBot
                                $"<{searchResult.FilteredResult.URL}>\n\n" +
                                $"[[APPROVE]](<{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approve&postid={post.Id}>)";
             }
+
+            messageText += "\n--------------------------------";
 
             List<string> parameters = new List<string>
             {
