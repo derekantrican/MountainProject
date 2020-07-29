@@ -324,7 +324,7 @@ namespace MountainProjectBot
             Post post = approvalRequest.RedditPost;
             SearchResult searchResult = approvalRequest.SearchResult;
 
-            string messageText = "--------------------------------" +
+            string messageText = "--------------------------------\n" +
                                  $"**Possible AutoReply found:**\n" +
                                  $"{searchResult.UnconfidentReason}\n\n" +
                                  $"**PostTitle:** {post.Title}\n" +
