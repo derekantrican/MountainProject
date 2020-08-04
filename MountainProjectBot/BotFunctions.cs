@@ -36,9 +36,9 @@ namespace MountainProjectBot
                     {
                         botResponseComment = await RedditHelper.GetComment(monitor.BotResponseComment.Permalink);
                     }
-                    catch
+                    catch (Exception ex)
                     {
-                        BotUtilities.WriteToConsoleWithColor("Exception thrown when getting comment. Removing monitor...", ConsoleColor.Red);
+                        BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment ({ex.Message}). Removing monitor...", ConsoleColor.Red);
                         monitoredComments.Remove(monitor);
                         continue;
                     }
