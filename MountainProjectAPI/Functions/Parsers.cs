@@ -365,7 +365,7 @@ namespace MountainProjectAPI
 
         public static Dimension ParseRouteHeight(ref string additionalInfo)
         {
-            string regexMatch = Regex.Match(additionalInfo, @"\d+\s?ft", RegexOptions.IgnoreCase).Value;
+            string regexMatch = Regex.Match(additionalInfo, @"\d+\s?ft(\s\(\d+\s?m\))?", RegexOptions.IgnoreCase).Value;
             if (!string.IsNullOrEmpty(regexMatch))
             {
                 additionalInfo = additionalInfo.Replace(regexMatch, "").Trim();
