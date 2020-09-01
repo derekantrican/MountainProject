@@ -530,7 +530,7 @@ namespace MountainProjectAPI
             string id;
             if (parentLevel < 0 && Math.Abs(parentLevel) <= child.ParentIDs.Count) //"Negative indicies"
                 id = child.ParentIDs[child.ParentIDs.Count + parentLevel];
-            else if (parentLevel <= child.ParentIDs.Count - 1) //Positive indicies (check for "within range")
+            else if (parentLevel >= 0 && parentLevel <= child.ParentIDs.Count - 1) //Positive indicies (check for "within range")
                 id = child.ParentIDs[parentLevel];
             else //Out of range
                 return null;
@@ -549,7 +549,7 @@ namespace MountainProjectAPI
         public static MPObject GetOuterParent(MPObject child)
         {
             MPObject parent = GetParent(child, 0); //Get state that route/area is in
-            if (parent.URL == Utilities.GetSimpleURL(Utilities.INTERNATIONALURL)) //If this is international, get the country instead of the state (eg "China")
+            if (parent?.URL == Utilities.GetSimpleURL(Utilities.INTERNATIONALURL)) //If this is international, get the country instead of the state (eg "China")
             {
                 if (child.ParentIDs.Count > 3)
                 {
