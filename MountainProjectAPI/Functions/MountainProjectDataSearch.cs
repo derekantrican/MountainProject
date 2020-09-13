@@ -206,6 +206,7 @@ namespace MountainProjectAPI
 
                 if (filteredResults.Count > 1)
                 {
+                    //Try to filter down to "most parents matched"
                     //Todo: possibly a more efficient way to do this
                     int maxParentsMatched = filteredResults.Max(r => r.FoundParents.Select(p => p.Value.Count).Max());
                     filteredResults = filteredResults.Where(r => r.FoundParents.Select(p => p.Value.Count).Max() == maxParentsMatched).ToList();
