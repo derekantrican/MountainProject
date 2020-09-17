@@ -38,7 +38,8 @@ namespace MountainProjectBot
                     }
                     catch (Exception ex)
                     {
-                        BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment ({ex.Message}). Removing monitor...", ConsoleColor.Red);
+                        BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment: {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red);
+                        BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red);
                         monitoredComments.Remove(monitor);
                         continue;
                     }
