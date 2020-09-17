@@ -39,6 +39,7 @@ namespace MountainProjectBot
                     }
                     catch (Exception ex)
                     {
+                        BotUtilities.SendDiscordMessage($"Exception thrown when trying to get the bot's comment from a CommentMonitor ({monitor.BotResponseComment.Permalink}):\n\n{ex.Message}\n\n{ex.StackTrace}");
                         BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment: {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red);
                         BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red);
                         monitoredComments.Remove(monitor);
