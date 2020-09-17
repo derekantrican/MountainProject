@@ -4,6 +4,7 @@ using RedditSharp.Things;
 using System;
 using System.Collections.Concurrent;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
@@ -42,6 +43,12 @@ namespace MountainProjectBot
                         BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red);
                         monitoredComments.Remove(monitor);
                         continue;
+                    }
+
+                    if (!monitor.Alerted && botResponseComment.Comments.Any(c => Regex.IsMatch(c.Body, "bad bot", RegexOptions.IgnoreCase)))
+                    {
+                        BotUtilities.SendDiscordMessage($"There was a \"bad bot\" reply to this comment. Might want to investigate:\n\n{botResponseComment.Shortlink}");
+                        monitor.Alerted = true;
                     }
 
                     if (monitor.Parent is Post && botResponseComment.Score <= -3)

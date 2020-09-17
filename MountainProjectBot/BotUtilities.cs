@@ -355,11 +355,16 @@ namespace MountainProjectBot
 
             messageText += "\n--------------------------------";
 
+            SendDiscordMessage(messageText);
+        }
+
+        public static void SendDiscordMessage(string message)
+        {
             List<string> parameters = new List<string>
             {
                 $"username=MountainProjectBot",
                 $"avatar_url={Uri.EscapeDataString("https://i.imgur.com/iMhyiUP.png")}",
-                $"content={Uri.EscapeDataString(messageText)}",
+                $"content={Uri.EscapeDataString(message)}",
             };
 
             DoPOST(requestForApprovalURL, parameters);
