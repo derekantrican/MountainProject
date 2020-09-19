@@ -220,7 +220,7 @@ namespace UnitTests
 
         [DataTestMethod] //https://stackoverflow.com/a/54296734/2246411
         [DataRow("/area/105791955/exit-38-deception-crags", new object[] { new[] { "/area/105708966/washington", "/area/108471374/central-west-cascades-seattle", "/area/108471684/north-bend-vicinity", "/area/114278624/exit-38" } })] //Area
-        [DataRow("/route/112177605/no-rang-na-rang", new object[] { new[] { "/area/105907743/international", "/area/106661515/asia", "/area/106225629/south-korea", "/area/112177596/gwanaksankwanaksan-cha-oon-am-san-sleeping-rock-mountain" } })] //Route
+        [DataRow("/route/112177605/no-rang-na-rang", new object[] { new[] { "/area/105907743/international", "/area/106661515/asia", "/area/106225629/south-korea", "/area/119456750/seoulgyeonggi-do-northwest-korea", "/area/112177596/gwanaksankwanaksan-cha-oon-am-san-sleeping-rock-mountain" } })] //Route
         public void TestParentParse(string url, object[] expectedParentUrls)
         {
             if (!url.Contains(Utilities.MPBASEURL))
