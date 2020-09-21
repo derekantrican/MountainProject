@@ -39,7 +39,19 @@ namespace MountainProjectBot
                     }
                     catch (Exception ex)
                     {
-                        BotUtilities.SendDiscordMessage($"Exception thrown when trying to get the bot's comment from a CommentMonitor ({monitor.BotResponseComment.Permalink}):\n\n{ex.Message}\n\n{ex.StackTrace}");
+                        string discordMessage = $"Exception thrown when trying to get the bot's comment from a CommentMonitor ({monitor.BotResponseComment.Permalink}).";
+                        using (WebClient client = new WebClient())
+                        {
+                            string htmlCode = client.DownloadString(RedditHelper.GetFullLink(monitor.BotResponseComment.Permalink));
+                            if (htmlCode.Contains("There doesn't seem to be anything here"))
+                            {
+                                discordMessage += " Comment missing. Blocked by AutoModerator?";
+                            }
+                        }
+
+                        discordMessage += $"\n\n{ex.Message}\n\n{ex.StackTrace}";
+                        BotUtilities.SendDiscordMessage(discordMessage);
+
                         BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment: {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red);
                         BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red);
                         monitoredComments.Remove(monitor);
