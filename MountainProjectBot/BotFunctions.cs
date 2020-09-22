@@ -58,9 +58,9 @@ namespace MountainProjectBot
                         continue;
                     }
 
-                    if (!monitor.Alerted && botResponseComment.Comments.Any(c => Regex.IsMatch(c.Body, "bad bot", RegexOptions.IgnoreCase)))
+                    if (!monitor.Alerted && botResponseComment.Comments.Any(c => Regex.IsMatch(c.Body, "bad bot|wrong", RegexOptions.IgnoreCase)))
                     {
-                        BotUtilities.SendDiscordMessage($"There was a \"bad bot\" reply to this comment. Might want to investigate:\n\n{botResponseComment.Shortlink}");
+                        BotUtilities.SendDiscordMessage($"There was a \"bad bot\"/\"wrong\" reply to this comment. Might want to investigate:\n\n{botResponseComment.Shortlink}");
                         monitor.Alerted = true;
                     }
 
