@@ -37,7 +37,7 @@ namespace MountainProjectBot
                     {
                         botResponseComment = await RedditHelper.GetComment(monitor.BotResponseComment.Permalink);
                     }
-                    catch (Exception ex)
+                    catch
                     {
                         try
                         {
@@ -46,7 +46,7 @@ namespace MountainProjectBot
                             BotUtilities.SendDiscordMessage($"Attempt to get comment {monitor.BotResponseComment.Permalink} initially failed, but with exponential backoff it passed. " +
                                                             $"It has been {(DateTime.Now - monitor.Created).TotalSeconds} seconds since the comment was originally posted");
                         }
-                        catch
+                        catch (Exception ex)
                         {
                             Exception exception = ex.InnerException ?? ex;
 
