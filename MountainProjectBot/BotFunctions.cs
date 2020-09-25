@@ -42,6 +42,7 @@ namespace MountainProjectBot
                         Exception exception = ex.InnerException ?? ex;
 
                         string discordMessage = $"Exception thrown (after 3 retries) when trying to get the bot's comment from a CommentMonitor ({monitor.BotResponseComment.Permalink})";
+                        discordMessage += $"\n(Created {(DateTime.Now - monitor.Created).TotalSeconds} seconds ago)";
                         discordMessage += $"\n\n{exception.Message}\n\n{exception.StackTrace}";
                         BotUtilities.SendDiscordMessage(discordMessage);
 
