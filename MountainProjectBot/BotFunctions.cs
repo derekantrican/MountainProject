@@ -35,21 +35,31 @@ namespace MountainProjectBot
                     Comment botResponseComment = null;
                     try
                     {
-                        botResponseComment = await BotUtilities.DoTaskWithExponentialBackoff(RedditHelper.GetComment(monitor.BotResponseComment.Permalink));
+                        botResponseComment = await RedditHelper.GetComment(monitor.BotResponseComment.Permalink);
                     }
                     catch (Exception ex)
                     {
-                        Exception exception = ex.InnerException ?? ex;
+                        try
+                        {
+                            botResponseComment = await BotUtilities.DoTaskWithExponentialBackoff(RedditHelper.GetComment(monitor.BotResponseComment.Permalink));
 
-                        string discordMessage = $"Exception thrown (after 3 retries) when trying to get the bot's comment from a CommentMonitor ({monitor.BotResponseComment.Permalink})";
-                        discordMessage += $"\n(Created {(DateTime.Now - monitor.Created).TotalSeconds} seconds ago)";
-                        discordMessage += $"\n\n{exception.Message}\n\n{exception.StackTrace}";
-                        BotUtilities.SendDiscordMessage(discordMessage);
+                            BotUtilities.SendDiscordMessage($"Attempt to get comment {monitor.BotResponseComment.Permalink} initially failed, but with exponential backoff it passed. " +
+                                                            $"It has been {(DateTime.Now - monitor.Created).TotalSeconds} seconds since the comment was originally posted");
+                        }
+                        catch
+                        {
+                            Exception exception = ex.InnerException ?? ex;
 
-                        BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment: {exception.Message}\n{exception.StackTrace}", ConsoleColor.Red);
-                        BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red); //maybe we shouldn't remove the monitor unless trying to retrieve the comment fails too many times?
-                        monitoredComments.Remove(monitor);
-                        continue;
+                            string discordMessage = $"Exception thrown (after 3 retries) when trying to get the bot's comment from a CommentMonitor ({monitor.BotResponseComment.Permalink})";
+                            discordMessage += $"\n(Created {(DateTime.Now - monitor.Created).TotalSeconds} seconds ago)";
+                            discordMessage += $"\n\n{exception.Message}\n\n{exception.StackTrace}";
+                            BotUtilities.SendDiscordMessage(discordMessage);
+
+                            BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment: {exception.Message}\n{exception.StackTrace}", ConsoleColor.Red);
+                            BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red); //maybe we shouldn't remove the monitor unless trying to retrieve the comment fails too many times?
+                            monitoredComments.Remove(monitor);
+                            continue;
+                        }
                     }
 
                     if (!monitor.Alerted && botResponseComment.Comments.Any(c => Regex.IsMatch(c.Body, "bad bot|wrong", RegexOptions.IgnoreCase)))
