@@ -9,6 +9,7 @@ using System.Linq;
 using System.Net;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using static MountainProjectBot.Enums;
 
@@ -102,6 +103,26 @@ namespace MountainProjectBot
             return fileLines.FirstOrDefault(p => p.StartsWith(credential)).Split(new[] { ':' }, 2)[1]; //Split on first occurence only because requestForApprovalURL also contains ':'
         }
         #endregion Init
+
+        public static async Task<T> DoTaskWithExponentialBackoff<T>(Task<T> task)
+        {
+            int retries = 3;
+            Exception taskException = null;
+            for (int i = 1; i <= retries; i++)
+            {
+                try
+                {
+                    return await task;
+                }
+                catch (Exception e)
+                {
+                    Thread.Sleep(i * 100);
+                    taskException = e;
+                }
+            }
+
+            throw new Exception("Retries failed", taskException);
+        }
 
         public static async Task<List<Comment>> RemoveCommentsOnSelfPosts(Subreddit subreddit, List<Comment> comments)
         {

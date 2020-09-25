@@ -35,25 +35,18 @@ namespace MountainProjectBot
                     Comment botResponseComment = null;
                     try
                     {
-                        botResponseComment = await RedditHelper.GetComment(monitor.BotResponseComment.Permalink);
+                        botResponseComment = await BotUtilities.DoTaskWithExponentialBackoff(RedditHelper.GetComment(monitor.BotResponseComment.Permalink));
                     }
                     catch (Exception ex)
                     {
-                        string discordMessage = $"Exception thrown when trying to get the bot's comment from a CommentMonitor ({monitor.BotResponseComment.Permalink}).";
-                        using (WebClient client = new WebClient())
-                        {
-                            string htmlCode = client.DownloadString(RedditHelper.GetFullLink(monitor.BotResponseComment.Permalink));
-                            if (htmlCode.Contains("There doesn't seem to be anything here"))
-                            {
-                                discordMessage += " Comment missing. Blocked by AutoModerator?";
-                            }
-                        }
+                        Exception exception = ex.InnerException ?? ex;
 
-                        discordMessage += $"\n\n{ex.Message}\n\n{ex.StackTrace}";
+                        string discordMessage = $"Exception thrown (after 3 retries) when trying to get the bot's comment from a CommentMonitor ({monitor.BotResponseComment.Permalink})";
+                        discordMessage += $"\n\n{exception.Message}\n\n{exception.StackTrace}";
                         BotUtilities.SendDiscordMessage(discordMessage);
 
-                        BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment: {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red);
-                        BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red);
+                        BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment: {exception.Message}\n{exception.StackTrace}", ConsoleColor.Red);
+                        BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red); //maybe we shouldn't remove the monitor unless trying to retrieve the comment fails too many times?
                         monitoredComments.Remove(monitor);
                         continue;
                     }
@@ -145,8 +138,10 @@ namespace MountainProjectBot
                 }
                 catch (Exception e)
                 {
-                    Console.WriteLine($"\tException occured when checking monitor for comment {RedditHelper.GetFullLink(monitor.Parent.Permalink)}");
-                    Console.WriteLine($"\t{e.Message}\n{e.StackTrace}");
+                    BotUtilities.WriteToConsoleWithColor($"\tException occured when checking monitor for comment {RedditHelper.GetFullLink(monitor.Parent.Permalink)}", ConsoleColor.Red);
+                    BotUtilities.WriteToConsoleWithColor($"\t{e.Message}\n{e.StackTrace}", ConsoleColor.Red);
+                    BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red);
+                    monitoredComments.Remove(monitor);
                 }
             }
         }
