@@ -243,17 +243,6 @@ namespace MountainProjectBot
         #endregion Replied To
 
         #region Server Calls
-        public static void PingStatus()
-        {
-            string url = "https://script.google.com/macros/s/AKfycbzjGHLRxHDecvJoqZZCG-ZrEs8oOUTHJuAl0xHa0y_iZ2ntbjs/exec?ping";
-
-            try
-            {
-                DoGET(url);
-            }
-            catch { } //Discard any errors
-        }
-
         public static void StartApprovalServer()
         {
             approvalServer = new Server(9999);
@@ -269,7 +258,11 @@ namespace MountainProjectBot
             if (request.RequestMethod == HttpMethod.Get && !request.IsFaviconRequest && !request.IsDefaultPageRequest)
             {
                 Dictionary<string, string> parameters = request.GetParameters();
-                if (parameters.ContainsKey("postid") && (parameters.ContainsKey("approve") || parameters.ContainsKey("approveall") || parameters.ContainsKey("approveother")))
+                if (parameters.ContainsKey("status")) //UpTimeRobot will ping this
+                {
+                    return "UP";
+                }
+                else if (parameters.ContainsKey("postid") && (parameters.ContainsKey("approve") || parameters.ContainsKey("approveall") || parameters.ContainsKey("approveother")))
                 {
                     if (BotFunctions.PostsPendingApproval.ContainsKey(parameters["postid"]))
                     {
