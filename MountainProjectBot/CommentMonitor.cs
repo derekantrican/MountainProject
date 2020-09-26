@@ -16,5 +16,6 @@ namespace MountainProjectBot
         public VotableThing Parent { get; set; }
         public Comment BotResponseComment { get; set; }
         public bool Alerted { get; set; }
+        public int FailedTimes { get; set; } = 0
     }
 }

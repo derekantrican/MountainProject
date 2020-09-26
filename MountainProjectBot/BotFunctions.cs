@@ -49,6 +49,8 @@ namespace MountainProjectBot
                         }
                         catch (Exception ex)
                         {
+                            monitor.FailedTimes++;
+
                             Exception exception = ex.InnerException ?? ex;
 
                             string discordMessage = $"Exception thrown (after 10 retries) when trying to get the bot's comment from a CommentMonitor ({monitor.BotResponseComment.Permalink})";
@@ -56,10 +58,15 @@ namespace MountainProjectBot
                             discordMessage += $"\n\n{exception.Message}\n\n{exception.StackTrace}";
                             BotUtilities.SendDiscordMessage(discordMessage);
 
-                            BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment: {exception.Message}\n{exception.StackTrace}", ConsoleColor.Red);
-                            BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red); //maybe we shouldn't remove the monitor unless trying to retrieve the comment fails too many times?
-                            monitoredComments.Remove(monitor);
-                            continue;
+                            if (monitor.FailedTimes == 3)
+                            {
+                                BotUtilities.SendDiscordMessage($"Comment monitor failed 3 separate times");
+
+                                BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment: {exception.Message}\n{exception.StackTrace}", ConsoleColor.Red);
+                                BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red); //maybe we shouldn't remove the monitor unless trying to retrieve the comment fails too many times?
+                                monitoredComments.Remove(monitor);
+                                continue;
+                            }
                         }
                     }
 
