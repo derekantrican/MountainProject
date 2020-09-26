@@ -104,15 +104,15 @@ namespace MountainProjectBot
         }
         #endregion Init
 
-        public static async Task<T> DoTaskWithExponentialBackoff<T>(Task<T> task)
+        public static async Task<(T, int)> DoTaskWithExponentialBackoff<T>(Task<T> task)
         {
-            int retries = 3;
+            int retries = 10;
             Exception taskException = null;
             for (int i = 1; i <= retries; i++)
             {
                 try
                 {
-                    return await task;
+                    return (await task, i);
                 }
                 catch (Exception e)
                 {

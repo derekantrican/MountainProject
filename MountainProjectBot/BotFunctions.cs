@@ -41,16 +41,17 @@ namespace MountainProjectBot
                     {
                         try
                         {
-                            botResponseComment = await BotUtilities.DoTaskWithExponentialBackoff(RedditHelper.GetComment(monitor.BotResponseComment.Permalink));
+                            (Comment, int) commentAndRetries = await BotUtilities.DoTaskWithExponentialBackoff(RedditHelper.GetComment(monitor.BotResponseComment.Permalink));
+                            botResponseComment = commentAndRetries.Item1;
 
-                            BotUtilities.SendDiscordMessage($"Attempt to get comment {monitor.BotResponseComment.Permalink} initially failed, but with exponential backoff it passed. " +
+                            BotUtilities.SendDiscordMessage($"Attempt to get comment {monitor.BotResponseComment.Permalink} initially failed, but with exponential backoff it passed after {commentAndRetries.Item2} retries. " +
                                                             $"It has been {(DateTime.Now - monitor.Created).TotalSeconds} seconds since the comment was originally posted");
                         }
                         catch (Exception ex)
                         {
                             Exception exception = ex.InnerException ?? ex;
 
-                            string discordMessage = $"Exception thrown (after 3 retries) when trying to get the bot's comment from a CommentMonitor ({monitor.BotResponseComment.Permalink})";
+                            string discordMessage = $"Exception thrown (after 10 retries) when trying to get the bot's comment from a CommentMonitor ({monitor.BotResponseComment.Permalink})";
                             discordMessage += $"\n(Created {(DateTime.Now - monitor.Created).TotalSeconds} seconds ago)";
                             discordMessage += $"\n\n{exception.Message}\n\n{exception.StackTrace}";
                             BotUtilities.SendDiscordMessage(discordMessage);
