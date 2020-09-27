@@ -71,8 +71,9 @@ namespace MountainProjectBot
                                 BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment: {exception.Message}\n{exception.StackTrace}", ConsoleColor.Red);
                                 BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red); //maybe we shouldn't remove the monitor unless trying to retrieve the comment fails too many times?
                                 monitoredComments.Remove(monitor);
-                                continue;
                             }
+
+                            continue;
                         }
                     }
 
