@@ -36,6 +36,12 @@ namespace MountainProjectBot
                     try
                     {
                         botResponseComment = await RedditHelper.GetComment(monitor.BotResponseComment.Permalink);
+
+                        if (monitor.FailedTimes > 0)
+                        {
+                            BotUtilities.SendDiscordMessage($"Retrieving this comment has failed {monitor.FailedTimes} times before, but it passed this time [1]");
+                            monitor.FailedTimes = 0; //Set back to 0 so we hopefully don't trigger this again (if it was successful to get once, it will probably be successful from here on out)
+                        }
                     }
                     catch
                     {
@@ -44,7 +50,7 @@ namespace MountainProjectBot
                             (Comment, int) commentAndRetries = await BotUtilities.DoTaskWithExponentialBackoff(RedditHelper.GetComment(monitor.BotResponseComment.Permalink));
                             botResponseComment = commentAndRetries.Item1;
 
-                            BotUtilities.SendDiscordMessage($"Attempt to get comment {monitor.BotResponseComment.Permalink} initially failed, but with exponential backoff it passed after {commentAndRetries.Item2} retries. " +
+                            BotUtilities.SendDiscordMessage($"Attempt to get comment {monitor.BotResponseComment.Permalink} initially failed, but with exponential backoff it passed after {commentAndRetries.Item2} retries ({monitor.FailedTimes} previous failures). " +
                                                             $"It has been {(DateTime.Now - monitor.Created).TotalSeconds} seconds since the comment was originally posted");
                         }
                         catch (Exception ex)
