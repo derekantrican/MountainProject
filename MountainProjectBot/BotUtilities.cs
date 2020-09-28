@@ -391,10 +391,14 @@ namespace MountainProjectBot
                 $"postURL={Uri.EscapeDataString(approvalRequest.RedditPost.Shortlink)}",
                 $"mpResultTitle={Uri.EscapeDataString(approvalRequest.SearchResult.FilteredResult.Name)}",
                 $"mpResultLocation={Uri.EscapeDataString(locationString)}",
-                $"mpResultGrade={Uri.EscapeDataString((approvalRequest.SearchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false))}",
                 $"mpResultURL={Uri.EscapeDataString(approvalRequest.SearchResult.FilteredResult.URL)}",
                 $"mpResultID={Uri.EscapeDataString(approvalRequest.SearchResult.FilteredResult.ID)}",
             };
+
+            if (approvalRequest.SearchResult.FilteredResult is Route route)
+            {
+                parameters.Add($"mpResultGrade={Uri.EscapeDataString(route.GetRouteGrade(Grade.GradeSystem.YDS).ToString(false))}");
+            }
 
             if (approvalRequest.SearchResult.Confidence == 1 || approvalRequest.IsApproved)
                 parameters.Add("alreadyApproved=true");
