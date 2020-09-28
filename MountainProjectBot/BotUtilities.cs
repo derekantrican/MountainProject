@@ -104,26 +104,6 @@ namespace MountainProjectBot
         }
         #endregion Init
 
-        public static async Task<(T, int)> DoTaskWithExponentialBackoff<T>(Task<T> task)
-        {
-            int retries = 10;
-            Exception taskException = null;
-            for (int i = 1; i <= retries; i++)
-            {
-                try
-                {
-                    return (await task, i);
-                }
-                catch (Exception e)
-                {
-                    Thread.Sleep(i * 100);
-                    taskException = e;
-                }
-            }
-
-            throw new Exception("Retries failed", taskException);
-        }
-
         public static async Task<List<Comment>> RemoveCommentsOnSelfPosts(Subreddit subreddit, List<Comment> comments)
         {
             List<Comment> result = new List<Comment>();

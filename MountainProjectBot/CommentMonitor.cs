@@ -1,14 +1,16 @@
 ﻿using RedditSharp.Things;
 using System;
+using System.Runtime.CompilerServices;
 
 namespace MountainProjectBot
 {
     public class CommentMonitor
     {
-        public CommentMonitor()
+        public CommentMonitor([CallerMemberName] string callingMethod = null)
         {
             Created = DateTime.Now;
             ExpirationHours = 24;
+            CreatorMethodName = callingMethod;
         }
 
         public DateTime Created { get; set; }
@@ -17,5 +19,6 @@ namespace MountainProjectBot
         public Comment BotResponseComment { get; set; }
         public bool Alerted { get; set; }
         public int FailedTimes { get; set; } = 0;
+        public string CreatorMethodName { get; set; }
     }
 }
