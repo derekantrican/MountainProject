@@ -279,7 +279,7 @@ namespace MountainProjectBot
                         {
                             if (parameters.ContainsKey("option"))
                             {
-                                MPObject matchingOption = approvalRequest.SearchResult.AllResults.Find(p => p.ID == parameters["option"]);
+                                MPObject matchingOption = approvalRequest.SearchResult.AllResults.Find(p => p.ID == parameters["option"]) ?? MountainProjectDataSearch.GetItemWithMatchingID(parameters["option"]);
                                 if (matchingOption == null)
                                 {
                                     result = $"Option '{parameters["option"]}' not found";
@@ -300,12 +300,14 @@ namespace MountainProjectBot
                                                   $" ({Regex.Replace(BotReply.GetLocationString(option, approvalRequest.SearchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("\n", "")})<br>";
                                 }
 
-                                htmlPicker += "<br><input type=\"button\" onclick=\"choose()\" value=\"Choose\"></form><script>" +
+                                htmlPicker += "<input type=\"radio\" name=\"options\">Other: <input type=\"text\" id=\"other_option\">" +
+                                              "<br><input type=\"button\" onclick=\"choose()\" value=\"Choose\"></form><script>" +
                                               "function choose(){" +
                                               "  var options = document.forms[0];" +
                                               "  for (var i = 0; i < options.length; i++){" +
                                               "    if (options[i].checked){" +
-                                              $"      window.location.replace(\"{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approveother&postid={parameters["postid"]}&option=\" + options[i].value);" +
+                                              "      var chosen = options[i].value ? options[i].value : document.getElementById(\"other_option\").value.match(/(?<=\\/)\\d+(?=\\/)/g);" +
+                                              $"     window.location.replace(\"{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approveother&postid={parameters["postid"]}&option=\" + chosen);" +
                                               "      break;" +
                                               "    }" +
                                               "  }" +
@@ -371,7 +373,8 @@ namespace MountainProjectBot
                 messageText += $"**MPResult:** {searchResult.FilteredResult.Name} ({(searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})\n" +
                                $"{Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult, searchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "")}\n" +
                                $"<{searchResult.FilteredResult.URL}>\n\n" +
-                               $"[[APPROVE]](<{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approve&postid={post.Id}>)";
+                               $"[[APPROVE]](<{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approve&postid={post.Id}>)" +
+                               $"[[APPROVE OTHER]](<{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approveother&postid={post.Id}>)";
             }
 
             messageText += "\n--------------------------------";
