@@ -273,13 +273,13 @@ namespace MountainProjectBot
                                                   $" ({Regex.Replace(BotReply.GetLocationString(option, approvalRequest.SearchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("\n", "")})<br>";
                                 }
 
-                                htmlPicker += "<input type=\"radio\" name=\"options\">Other: <input type=\"text\" id=\"other_option\">" +
+                                htmlPicker += "<input type=\"radio\" name=\"options\" id=\"other_option\">Other: <input type=\"text\" id=\"other_option_value\">" +
                                               "<br><input type=\"button\" onclick=\"choose()\" value=\"Choose\"></form><script>" +
                                               "function choose(){" +
                                               "  var options = document.forms[0];" +
                                               "  for (var i = 0; i < options.length; i++){" +
                                               "    if (options[i].checked){" +
-                                              "      var chosen = options[i].value ? options[i].value : document.getElementById(\"other_option\").value.match(/(?<=\\/)\\d+(?=\\/)/g);" +
+                                              "      var chosen = options[i].id != \"other_option\" ? options[i].value : document.getElementById(\"other_option_value\").value.match(/(?<=\\/)\\d+(?=\\/)/g);" +
                                               $"     window.location.replace(\"{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approveother&postid={parameters["postid"]}&option=\" + chosen);" +
                                               "      break;" +
                                               "    }" +
@@ -299,8 +299,19 @@ namespace MountainProjectBot
                             approvalRequest.ApproveAll = true;
                         }
 
-                        BotFunctions.PostsPendingApproval[parameters["postid"]] = approvalRequest;
-                        result = "Approved";
+                        if (approvalRequest.IsApproved)
+                        {
+                            BotFunctions.PostsPendingApproval[parameters["postid"]] = approvalRequest;
+                            result = $"Approved";
+                            if (approvalRequest.ApproveFiltered)
+                            {
+                                result += $" {approvalRequest.SearchResult.FilteredResult.Name} ({approvalRequest.SearchResult.FilteredResult.ID})";
+                            }
+                            else
+                            {
+                                result += "all";
+                            }
+                        }
                     }
                     else
                     {
@@ -346,7 +357,7 @@ namespace MountainProjectBot
                 messageText += $"**MPResult:** {searchResult.FilteredResult.Name} ({(searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})\n" +
                                $"{Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult, searchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "")}\n" +
                                $"<{searchResult.FilteredResult.URL}>\n\n" +
-                               $"[[APPROVE]](<{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approve&postid={post.Id}>)" +
+                               $"[[APPROVE]](<{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approve&postid={post.Id}>)  " +
                                $"[[APPROVE OTHER]](<{(Debugger.IsAttached ? "http://localhost" : webServerURL)}:{approvalServer.Port}?approveother&postid={post.Id}>)";
             }
 
