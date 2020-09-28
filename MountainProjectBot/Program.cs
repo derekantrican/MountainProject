@@ -100,8 +100,6 @@ namespace MountainProjectBot
         {
             while (true)
             {
-                _ = Task.Run(() => BotUtilities.PingStatus()); //Send the bot status (for Uptime Robot)
-
                 Console.WriteLine("\tGetting comments...");
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 long elapsed;

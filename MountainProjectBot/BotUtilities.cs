@@ -104,15 +104,15 @@ namespace MountainProjectBot
         }
         #endregion Init
 
-        public static async Task<T> DoTaskWithExponentialBackoff<T>(Task<T> task)
+        public static async Task<(T, int)> DoTaskWithExponentialBackoff<T>(Task<T> task)
         {
-            int retries = 3;
+            int retries = 10;
             Exception taskException = null;
             for (int i = 1; i <= retries; i++)
             {
                 try
                 {
-                    return await task;
+                    return (await task, i);
                 }
                 catch (Exception e)
                 {
@@ -243,17 +243,6 @@ namespace MountainProjectBot
         #endregion Replied To
 
         #region Server Calls
-        public static void PingStatus()
-        {
-            string url = "https://script.google.com/macros/s/AKfycbzjGHLRxHDecvJoqZZCG-ZrEs8oOUTHJuAl0xHa0y_iZ2ntbjs/exec?ping";
-
-            try
-            {
-                DoGET(url);
-            }
-            catch { } //Discard any errors
-        }
-
         public static void StartApprovalServer()
         {
             approvalServer = new Server(9999);
@@ -269,7 +258,11 @@ namespace MountainProjectBot
             if (request.RequestMethod == HttpMethod.Get && !request.IsFaviconRequest && !request.IsDefaultPageRequest)
             {
                 Dictionary<string, string> parameters = request.GetParameters();
-                if (parameters.ContainsKey("postid") && (parameters.ContainsKey("approve") || parameters.ContainsKey("approveall") || parameters.ContainsKey("approveother")))
+                if (parameters.ContainsKey("status")) //UpTimeRobot will ping this
+                {
+                    return "UP";
+                }
+                else if (parameters.ContainsKey("postid") && (parameters.ContainsKey("approve") || parameters.ContainsKey("approveall") || parameters.ContainsKey("approveother")))
                 {
                     if (BotFunctions.PostsPendingApproval.ContainsKey(parameters["postid"]))
                     {

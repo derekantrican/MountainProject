@@ -36,28 +36,43 @@ namespace MountainProjectBot
                     try
                     {
                         botResponseComment = await RedditHelper.GetComment(monitor.BotResponseComment.Permalink);
+
+                        if (monitor.FailedTimes > 0)
+                        {
+                            BotUtilities.SendDiscordMessage($"Retrieving this comment has failed {monitor.FailedTimes} times before, but it passed this time [1]");
+                            monitor.FailedTimes = 0; //Set back to 0 so we hopefully don't trigger this again (if it was successful to get once, it will probably be successful from here on out)
+                        }
                     }
                     catch
                     {
                         try
                         {
-                            botResponseComment = await BotUtilities.DoTaskWithExponentialBackoff(RedditHelper.GetComment(monitor.BotResponseComment.Permalink));
+                            (Comment, int) commentAndRetries = await BotUtilities.DoTaskWithExponentialBackoff(RedditHelper.GetComment(monitor.BotResponseComment.Permalink));
+                            botResponseComment = commentAndRetries.Item1;
 
-                            BotUtilities.SendDiscordMessage($"Attempt to get comment {monitor.BotResponseComment.Permalink} initially failed, but with exponential backoff it passed. " +
+                            BotUtilities.SendDiscordMessage($"Attempt to get comment {monitor.BotResponseComment.Permalink} initially failed, but with exponential backoff it passed after {commentAndRetries.Item2} retries ({monitor.FailedTimes} previous failures). " +
                                                             $"It has been {(DateTime.Now - monitor.Created).TotalSeconds} seconds since the comment was originally posted");
                         }
                         catch (Exception ex)
                         {
+                            monitor.FailedTimes++;
+
                             Exception exception = ex.InnerException ?? ex;
 
-                            string discordMessage = $"Exception thrown (after 3 retries) when trying to get the bot's comment from a CommentMonitor ({monitor.BotResponseComment.Permalink})";
+                            string discordMessage = $"Exception thrown (after 10 retries) when trying to get the bot's comment from a CommentMonitor ({monitor.BotResponseComment.Permalink})";
                             discordMessage += $"\n(Created {(DateTime.Now - monitor.Created).TotalSeconds} seconds ago)";
                             discordMessage += $"\n\n{exception.Message}\n\n{exception.StackTrace}";
                             BotUtilities.SendDiscordMessage(discordMessage);
 
-                            BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment: {exception.Message}\n{exception.StackTrace}", ConsoleColor.Red);
-                            BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red); //maybe we shouldn't remove the monitor unless trying to retrieve the comment fails too many times?
-                            monitoredComments.Remove(monitor);
+                            if (monitor.FailedTimes == 3)
+                            {
+                                BotUtilities.SendDiscordMessage($"Comment monitor failed 3 separate times");
+
+                                BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment: {exception.Message}\n{exception.StackTrace}", ConsoleColor.Red);
+                                BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red); //maybe we shouldn't remove the monitor unless trying to retrieve the comment fails too many times?
+                                monitoredComments.Remove(monitor);
+                            }
+
                             continue;
                         }
                     }
