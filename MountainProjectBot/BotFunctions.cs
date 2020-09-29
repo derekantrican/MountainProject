@@ -39,7 +39,7 @@ namespace MountainProjectBot
 
                         if (monitor.FailedTimes > 0)
                         {
-                            BotUtilities.SendDiscordMessage($"Retrieving this comment has failed {monitor.FailedTimes} times before, but it passed this time");
+                            BotUtilities.SendDiscordMessage($"Retrieving this comment has failed {monitor.FailedTimes} times before, but it passed this time (created {(DateTime.Now - monitor.Created).TotalSeconds} seconds ago)");
                             monitor.FailedTimes = 0; //Set back to 0 so we hopefully don't trigger this again (if it was successful to get once, it will probably be successful from here on out)
                         }
                     }
