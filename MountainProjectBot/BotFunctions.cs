@@ -24,7 +24,7 @@ namespace MountainProjectBot
 
         public static async Task CheckMonitoredComments()
         {
-            monitoredComments.RemoveAll(c => (DateTime.Now - c.Created).TotalHours > c.ExpirationHours); //Remove any old monitors
+            monitoredComments.RemoveAll(c => c.Age.TotalHours > c.ExpirationHours); //Remove any old monitors
 
             for (int i = monitoredComments.Count - 1; i >= 0; i--)
             {
@@ -39,7 +39,7 @@ namespace MountainProjectBot
 
                         if (monitor.FailedTimes > 0)
                         {
-                            BotUtilities.SendDiscordMessage($"Retrieving this comment has failed {monitor.FailedTimes} times before, but it passed this time (created {(DateTime.Now - monitor.Created).TotalSeconds} seconds ago)");
+                            BotUtilities.SendDiscordMessage($"Retrieving this comment has failed {monitor.FailedTimes} times before, but it passed this time (created {monitor.Age.TotalSeconds} seconds ago)");
                             monitor.FailedTimes = 0; //Set back to 0 so we hopefully don't trigger this again (if it was successful to get once, it will probably be successful from here on out)
                         }
                     }
@@ -47,7 +47,7 @@ namespace MountainProjectBot
                     {
                         monitor.FailedTimes++;
 
-                        BotUtilities.SendDiscordMessage($"Failed to get comment. Monitor created {(DateTime.Now - monitor.Created).TotalSeconds} seconds ago from {monitor.CreatorMethodName}");
+                        BotUtilities.SendDiscordMessage($"Failed to get comment. Monitor created {monitor.Age.TotalSeconds} seconds ago from {monitor.CreatorMethodName}");
 
                         if (monitor.FailedTimes == 3)
                         {
