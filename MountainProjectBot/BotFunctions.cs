@@ -36,23 +36,13 @@ namespace MountainProjectBot
                     try
                     {
                         botResponseComment = await RedditHelper.GetComment(monitor.BotResponseComment.Permalink);
-
-                        if (monitor.FailedTimes > 0)
-                        {
-                            BotUtilities.SendDiscordMessage($"Retrieving this comment has failed {monitor.FailedTimes} times before, but it passed this time (created {monitor.Age.TotalSeconds} seconds ago)");
-                            monitor.FailedTimes = 0; //Set back to 0 so we hopefully don't trigger this again (if it was successful to get once, it will probably be successful from here on out)
-                        }
                     }
                     catch (Exception ex)
                     {
                         monitor.FailedTimes++;
 
-                        BotUtilities.SendDiscordMessage($"Failed to get comment. Monitor created {monitor.Age.TotalSeconds} seconds ago from {monitor.CreatorMethodName}");
-
                         if (monitor.FailedTimes == 3)
                         {
-                            BotUtilities.SendDiscordMessage($"Comment monitor failed 3 separate times");
-
                             BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment: {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red);
                             BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red); //maybe we shouldn't remove the monitor unless trying to retrieve the comment fails too many times?
                             monitoredComments.Remove(monitor);
