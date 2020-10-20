@@ -252,14 +252,30 @@ namespace MountainProjectBot
                         {
                             if (parameters.ContainsKey("option"))
                             {
-                                MPObject matchingOption = approvalRequest.SearchResult.AllResults.Find(p => p.ID == parameters["option"]) ?? MountainProjectDataSearch.GetItemWithMatchingID(parameters["option"]);
-                                if (matchingOption == null)
+                                result = "";
+
+                                List<MPObject> approveResult = new List<MPObject>();
+                                foreach(string approvedId in parameters["option"].Split(','))
                                 {
-                                    result = $"Option '{parameters["option"]}' not found";
+                                    MPObject matchingOption = approvalRequest.SearchResult.AllResults.Find(p => p.ID == approvedId) ?? MountainProjectDataSearch.GetItemWithMatchingID(approvedId);
+                                    if (matchingOption == null)
+                                    {
+                                        result += $"Option '{approvedId}' not found<br>";
+                                    }
+                                    else
+                                    {
+                                        approveResult.Add(matchingOption);
+                                    }
+                                }
+
+                                if (approveResult.Count > 1)
+                                {
+                                    approvalRequest.SearchResult.AllResults = approveResult;
+                                    approvalRequest.ApproveAll = true;
                                 }
                                 else
                                 {
-                                    approvalRequest.SearchResult.FilteredResult = matchingOption;
+                                    approvalRequest.SearchResult.FilteredResult = approveResult.First();
                                     approvalRequest.ApproveFiltered = true;
                                 }
                             }
@@ -273,7 +289,7 @@ namespace MountainProjectBot
                                                   $" ({Regex.Replace(BotReply.GetLocationString(option, approvalRequest.SearchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("\n", "")})<br>";
                                 }
 
-                                htmlPicker += "<input type=\"radio\" name=\"options\" id=\"other_option\">Other: <input type=\"text\" id=\"other_option_value\">" +
+                                htmlPicker += "<input type=\"radio\" name=\"options\" id=\"other_option\">Other: <input type=\"text\" id=\"other_option_value\" size=\"100\">&nbsp;(separate multiple urls with semicolons)" +
                                               "<br><input type=\"button\" onclick=\"choose()\" value=\"Choose\"></form><script>" +
                                               "function choose(){" +
                                               "  var options = document.forms[0];" +
