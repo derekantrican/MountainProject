@@ -171,18 +171,16 @@ namespace MountainProjectBot
             foreach (ApprovalRequest approvalRequest in approvedPosts)
             {
                 string reply = "";
-                if (approvalRequest.ApproveFiltered)
+                foreach (MPObject mpObject in approvalRequest.ApprovedResults)
                 {
-                    reply += BotReply.GetFormattedString(approvalRequest.SearchResult);
-                    reply += Markdown.HRule;
-                }
-                else if (approvalRequest.ApproveAll)
-                {
-                    foreach (MPObject mpObject in approvalRequest.SearchResult.AllResults)
+                    Area relatedLocation = approvalRequest.RelatedLocation;
+                    if (!mpObject.Parents.Contains(approvalRequest.RelatedLocation))
                     {
-                        reply += BotReply.GetFormattedString(new SearchResult(mpObject, approvalRequest.SearchResult.RelatedLocation));
-                        reply += Markdown.HRule;
+                        relatedLocation = null;
                     }
+
+                    reply += BotReply.GetFormattedString(new SearchResult(mpObject, relatedLocation));
+                    reply += Markdown.HRule;
                 }
 
                 reply += BotReply.GetBotLinks(approvalRequest.RedditPost);

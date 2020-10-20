@@ -254,7 +254,7 @@ namespace MountainProjectBot
                             {
                                 result = "";
 
-                                List<MPObject> approveResult = new List<MPObject>();
+                                //List<MPObject> approveResult = new List<MPObject>();
                                 foreach(string approvedId in parameters["option"].Split(','))
                                 {
                                     MPObject matchingOption = approvalRequest.SearchResult.AllResults.Find(p => p.ID == approvedId) ?? MountainProjectDataSearch.GetItemWithMatchingID(approvedId);
@@ -264,19 +264,8 @@ namespace MountainProjectBot
                                     }
                                     else
                                     {
-                                        approveResult.Add(matchingOption);
+                                        approvalRequest.ApprovedResults.Add(matchingOption);
                                     }
-                                }
-
-                                if (approveResult.Count > 1)
-                                {
-                                    approvalRequest.SearchResult.AllResults = approveResult;
-                                    approvalRequest.ApproveAll = true;
-                                }
-                                else
-                                {
-                                    approvalRequest.SearchResult.FilteredResult = approveResult.First();
-                                    approvalRequest.ApproveFiltered = true;
                                 }
                             }
                             else
@@ -308,25 +297,19 @@ namespace MountainProjectBot
                         }
                         else if (parameters.ContainsKey("approve"))
                         {
-                            approvalRequest.ApproveFiltered = true;
+                            approvalRequest.ApprovedResults = new List<MPObject> { approvalRequest.SearchResult.FilteredResult };
+                            approvalRequest.RelatedLocation = approvalRequest.SearchResult.RelatedLocation;
                         }
                         else if (parameters.ContainsKey("approveall"))
                         {
-                            approvalRequest.ApproveAll = true;
+                            approvalRequest.ApprovedResults = approvalRequest.SearchResult.AllResults;
+                            approvalRequest.RelatedLocation = approvalRequest.SearchResult.RelatedLocation;
                         }
 
                         if (approvalRequest.IsApproved)
                         {
                             BotFunctions.PostsPendingApproval[parameters["postid"]] = approvalRequest;
-                            result = $"Approved";
-                            if (approvalRequest.ApproveFiltered)
-                            {
-                                result += $" {approvalRequest.SearchResult.FilteredResult.Name} ({approvalRequest.SearchResult.FilteredResult.ID})";
-                            }
-                            else
-                            {
-                                result += "all";
-                            }
+                            result = $"Approved {(approvalRequest.ApprovedResults.Count > 1 ? " all" : $" {approvalRequest.ApprovedResults[0].Name} ({approvalRequest.ApprovedResults[0].ID})")}";
                         }
                     }
                     else
@@ -485,12 +468,12 @@ namespace MountainProjectBot
     {
         public Post RedditPost { get; set; }
         public SearchResult SearchResult { get; set; }
-        public bool ApproveFiltered { get; set; }
-        public bool ApproveAll { get; set; }
+        public List<MPObject> ApprovedResults { get; set; } = new List<MPObject>();
+        public Area RelatedLocation { get; set; }
 
         public bool IsApproved
         {
-            get { return ApproveFiltered || ApproveAll; }
+            get { return ApprovedResults.Any(); }
         }
     }
 }
