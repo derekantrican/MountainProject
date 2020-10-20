@@ -481,7 +481,7 @@ namespace MountainProjectBot
         }
     }
 
-    public class ApprovalRequest
+    public class ApprovalRequest //Todo: rather than modifying ApprovalRequest.SearchResult.FilteredResult (or similar) - ApprovalRequest should have its own list of approved items (maybe also with a related area?)
     {
         public Post RedditPost { get; set; }
         public SearchResult SearchResult { get; set; }
