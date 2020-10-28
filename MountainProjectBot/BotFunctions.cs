@@ -151,6 +151,11 @@ namespace MountainProjectBot
             int removed = 0;
             foreach (string approvalRequestId in PostsPendingApproval.Keys) //Remove approval requests that have "timed out"
             {
+                if (PostsPendingApproval[approvalRequestId].Force)
+                {
+                    continue;
+                }
+
                 if ((DateTime.UtcNow - PostsPendingApproval[approvalRequestId].RedditPost.CreatedUTC).TotalMinutes > 30)
                 {
                     //Try to remove until we are able (another thread may be accessing it at this time)
