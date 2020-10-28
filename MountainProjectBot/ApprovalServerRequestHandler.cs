@@ -36,7 +36,7 @@ namespace MountainProjectBot
                         //Because the ApprovalRequest & SearchResult have been disposed by now, we need to recreate them. Maybe we can do this in a better way in the future
                         Post post = BotFunctions.RedditHelper.GetPost(parameters["postid"]).Result;
                         SearchResult searchResult = MountainProjectDataSearch.ParseRouteFromString(post.Title);
-                        return GetApproval(parameters, new ApprovalRequest { Force = true, SearchResult = searchResult });
+                        return GetApproval(parameters, new ApprovalRequest { Force = true, RedditPost = post, SearchResult = searchResult });
                     }
                     else
                     {
