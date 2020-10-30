@@ -29,7 +29,7 @@ namespace MountainProjectBot
         {
             get
             {
-                return this.thread.IsAlive;
+                return this.thread != null && this.thread.IsAlive;
             }
         }
 

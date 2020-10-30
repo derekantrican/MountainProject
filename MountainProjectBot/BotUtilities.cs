@@ -99,7 +99,11 @@ namespace MountainProjectBot
             ApprovalServer = new Server(9999)
             {
                 HandleRequest = ApprovalServerRequestHandler.HandleRequest,
-                ExceptionHandling = (Exception ex) => WriteToConsoleWithColor($"Sever error: ({ex.GetType()}): {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red)
+                ExceptionHandling = (Exception ex) => 
+                {
+                    SendDiscordMessage($"Sever error: ({ex.GetType()}): {ex.Message}\n{ex.StackTrace}\n\nIs alive? {ApprovalServer.IsAlive}");
+                    WriteToConsoleWithColor($"Sever error: ({ex.GetType()}): {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red); 
+                }
             };
             ApprovalServer.Start();
         }
