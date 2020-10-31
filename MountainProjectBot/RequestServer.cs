@@ -52,6 +52,7 @@ namespace MountainProjectBot
         {
             while (true)
             {
+                string request = null;
                 try
                 {
                     TcpClient client = listener.AcceptTcpClient();
@@ -59,7 +60,7 @@ namespace MountainProjectBot
                     StreamReader sr = new StreamReader(client.GetStream());
                     StreamWriter sw = new StreamWriter(client.GetStream());
 
-                    string request = sr.ReadLine();
+                    request = sr.ReadLine();
 
                     sw.WriteLine("HTTP/1.0 200 OK\n"); //Send ok response to requester
 
@@ -74,6 +75,11 @@ namespace MountainProjectBot
                 }
                 catch (Exception ex)
                 {
+                    if (request != null)
+                    {
+                        ex.Data["path"] = request;
+                    }
+
                     ExceptionHandling?.Invoke(ex);
                 }
             }
@@ -95,6 +101,18 @@ namespace MountainProjectBot
         public static ServerRequest Parse(string data)
         {
             Match match = Regex.Match(data, @"^(?<method>[^\s]*)\s(?<page>[^\s]*)\s");
+
+            //bool success = Enum.TryParse(match.Groups["method"].ToString(), true, out HttpMethod method);
+            //if (success)
+            //{
+            //    return new ServerRequest
+            //    {
+            //        RequestMethod = method,
+            //        Path = match.Groups["page"].ToString().Trim('/'),
+            //    };
+            //}
+
+            //return null;
 
             return new ServerRequest
             {
