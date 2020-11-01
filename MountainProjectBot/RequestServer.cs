@@ -52,7 +52,7 @@ namespace MountainProjectBot
         {
             while (true)
             {
-                string request = null;
+                string requestString = null;
                 try
                 {
                     TcpClient client = listener.AcceptTcpClient();
@@ -60,13 +60,14 @@ namespace MountainProjectBot
                     StreamReader sr = new StreamReader(client.GetStream());
                     StreamWriter sw = new StreamWriter(client.GetStream());
 
-                    request = sr.ReadLine();
+                    requestString = sr.ReadLine();
 
                     sw.WriteLine("HTTP/1.0 200 OK\n"); //Send ok response to requester
 
-                    if (HandleRequest != null)
+                    ServerRequest request = ServerRequest.Parse(requestString);
+                    if (HandleRequest != null && request != null)
                     {
-                        sw.WriteLine(HandleRequest.Invoke(ServerRequest.Parse(request)));
+                        sw.WriteLine(HandleRequest.Invoke(request));
                     }
 
                     sw.Flush();
@@ -75,9 +76,9 @@ namespace MountainProjectBot
                 }
                 catch (Exception ex)
                 {
-                    if (request != null)
+                    if (requestString != null)
                     {
-                        ex.Data["path"] = request;
+                        ex.Data["path"] = requestString;
                     }
 
                     ExceptionHandling?.Invoke(ex);
@@ -102,23 +103,16 @@ namespace MountainProjectBot
         {
             Match match = Regex.Match(data, @"^(?<method>[^\s]*)\s(?<page>[^\s]*)\s");
 
-            //bool success = Enum.TryParse(match.Groups["method"].ToString(), true, out HttpMethod method);
-            //if (success)
-            //{
-            //    return new ServerRequest
-            //    {
-            //        RequestMethod = method,
-            //        Path = match.Groups["page"].ToString().Trim('/'),
-            //    };
-            //}
-
-            //return null;
-
-            return new ServerRequest
+            if (Enum.TryParse(match.Groups["method"].ToString(), true, out HttpMethod method))
             {
-                RequestMethod = (HttpMethod)Enum.Parse(typeof(HttpMethod), match.Groups["method"].ToString(), true),
-                Path = match.Groups["page"].ToString().Trim('/'),
-            };
+                return new ServerRequest
+                {
+                    RequestMethod = method,
+                    Path = match.Groups["page"].ToString().Trim('/'),
+                };
+            }
+
+            return null;
         }
 
         public HttpMethod RequestMethod { get; set; }
