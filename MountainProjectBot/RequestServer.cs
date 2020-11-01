@@ -101,15 +101,18 @@ namespace MountainProjectBot
     {
         public static ServerRequest Parse(string data)
         {
-            Match match = Regex.Match(data, @"^(?<method>[^\s]*)\s(?<page>[^\s]*)\s");
-
-            if (Enum.TryParse(match.Groups["method"].ToString(), true, out HttpMethod method))
+            if (!string.IsNullOrEmpty(data))
             {
-                return new ServerRequest
+                Match match = Regex.Match(data, @"^(?<method>[^\s]*)\s(?<page>[^\s]*)\s");
+
+                if (Enum.TryParse(match.Groups["method"].ToString(), true, out HttpMethod method))
                 {
-                    RequestMethod = method,
-                    Path = match.Groups["page"].ToString().Trim('/'),
-                };
+                    return new ServerRequest
+                    {
+                        RequestMethod = method,
+                        Path = match.Groups["page"].ToString().Trim('/'),
+                    };
+                }
             }
 
             return null;
