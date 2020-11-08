@@ -142,7 +142,7 @@ namespace MountainProjectBot
             {
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
                 request.Timeout = 3000;
-                request.AllowAutoRedirect = false; // find out if this site is up and don't follow a redirector
+                request.AllowAutoRedirect = false;
                 request.Method = "HEAD";
 
                 using (var response = request.GetResponse())
