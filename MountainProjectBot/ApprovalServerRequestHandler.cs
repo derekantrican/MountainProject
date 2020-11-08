@@ -102,6 +102,11 @@ namespace MountainProjectBot
                         approvalRequest.ApprovedResults.Add(matchingOption);
                     }
                 }
+
+                if (result == "")
+                {
+                    result = $"Approved {string.Join(", ", approvalRequest.ApprovedResults.Select(p => p.Name))}";
+                }
             }
             else
             {
