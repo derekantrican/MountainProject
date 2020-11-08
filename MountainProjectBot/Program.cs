@@ -150,6 +150,14 @@ namespace MountainProjectBot
                 }
                 catch (Exception e)
                 {
+                    if (e is AggregateException aggregateException)
+                    {
+                        foreach (Exception innerException in aggregateException.InnerExceptions)
+                        {
+                            BotUtilities.WriteToConsoleWithColor($"Inner exception ({e.GetType()}: {e.Message}) thrown at \n\n{e.StackTrace}", ConsoleColor.Red);
+                        }
+                    }
+
                     //Handle all sorts of "timeout" or internet connection errors
                     if (e is RedditHttpException ||
                         e is HttpRequestException ||
