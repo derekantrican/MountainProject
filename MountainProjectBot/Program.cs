@@ -100,6 +100,16 @@ namespace MountainProjectBot
         {
             while (true)
             {
+                if (!BotUtilities.ApprovalServer.IsAlive)
+                {
+                    BotUtilities.SendDiscordMessage("Approval server is down (thread not alive)");
+                }
+
+                if (!BotUtilities.PingUrl($"{BotUtilities.WebServerURL}:{BotUtilities.ApprovalServer.Port}?status"))
+                {
+                    BotUtilities.SendDiscordMessage("Approval server is down (ping timed out)");
+                }
+
                 Console.WriteLine("\tGetting comments...");
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 long elapsed;
