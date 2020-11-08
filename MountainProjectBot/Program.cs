@@ -18,6 +18,8 @@ namespace MountainProjectBot
         private static OutputCapture outputCapture;
         static void Main(string[] args)
         {
+            //bool result = BotUtilities.PingUrl("http://24.16.27.242:9999/?status");
+
             Console.OutputEncoding = Encoding.UTF8;
             outputCapture = new OutputCapture();
 
@@ -105,10 +107,10 @@ namespace MountainProjectBot
                     BotUtilities.SendDiscordMessage("Approval server is down (thread not alive)");
                 }
 
-                if (!BotFunctions.DryRun && !BotUtilities.PingUrl($"{BotUtilities.WebServerURL}:{BotUtilities.ApprovalServer.Port}?status"))
-                {
-                    BotUtilities.SendDiscordMessage("Approval server is down (ping timed out)");
-                }
+                //if (!BotFunctions.DryRun && !BotUtilities.PingUrl($"{BotUtilities.WebServerURL}:{BotUtilities.ApprovalServer.Port}?status"))
+                //{
+                //    BotUtilities.SendDiscordMessage("Approval server is down (ping timed out)");
+                //}
 
                 Console.WriteLine("\tGetting comments...");
                 Stopwatch stopwatch = Stopwatch.StartNew();
