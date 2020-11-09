@@ -96,18 +96,21 @@ namespace MountainProjectBot
             Environment.Exit(0);
         }
 
+        private static bool alerted = false;
         private static async Task DoBotLoop()
         {
             while (true)
             {
-                if (!BotFunctions.DryRun && !BotUtilities.ApprovalServer.IsAlive)
+                if (!BotFunctions.DryRun && !alerted && !BotUtilities.ApprovalServer.IsAlive)
                 {
                     BotUtilities.SendDiscordMessage("Approval server is down (thread not alive)");
+                    alerted = true;
                 }
 
-                if (!BotFunctions.DryRun && !BotUtilities.PingUrl($"{BotUtilities.WebServerURL}:{BotUtilities.ApprovalServer.Port}?status"))
+                if (!BotFunctions.DryRun && !alerted && !BotUtilities.PingUrl($"{BotUtilities.WebServerURL}:{BotUtilities.ApprovalServer.Port}?status"))
                 {
                     BotUtilities.SendDiscordMessage("Approval server is down (ping timed out)");
+                    alerted = true;
                 }
 
                 Console.WriteLine("\tGetting comments...");
