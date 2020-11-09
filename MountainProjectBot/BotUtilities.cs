@@ -306,7 +306,16 @@ namespace MountainProjectBot
                 $"content={Uri.EscapeDataString(message)}",
             };
 
-            DoPOST(requestForApprovalURL, parameters);
+            try
+            {
+                DoPOST(requestForApprovalURL, parameters);
+            }
+            catch (Exception e)
+            {
+                string text = $"Error sending discord message: {e.Message} ({e.GetType()})\n\n" +
+                              $"Content:\n\n{Uri.EscapeDataString(message)}";
+                File.WriteAllText($"PROBLEMATIC DISCORD MESSAGE ({DateTime.Now:yyyy.MM.dd.HH.mm.ss}).log", text);
+            }
         }
 
         public static void LogOrUpdateSpreadsheet(ApprovalRequest approvalRequest)
