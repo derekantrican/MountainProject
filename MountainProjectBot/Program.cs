@@ -54,7 +54,7 @@ namespace MountainProjectBot
             foreach (string line in logLines.Skip(Math.Max(0, logLines.Count() - 500)))
                 exceptionString += $"{line}\n";
 
-            File.AppendAllText($"CRASHREPORT ({DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss")}).log", exceptionString);
+            File.AppendAllText($"CRASHREPORT ({DateTime.Now:yyyy.MM.dd.HH.mm.ss}).log", exceptionString);
         }
 
         private static string ExceptionDetailsToString(Exception ex, bool inner = true)
@@ -101,16 +101,43 @@ namespace MountainProjectBot
         {
             while (true)
             {
-                if (!BotFunctions.DryRun && !alerted && !BotUtilities.ApprovalServer.IsAlive)
+                if (!alerted)
                 {
-                    BotUtilities.SendDiscordMessage("Approval server is down (thread not alive)");
-                    alerted = true;
-                }
+                    if (!BotFunctions.DryRun && !BotUtilities.ApprovalServer.IsAlive)
+                    {
+                        BotUtilities.SendDiscordMessage("Approval server is down (thread not alive)");
+                        alerted = true;
+                    }
 
-                if (!BotFunctions.DryRun && !alerted && !BotUtilities.PingUrl($"{BotUtilities.WebServerURL}:{BotUtilities.ApprovalServer.Port}?status"))
+                    if (!BotFunctions.DryRun && !BotUtilities.PingUrl($"{BotUtilities.WebServerURL}:{BotUtilities.ApprovalServer.Port}?status"))
+                    {
+                        BotUtilities.SendDiscordMessage("Approval server is down (ping timed out)");
+                        alerted = true;
+                    }
+
+                    if (alerted)
+                    {
+                        string serverActivity = "";
+                        string[] serverLines = BotUtilities.ApprovalServer.Activity.ToString().Split('\n');
+                        foreach (string line in serverLines.Skip(Math.Max(0, serverLines.Count() - 50)))
+                            serverActivity += $"{line}\n";
+
+                        BotUtilities.SendDiscordMessage($"Recent server lines:\n\n{serverActivity}");
+                    }
+                }
+                else
                 {
-                    BotUtilities.SendDiscordMessage("Approval server is down (ping timed out)");
-                    alerted = true;
+                    if (BotUtilities.PingUrl($"{BotUtilities.WebServerURL}:{BotUtilities.ApprovalServer.Port}?status"))
+                    {
+                        BotUtilities.SendDiscordMessage("Approval server is back up");
+                        string serverActivity = "";
+                        string[] serverLines = BotUtilities.ApprovalServer.Activity.ToString().Split('\n');
+                        foreach (string line in serverLines.Skip(Math.Max(0, serverLines.Count() - 50)))
+                            serverActivity += $"{line}\n";
+
+                        BotUtilities.SendDiscordMessage($"Recent server lines:\n\n{serverActivity}");
+                        alerted = false;
+                    }
                 }
 
                 Console.WriteLine("\tGetting comments...");

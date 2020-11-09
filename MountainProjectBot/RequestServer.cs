@@ -48,31 +48,53 @@ namespace MountainProjectBot
             thread.Start();
         }
 
+        public StringWriter Activity { get; set; } = new StringWriter();
+
         private void WaitForRequests()
         {
+            void log(string itemToLog) => Activity.WriteLine($"[{DateTime.Now}] {itemToLog}");
+
             while (true)
             {
                 string requestString = null;
                 try
                 {
+                    log("Waiting for client...");
                     TcpClient client = listener.AcceptTcpClient();
+                    log("Accepted client");
 
+                    log("Opening streamreader...");
                     StreamReader sr = new StreamReader(client.GetStream());
+                    log("Opened streamreader");
+                    log("Opening streamwriter...");
                     StreamWriter sw = new StreamWriter(client.GetStream());
+                    log("Opened streamwriter");
 
+                    log("Reading streamreader...");
                     requestString = sr.ReadLine();
+                    log("Read streamreader");
 
+                    log("Writing status...");
                     sw.WriteLine("HTTP/1.0 200 OK\n"); //Send ok response to requester
+                    log("Wrote status");
 
+                    log("Parsing request...");
                     ServerRequest request = ServerRequest.Parse(requestString);
+                    log("Parsed request");
                     if (HandleRequest != null && request != null)
                     {
+                        log("Invoking HandleRequest...");
                         sw.WriteLine(HandleRequest.Invoke(request));
+                        log("Invoked HandleRequest");
                     }
 
+                    log("Flushing streamwriter...");
                     sw.Flush();
+                    log("Flushed streamwriter");
 
+                    log("Closing client connection...");
                     client.Close();
+                    log("Closed client connection");
                 }
                 catch (Exception ex)
                 {
@@ -81,7 +103,9 @@ namespace MountainProjectBot
                         ex.Data["path"] = requestString;
                     }
 
+                    log("Invoking ExceptionHandling...");
                     ExceptionHandling?.Invoke(ex);
+                    log("Invoked ExceptionHandling");
                 }
             }
         }
