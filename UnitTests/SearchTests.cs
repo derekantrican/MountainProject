@@ -82,7 +82,7 @@ namespace UnitTests
             { "Red River Gorge", "Kentucky" },
             { "Exit 38: Deception Crags", "Exit 38, Washington" },
             { "Deception Crags", "Exit 38, Washington" },
-            { "no-rang-na-rang", "South Korea" }, //International
+            { "no-rang-na-rang", "Seoul/Gyeonggi-do (Northwest Korea), South Korea" }, //International
             { "Sweet Dreams", "Blue Mountains, Australia"}, //Australia route (special case for Australia)
             { "Grab Your Balls", "Breakneck, Pennsylvania" }, //https://github.com/derekantrican/MountainProject/issues/12
             { "Sandy Cheeks", "Kistachie Boulder Longleaf Vista, Louisiana" }, //Parent is 1 less than state (ie Louisiana -> Kistachie Boulder Longleaf Vista -> Sandy Cheeks)
