@@ -324,7 +324,7 @@ namespace MountainProjectDBBuilder
         {
             using (GoogleDriveDownloader downloader = new GoogleDriveDownloader())
             {
-                downloader.DownloadFile(fileUrl, serializationPath.Replace(".xml", "-downloaded.xml"));
+                downloader.DownloadFile(fileUrl, serializationPath);
             }
         }
 
