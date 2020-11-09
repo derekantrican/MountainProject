@@ -11,6 +11,7 @@ using MountainProjectAPI;
 using System.Collections.Concurrent;
 using System.Xml;
 using System.ServiceModel.Syndication;
+using System.Text.RegularExpressions;
 
 namespace MountainProjectDBBuilder
 {
@@ -18,7 +19,8 @@ namespace MountainProjectDBBuilder
     {
         None,
         Parse,
-        BuildDB
+        BuildDB,
+        DownloadFile
     }
     
     class Program
@@ -48,6 +50,8 @@ namespace MountainProjectDBBuilder
                     break;
                 case Mode.Parse:
                     ParseInputString();
+                    break;
+                case Mode.DownloadFile:
                     break;
             }
         }
@@ -79,6 +83,15 @@ namespace MountainProjectDBBuilder
                         "onlyNew",
                         "Only add new items since the last time the database was built",
                         (arg) => { buildAll = false; }
+                    },
+                    {
+                        "download=",
+                        "Download xml file from Google Drive",
+                        (arg) =>
+                        {
+                            DownloadGoogleDriveFileFromUrl(arg);
+                            Environment.Exit(0);
+                        }
                     }
                 };
 
@@ -305,6 +318,14 @@ namespace MountainProjectDBBuilder
             SerializeResults(destAreas);
 
             SendReport($"MountainProjectDBBuilder database updated SUCCESSFULLY in {totalTimer.Elapsed}", $"{newlyAddedItemUrls.Count()} new items:\n\n{string.Join("\n", newlyAddedItemUrls)}");
+        }
+
+        private static void DownloadGoogleDriveFileFromUrl(string fileUrl)
+        {
+            using (GoogleDriveDownloader downloader = new GoogleDriveDownloader())
+            {
+                downloader.DownloadFile(fileUrl, serializationPath.Replace(".xml", "-downloaded.xml"));
+            }
         }
 
         private static void SerializeResults(List<Area> inputAreas)
