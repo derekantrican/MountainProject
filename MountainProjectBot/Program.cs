@@ -132,7 +132,7 @@ namespace MountainProjectBot
                         BotUtilities.SendDiscordMessage("Approval server is back up");
                         string serverActivity = "";
                         string[] serverLines = BotUtilities.ApprovalServer.Activity.ToString().Split('\n');
-                        foreach (string line in serverLines.Skip(Math.Max(0, serverLines.Count() - 50)))
+                        foreach (string line in serverLines.Skip(Math.Max(0, serverLines.Count() - 25)))
                             serverActivity += $"{line}\n";
 
                         BotUtilities.SendDiscordMessage($"Recent server lines:\n\n{serverActivity}");

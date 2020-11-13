@@ -52,7 +52,7 @@ namespace MountainProjectBot
 
         private void WaitForRequests()
         {
-            void log(string itemToLog) => Activity.WriteLine($"[{DateTime.Now}] {itemToLog}");
+            void log(string itemToLog) => Activity.WriteLine($"[{DateTime.Now:yyyy.MM.dd.HH.mm.ss}] {itemToLog}");
 
             while (true)
             {
