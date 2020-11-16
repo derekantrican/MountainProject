@@ -434,7 +434,7 @@ namespace MountainProjectAPI
             Regex routeGradeRegex = new Regex(@"((5\.)\d+[+-]?[a-dA-D]?([\/\\\-][a-dA-D])?)|([vV]\d+([\/\\\-]\d+)?)");
             postTitle = routeGradeRegex.Replace(postTitle, "");
 
-            string[] connectingWords = new[] { "and", "the", "to", "or", "a", "an", "was", "but" };
+            string[] connectingWords = new[] { "and", "the", "to", "or", "a", "an", "was", "but", "by" };
             string[] locationWords = new[] { "of", "on", "at", "in" };
             string[] ignoredWords = new[] { "slabby", "pinches" };
             string[] ignoredStartingWords = new[] { "climbing" };
