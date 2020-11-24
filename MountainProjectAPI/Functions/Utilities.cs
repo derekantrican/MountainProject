@@ -367,7 +367,8 @@ namespace MountainProjectAPI
 
         public static List<string> GetWords(string input, bool removeEmpty = true)
         {
-            List<string> words = Regex.Split(input, @"[^\p{L}0-9'’]").ToList();
+            input = Regex.Replace(input, "['’]", "");
+            List<string> words = Regex.Split(input, @"[^\p{L}0-9]").ToList();
 
             if (removeEmpty)
                 words.RemoveAll(s => string.IsNullOrEmpty(s));
