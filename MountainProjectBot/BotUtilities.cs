@@ -101,7 +101,6 @@ namespace MountainProjectBot
                 HandleRequest = ApprovalServerRequestHandler.HandleRequest,
                 ExceptionHandling = (Exception ex) => 
                 {
-                    SendDiscordMessage($"Sever error: ({ex.GetType()}): {ex.Message}\n{ex.StackTrace}{(ex.Data.Contains("path") ? $"\n\nPath: {ex.Data["path"]}" : "")}\n\nIs alive? {ApprovalServer.IsAlive}");
                     WriteToConsoleWithColor($"Sever error: ({ex.GetType()}): {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red); 
                 }
             };
