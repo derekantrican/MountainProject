@@ -48,11 +48,12 @@ namespace MountainProjectBot
             thread.Start();
         }
 
+        public (DateTime, Exception) LastException;
         public StringWriter Activity { get; set; } = new StringWriter();
 
         private void WaitForRequests()
         {
-            void log(string itemToLog) => Activity.WriteLine($"[{DateTime.Now:yyyy.MM.dd.HH.mm.ss}] {itemToLog}");
+            void log(string itemToLog) => Activity.WriteLine($"[{DateTime.Now:yyyy.MM.dd.HH.mm.ss.fff}] {itemToLog}");
 
             while (true)
             {
@@ -98,6 +99,7 @@ namespace MountainProjectBot
                 }
                 catch (Exception ex)
                 {
+                    LastException = (DateTime.Now, ex);
                     if (requestString != null)
                     {
                         ex.Data["path"] = requestString;

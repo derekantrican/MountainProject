@@ -119,6 +119,11 @@ namespace MountainProjectBot
                             serverActivity += $"{line}\n";
 
                         BotUtilities.SendDiscordMessage($"Recent server lines:\n\n{serverActivity}");
+                        if (BotUtilities.ApprovalServer.LastException.Item2 != null)
+                        {
+                            (DateTime, Exception) exceptionObject = BotUtilities.ApprovalServer.LastException;
+                            BotUtilities.SendDiscordMessage($"Last exception (at {exceptionObject.Item1:yyyy.MM.dd.HH.mm.ss.fff}): {exceptionObject.Item2.Message}\n{exceptionObject.Item2.StackTrace}");
+                        }
                     }
                 }
                 else
