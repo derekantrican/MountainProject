@@ -12,8 +12,6 @@ namespace MountainProjectBot
 {
     public static class ApprovalServerRequestHandler
     {
-        private static string serverUrl = $"{(Debugger.IsAttached ? "http://localhost" : BotUtilities.WebServerURL)}:{BotUtilities.ApprovalServer.Port}";
-
         public static string HandleRequest(ServerRequest request)
         {
             string result = $"Path '{request.Path}' not understood";
@@ -45,7 +43,7 @@ namespace MountainProjectBot
                         result = $"Post '{parameters["postid"]}' expired<br><br><input type=\"button\" onclick=\"force()\" value=\"Force\">" +
                                  $"<script>" +
                                  $"  function force(){{" +
-                                 $"    window.location.replace(\"{serverUrl}?{string.Join("&", parameters.Select(p => $"{p.Key}={p.Value}").Concat(new[] { "force" }))}\");" +
+                                 $"    window.location.replace(\"{BotUtilities.ApprovalServerUrl}?{string.Join("&", parameters.Select(p => $"{p.Key}={p.Value}").Concat(new[] { "force" }))}\");" +
                                  $"}}" +
                                  $"</script>";
                     }
@@ -118,7 +116,7 @@ namespace MountainProjectBot
                             "  for (var i = 0; i < options.length; i++){" +
                             "    if (options[i].checked){" +
                             "      var chosen = options[i].id != \"other_option\" ? options[i].value : document.getElementById(\"other_option_value\").value.match(/(?<=\\/)\\d+(?=\\/)/g);" +
-                            $"     window.location.replace(\"{serverUrl}?approveother&postid={parameters["postid"]}{(parameters.ContainsKey("force") ? "&force" : "")}&option=\" + chosen);" +
+                            $"     window.location.replace(\"{BotUtilities.ApprovalServerUrl}?approveother&postid={parameters["postid"]}{(parameters.ContainsKey("force") ? "&force" : "")}&option=\" + chosen);" +
                             "      break;" +
                             "    }" +
                             "  }" +

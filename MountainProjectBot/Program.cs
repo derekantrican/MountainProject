@@ -96,49 +96,13 @@ namespace MountainProjectBot
             Environment.Exit(0);
         }
 
-        private static bool alerted = false;
         private static async Task DoBotLoop()
         {
             while (true)
             {
-                if (!alerted)
+                if (!BotFunctions.DryRun)
                 {
-                    if (!BotFunctions.DryRun && !BotUtilities.PingUrl($"{BotUtilities.WebServerURL}:{BotUtilities.ApprovalServer.Port}?status"))
-                    {
-                        BotUtilities.SendDiscordMessage("Approval server is down (ping timed out)\nAttempting to restart...");
-                        BotUtilities.ApprovalServer.Stop();
-                        BotUtilities.ApprovalServer.Start();
-                        alerted = true;
-                    }
-
-                    if (alerted)
-                    {
-                        string serverActivity = "";
-                        string[] serverLines = BotUtilities.ApprovalServer.Activity.ToString().Split('\n');
-                        foreach (string line in serverLines.Skip(Math.Max(0, serverLines.Count() - 25)))
-                            serverActivity += $"{line}\n";
-
-                        BotUtilities.SendDiscordMessage($"Recent server lines:\n\n{serverActivity}");
-                        if (BotUtilities.ApprovalServer.LastException.Item2 != null)
-                        {
-                            (DateTime, Exception) exceptionObject = BotUtilities.ApprovalServer.LastException;
-                            BotUtilities.SendDiscordMessage($"Last exception (at {exceptionObject.Item1:yyyy.MM.dd.HH.mm.ss.fff}): {exceptionObject.Item2.Message}\n{exceptionObject.Item2.StackTrace}");
-                        }
-                    }
-                }
-                else
-                {
-                    if (BotUtilities.PingUrl($"{BotUtilities.WebServerURL}:{BotUtilities.ApprovalServer.Port}?status"))
-                    {
-                        BotUtilities.SendDiscordMessage("Approval server is back up");
-                        string serverActivity = "";
-                        string[] serverLines = BotUtilities.ApprovalServer.Activity.ToString().Split('\n');
-                        foreach (string line in serverLines.Skip(Math.Max(0, serverLines.Count() - 25)))
-                            serverActivity += $"{line}\n";
-
-                        BotUtilities.SendDiscordMessage($"Recent server lines:\n\n{serverActivity}");
-                        alerted = false;
-                    }
+                    ApprovalServerStatusCheck();
                 }
 
                 Console.WriteLine("\tGetting comments...");
@@ -216,6 +180,25 @@ namespace MountainProjectBot
                     Thread.Sleep(3000);
                     Environment.Exit(0);
                 }
+            }
+        }
+
+        private static bool alerted = true;
+        private static void ApprovalServerStatusCheck()
+        {
+            bool serverUp = BotUtilities.PingUrl($"{BotUtilities.ApprovalServerUrl}?status");
+            if (!serverUp && !alerted)
+            {
+                BotUtilities.SendDiscordMessage("Approval server is down (ping timed out)\nAttempting to restart...");
+                alerted = true;
+
+                BotUtilities.ApprovalServer.Stop();
+                BotUtilities.ApprovalServer.Start();
+            }
+            else if (serverUp && alerted)
+            {
+                BotUtilities.SendDiscordMessage("Approval server is back up");
+                alerted = false;
             }
         }
     }

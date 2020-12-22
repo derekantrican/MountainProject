@@ -29,6 +29,10 @@ namespace MountainProjectBot
         private static string spreadsheetHistoryURL = "";
 
         public static string WebServerURL = "";
+        public static string ApprovalServerUrl
+        {
+            get { return $"{(Debugger.IsAttached ? "http://localhost" : WebServerURL)}:{ApprovalServer.Port}"; }
+        }
         public static Server ApprovalServer;
 
         #region Init
@@ -278,17 +282,17 @@ namespace MountainProjectBot
                 messageText += "\n" +
                                $"**Filtered Result:** [{searchResult.FilteredResult.Name} ({(searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})](<{searchResult.FilteredResult.URL}>)\n" +
                                $"{Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult, searchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "")}\n\n" +
-                               $"[[APPROVE FILTERED]](<{(Debugger.IsAttached ? "http://localhost" : WebServerURL)}:{ApprovalServer.Port}?approve&postid={post.Id}>)  " +
-                               $"[[APPROVE ALL]](<{(Debugger.IsAttached ? "http://localhost" : WebServerURL)}:{ApprovalServer.Port}?approveall&postid={post.Id}>)  " +
-                               $"[[APPROVE OTHER]](<{(Debugger.IsAttached ? "http://localhost" : WebServerURL)}:{ApprovalServer.Port}?approveother&postid={post.Id}>)";
+                               $"[[APPROVE FILTERED]](<{ApprovalServerUrl}?approve&postid={post.Id}>)  " +
+                               $"[[APPROVE ALL]](<{ApprovalServerUrl}?approveall&postid={post.Id}>)  " +
+                               $"[[APPROVE OTHER]](<{ApprovalServerUrl}?approveother&postid={post.Id}>)";
             }
             else
             {
                 messageText += $"**MPResult:** {searchResult.FilteredResult.Name} ({(searchResult.FilteredResult as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})\n" +
                                $"{Regex.Replace(BotReply.GetLocationString(searchResult.FilteredResult, searchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "")}\n" +
                                $"<{searchResult.FilteredResult.URL}>\n\n" +
-                               $"[[APPROVE]](<{(Debugger.IsAttached ? "http://localhost" : WebServerURL)}:{ApprovalServer.Port}?approve&postid={post.Id}>)  " +
-                               $"[[APPROVE OTHER]](<{(Debugger.IsAttached ? "http://localhost" : WebServerURL)}:{ApprovalServer.Port}?approveother&postid={post.Id}>)";
+                               $"[[APPROVE]](<{ApprovalServerUrl}?approve&postid={post.Id}>)  " +
+                               $"[[APPROVE OTHER]](<{ApprovalServerUrl}?approveother&postid={post.Id}>)";
             }
 
             messageText += "\n--------------------------------";
