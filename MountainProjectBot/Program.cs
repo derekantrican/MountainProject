@@ -183,7 +183,7 @@ namespace MountainProjectBot
             }
         }
 
-        private static bool alerted = true;
+        private static bool alerted = false;
         private static void ApprovalServerStatusCheck()
         {
             bool serverUp = BotUtilities.PingUrl($"{BotUtilities.ApprovalServerUrl}?status");
