@@ -149,7 +149,7 @@ namespace MountainProjectBot
                     {
                         foreach (Exception innerException in aggregateException.InnerExceptions)
                         {
-                            BotUtilities.WriteToConsoleWithColor($"Inner exception ({e.GetType()}: {e.Message}) thrown at \n\n{e.StackTrace}", ConsoleColor.Red);
+                            BotUtilities.WriteToConsoleWithColor($"Inner exception ({innerException.GetType()}: {innerException.Message}) thrown at \n\n{innerException.StackTrace}", ConsoleColor.Red);
                         }
                     }
 
