@@ -303,6 +303,12 @@ namespace MountainProjectAPI
                     }
                 }
 
+                //Todo: temporary fix for posts about "covid-19" where the route is called "COVID-19" AND the parent is "Covid 19 Boulder"
+                if (filteredResults.Count == 1 && filteredResults[0].Route.ID == "119484798" && filteredResults[0].FoundParents.All(kvp => kvp.Value.Count == 1))
+                {
+                    return new SearchResult() { TimeTakenMS = stopwatch.ElapsedMilliseconds };
+                }
+
                 PossibleRouteResult chosenRoute;
                 Area location;
                 List<MPObject> allResults = new List<MPObject>();
