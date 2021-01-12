@@ -130,7 +130,10 @@ namespace MountainProjectAPI
                             retries++;
                         }
                         else
+                        {
+                            Console.WriteLine($"Retries failed when trying to get HTML from {url}");
                             throw;
+                        }
                     }
                 }
             }
@@ -159,7 +162,10 @@ namespace MountainProjectAPI
                             retries++;
                         }
                         else
+                        {
+                            Console.WriteLine($"Retries failed when trying to get HTML from {url}");
                             throw;
+                        }
                     }
                 }
             }
