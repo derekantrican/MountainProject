@@ -1,4 +1,5 @@
-﻿using MountainProjectAPI;
+﻿using Base;
+using MountainProjectAPI;
 using Newtonsoft.Json.Linq;
 using RedditSharp.Things;
 using System;
@@ -55,7 +56,7 @@ namespace MountainProjectBot
 
             if (args.FirstOrDefault(p => p.Contains("dryrun")) != null || Debugger.IsAttached)
             {
-                WriteToConsoleWithColor("============== STARTING IN \"DRY RUN\" MODE ==============", ConsoleColor.Blue);
+                ConsoleHelper.Write("============== STARTING IN \"DRY RUN\" MODE ==============", ConsoleColor.Blue);
                 BotFunctions.DryRun = true;
             }
         }
@@ -105,7 +106,7 @@ namespace MountainProjectBot
                 HandleRequest = ApprovalServerRequestHandler.HandleRequest,
                 ExceptionHandling = (Exception ex) => 
                 {
-                    WriteToConsoleWithColor($"Sever error: ({ex.GetType()}): {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red); 
+                    ConsoleHelper.Write($"Sever error: ({ex.GetType()}): {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red); 
                 }
             };
             ApprovalServer.Start();
@@ -399,13 +400,6 @@ namespace MountainProjectBot
             }
         }
         #endregion Server Calls
-
-        public static void WriteToConsoleWithColor(string text, ConsoleColor color)
-        {
-            Console.ForegroundColor = color;
-            Console.WriteLine(text);
-            Console.ResetColor();
-        }
     }
 
     public class ApprovalRequest //Todo: rather than modifying ApprovalRequest.SearchResult.FilteredResult (or similar) - ApprovalRequest should have its own list of approved items (maybe also with a related area?)

@@ -1,4 +1,5 @@
-﻿using MountainProjectAPI;
+﻿using Base;
+using MountainProjectAPI;
 using RedditSharp;
 using RedditSharp.Things;
 using System;
@@ -43,8 +44,8 @@ namespace MountainProjectBot
 
                         if (monitor.FailedTimes == 3)
                         {
-                            BotUtilities.WriteToConsoleWithColor($"Exception thrown when getting comment: {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red);
-                            BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red); //maybe we shouldn't remove the monitor unless trying to retrieve the comment fails too many times?
+                            ConsoleHelper.Write($"Exception thrown when getting comment: {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red);
+                            ConsoleHelper.Write("Removing monitor...", ConsoleColor.Red); //maybe we shouldn't remove the monitor unless trying to retrieve the comment fails too many times?
                             monitoredComments.Remove(monitor);
                         }
 
@@ -61,7 +62,7 @@ namespace MountainProjectBot
                     {
                         await RedditHelper.DeleteComment(monitor.BotResponseComment);
                         monitoredComments.Remove(monitor);
-                        BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id} (score too low)", ConsoleColor.Green);
+                        ConsoleHelper.Write($"Deleted comment {monitor.BotResponseComment.Id} (score too low)", ConsoleColor.Green);
 
                         //If we've made a bad reply, update the Google sheet to reflect that
                         if (monitor.Parent is Post parentPost)
@@ -81,7 +82,7 @@ namespace MountainProjectBot
                         {
                             await RedditHelper.DeleteComment(monitor.BotResponseComment);
                             monitoredComments.Remove(monitor);
-                            BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id} (parent deleted)", ConsoleColor.Green);
+                            ConsoleHelper.Write($"Deleted comment {monitor.BotResponseComment.Id} (parent deleted)", ConsoleColor.Green);
                         }
                         else if (updatedParent.Body != oldParentBody) //If the parent comment's request has changed, edit the bot's response
                         {
@@ -94,13 +95,13 @@ namespace MountainProjectBot
                                     if (!string.IsNullOrEmpty(reply))
                                     {
                                         await RedditHelper.EditComment(monitor.BotResponseComment, reply);
-                                        BotUtilities.WriteToConsoleWithColor($"Edited comment {monitor.BotResponseComment.Id} (parent edited)", ConsoleColor.Green);
+                                        ConsoleHelper.Write($"Edited comment {monitor.BotResponseComment.Id} (parent edited)", ConsoleColor.Green);
                                     }
                                     else
                                     {
                                         await RedditHelper.DeleteComment(monitor.BotResponseComment);
                                         monitoredComments.Remove(monitor);
-                                        BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id} (parent doesn't require a response)", ConsoleColor.Green);
+                                        ConsoleHelper.Write($"Deleted comment {monitor.BotResponseComment.Id} (parent doesn't require a response)", ConsoleColor.Green);
                                     }
                                 }
 
@@ -115,13 +116,13 @@ namespace MountainProjectBot
                                     if (!string.IsNullOrEmpty(reply))
                                     {
                                         await RedditHelper.EditComment(monitor.BotResponseComment, reply);
-                                        BotUtilities.WriteToConsoleWithColor($"Edited comment {monitor.BotResponseComment.Id} (parent edited)", ConsoleColor.Green);
+                                        ConsoleHelper.Write($"Edited comment {monitor.BotResponseComment.Id} (parent edited)", ConsoleColor.Green);
                                     }
                                     else
                                     {
                                         await RedditHelper.DeleteComment(monitor.BotResponseComment);
                                         monitoredComments.Remove(monitor);
-                                        BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id} (parent doesn't require a response)", ConsoleColor.Green);
+                                        ConsoleHelper.Write($"Deleted comment {monitor.BotResponseComment.Id} (parent doesn't require a response)", ConsoleColor.Green);
                                     }
                                 }
 
@@ -131,16 +132,16 @@ namespace MountainProjectBot
                             {
                                 await RedditHelper.DeleteComment(monitor.BotResponseComment);
                                 monitoredComments.Remove(monitor);
-                                BotUtilities.WriteToConsoleWithColor($"Deleted comment {monitor.BotResponseComment.Id} (parent doesn't require a response)", ConsoleColor.Green);
+                                ConsoleHelper.Write($"Deleted comment {monitor.BotResponseComment.Id} (parent doesn't require a response)", ConsoleColor.Green);
                             }
                         }
                     }
                 }
                 catch (Exception e)
                 {
-                    BotUtilities.WriteToConsoleWithColor($"\tException occured when checking monitor for comment {RedditHelper.GetFullLink(monitor.Parent.Permalink)}", ConsoleColor.Red);
-                    BotUtilities.WriteToConsoleWithColor($"\t{e.Message}\n{e.StackTrace}", ConsoleColor.Red);
-                    BotUtilities.WriteToConsoleWithColor("Removing monitor...", ConsoleColor.Red);
+                    ConsoleHelper.Write($"\tException occured when checking monitor for comment {RedditHelper.GetFullLink(monitor.Parent.Permalink)}", ConsoleColor.Red);
+                    ConsoleHelper.Write($"\t{e.Message}\n{e.StackTrace}", ConsoleColor.Red);
+                    ConsoleHelper.Write("Removing monitor...", ConsoleColor.Red);
                     monitoredComments.Remove(monitor);
                 }
             }
@@ -170,7 +171,7 @@ namespace MountainProjectBot
             }
 
             if (removed > 0)
-                BotUtilities.WriteToConsoleWithColor($"\tRemoved {removed} pending auto-replies that got too old", ConsoleColor.Red);
+                ConsoleHelper.Write($"\tRemoved {removed} pending auto-replies that got too old", ConsoleColor.Red);
 
             List<ApprovalRequest> approvedPosts = PostsPendingApproval.Where(p => p.Value.IsApproved).Select(p => p.Value).ToList();
             foreach (ApprovalRequest approvalRequest in approvedPosts)
@@ -194,7 +195,7 @@ namespace MountainProjectBot
                 {
                     Comment botReplyComment = await RedditHelper.CommentOnPost(approvalRequest.RedditPost, reply);
                     monitoredComments.Add(new CommentMonitor() { Parent = approvalRequest.RedditPost, BotResponseComment = botReplyComment });
-                    BotUtilities.WriteToConsoleWithColor($"\tAuto-replied to post {approvalRequest.RedditPost.Id}", ConsoleColor.Green);
+                    ConsoleHelper.Write($"\tAuto-replied to post {approvalRequest.RedditPost.Id}", ConsoleColor.Green);
                     BotUtilities.LogOrUpdateSpreadsheet(approvalRequest);
                 }
 
@@ -221,7 +222,7 @@ namespace MountainProjectBot
                     if (post.IsSelfPost)
                     {
                         subredditPosts.Remove(post);
-                        BotUtilities.WriteToConsoleWithColor($"\tSkipping {post.Id} (self-post)", ConsoleColor.Red);
+                        ConsoleHelper.Write($"\tSkipping {post.Id} (self-post)", ConsoleColor.Red);
                         BotUtilities.LogPostBeenSeen(post, "self-post");
                     }
 
@@ -229,7 +230,7 @@ namespace MountainProjectBot
                     if (ageInMin > 30)
                     {
                         subredditPosts.Remove(post);
-                        BotUtilities.WriteToConsoleWithColor($"\tSkipping {post.Id} (too old: {Math.Round(ageInMin,2)} min)", ConsoleColor.Red);
+                        ConsoleHelper.Write($"\tSkipping {post.Id} (too old: {Math.Round(ageInMin,2)} min)", ConsoleColor.Red);
                         BotUtilities.LogPostBeenSeen(post, $"too old ({Math.Round(ageInMin, 2)} min)");
                     }
                 }
@@ -268,12 +269,12 @@ namespace MountainProjectBot
 
                                 Comment botReplyComment = await RedditHelper.CommentOnPost(post, reply);
                                 monitoredComments.Add(new CommentMonitor() { Parent = post, BotResponseComment = botReplyComment });
-                                BotUtilities.WriteToConsoleWithColor($"\n\tAuto-replied to post {post.Id}", ConsoleColor.Green);
+                                ConsoleHelper.Write($"\n\tAuto-replied to post {post.Id}", ConsoleColor.Green);
                             }
                             else
                             {
                                 //Until we are more confident with automatic results, we're going to request for approval for confidence values greater than 1 (less than 100%)
-                                BotUtilities.WriteToConsoleWithColor($"\tRequesting approval for post {post.Id}", ConsoleColor.Yellow);
+                                ConsoleHelper.Write($"\tRequesting approval for post {post.Id}", ConsoleColor.Yellow);
                                 BotUtilities.RequestApproval(approvalRequest);
                             }
 
@@ -316,7 +317,7 @@ namespace MountainProjectBot
                     if (!DryRun)
                     {
                         Comment botReplyComment = await RedditHelper.ReplyToComment(comment, reply);
-                        BotUtilities.WriteToConsoleWithColor($"\tReplied to comment {comment.Id}", ConsoleColor.Green);
+                        ConsoleHelper.Write($"\tReplied to comment {comment.Id}", ConsoleColor.Green);
                         monitoredComments.Add(new CommentMonitor() { Parent = comment, BotResponseComment = botReplyComment });
                     }
 
@@ -363,7 +364,7 @@ namespace MountainProjectBot
                     if (!DryRun)
                     {
                         Comment botReplyComment = await RedditHelper.ReplyToComment(comment, reply);
-                        BotUtilities.WriteToConsoleWithColor($"\tReplied to comment {comment.Id}", ConsoleColor.Green);
+                        ConsoleHelper.Write($"\tReplied to comment {comment.Id}", ConsoleColor.Green);
                         monitoredComments.Add(new CommentMonitor() { Parent = comment, BotResponseComment = botReplyComment });
                     }
 

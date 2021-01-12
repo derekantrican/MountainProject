@@ -8,10 +8,10 @@ using System.Xml.Serialization;
 using System.Threading.Tasks;
 using Mono.Options;
 using MountainProjectAPI;
-using System.Collections.Concurrent;
 using System.Xml;
 using System.ServiceModel.Syndication;
-using System.Text.RegularExpressions;
+using Base;
+using System.Collections.Concurrent;
 
 namespace MountainProjectDBBuilder
 {
@@ -25,17 +25,17 @@ namespace MountainProjectDBBuilder
     
     class Program
     {
-        static string serializationPath;
-        static string logPath;
-        static OutputCapture outputCapture;
-        static Stopwatch totalTimer = new Stopwatch();
-        static Mode programMode = Mode.None;
-        static bool buildAll = true;
+        private static string serializationPath;
+        private static string logPath;
+        private static readonly StringWriter outputCapture = new StringWriter();
+        private static readonly Stopwatch totalTimer = new Stopwatch();
+        private static Mode programMode = Mode.None;
+        private static bool buildAll = true;
 
         static void Main(string[] args)
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
-            outputCapture = new OutputCapture();
+            ConsoleHelper.WriteToAdditionalTarget(outputCapture);
 
             logPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss") + " Log.txt");
             serializationPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), "MountainProjectAreas.xml");
@@ -218,7 +218,7 @@ namespace MountainProjectDBBuilder
             }
             finally
             {
-                File.AppendAllText(logPath, outputCapture.Captured.ToString());
+                File.AppendAllText(logPath, outputCapture.ToString());
                 outputCapture.Dispose();
             }
         }
@@ -226,7 +226,11 @@ namespace MountainProjectDBBuilder
         private static void BuildFullDB()
         {
             Parsers.TotalTimer = totalTimer;
-            List<Area> destAreas = Parsers.GetDestAreas();
+            List<Area> destAreas = Parsers.GetDestAreas().Take(1).ToList(); //TEMP: Only look at Alabama for profiler
+
+            //Todo: there should possibly be a cmd arg for switching this (something like "fast") because I don't think the progress feature really works here. Though maybe we could use these
+            //tasks to fix progress instead? (percentage seems to be roughly accurate, but maybe not time remaining)
+            //Todo: Should also look into "compiling" any regexes to possibly improve time https://docs.microsoft.com/en-us/dotnet/standard/base-types/compilation-and-reuse-in-regular-expressions
 
             Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
             ConcurrentBag<Task> areaTasks = new ConcurrentBag<Task>();
@@ -238,7 +242,6 @@ namespace MountainProjectDBBuilder
             Task.WaitAll(areaTasks.ToArray());
 
             totalTimer.Stop();
-            Console.WriteLine(outputCapture.Captured.ToString());
             Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
             Console.WriteLine();
             Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
@@ -311,7 +314,6 @@ namespace MountainProjectDBBuilder
             destAreas = MountainProjectDataSearch.DestAreas;
 
             totalTimer.Stop();
-            Console.WriteLine(outputCapture.Captured.ToString());
             Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
             Console.WriteLine();
             Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");

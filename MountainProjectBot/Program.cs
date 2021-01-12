@@ -1,4 +1,5 @@
-﻿using RedditSharp;
+﻿using Base;
+using RedditSharp;
 using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
@@ -15,11 +16,11 @@ namespace MountainProjectBot
 {
     class Program
     {
-        private static OutputCapture outputCapture;
+        private static StringWriter outputCapture = new StringWriter();
         static void Main(string[] args)
         {
             Console.OutputEncoding = Encoding.UTF8;
-            outputCapture = new OutputCapture();
+            ConsoleHelper.WriteToAdditionalTarget(outputCapture);
 
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
@@ -50,7 +51,7 @@ namespace MountainProjectBot
                 exceptionString = ExceptionDetailsToString(ex);
 
             exceptionString += $"[{DateTime.Now}] 500 RECENT LOG LINES:\n\n";
-            string[] logLines = outputCapture.Captured.ToString().Split('\n');
+            string[] logLines = outputCapture.ToString().Split('\n');
             foreach (string line in logLines.Skip(Math.Max(0, logLines.Count() - 500)))
                 exceptionString += $"{line}\n";
 
@@ -113,35 +114,35 @@ namespace MountainProjectBot
                 {
                     BotFunctions.RedditHelper.Actions = 0; //Reset number of actions
 
-                    BotUtilities.WriteToConsoleWithColor("\tChecking monitored comments...", ConsoleColor.Blue);
+                    ConsoleHelper.Write("\tChecking monitored comments...", ConsoleColor.Blue);
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await BotFunctions.CheckMonitoredComments();
-                    BotUtilities.WriteToConsoleWithColor($"\tDone checking monitored comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
+                    ConsoleHelper.Write($"\tDone checking monitored comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
 
-                    BotUtilities.WriteToConsoleWithColor("\tChecking posts for auto-reply...", ConsoleColor.Blue);
+                    ConsoleHelper.Write("\tChecking posts for auto-reply...", ConsoleColor.Blue);
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await BotFunctions.CheckPostsForAutoReply(BotFunctions.RedditHelper.Subreddits);
-                    BotUtilities.WriteToConsoleWithColor($"\tDone with auto-reply ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
+                    ConsoleHelper.Write($"\tDone with auto-reply ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
 
-                    BotUtilities.WriteToConsoleWithColor("\tReplying to approved posts...", ConsoleColor.Blue);
+                    ConsoleHelper.Write("\tReplying to approved posts...", ConsoleColor.Blue);
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await BotFunctions.ReplyToApprovedPosts();
-                    BotUtilities.WriteToConsoleWithColor($"\tDone replying ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
+                    ConsoleHelper.Write($"\tDone replying ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
 
-                    BotUtilities.WriteToConsoleWithColor("\tGetting recent comments for each subreddit...", ConsoleColor.Blue);
+                    ConsoleHelper.Write("\tGetting recent comments for each subreddit...", ConsoleColor.Blue);
                     elapsed = stopwatch.ElapsedMilliseconds;
                     Dictionary<Subreddit, List<Comment>> subredditsAndRecentComments = await BotFunctions.RedditHelper.GetRecentComments();
-                    BotUtilities.WriteToConsoleWithColor($"\tDone getting recent comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
+                    ConsoleHelper.Write($"\tDone getting recent comments ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
 
-                    BotUtilities.WriteToConsoleWithColor("\tChecking for requests (comments with !MountainProject)...", ConsoleColor.Blue);
+                    ConsoleHelper.Write("\tChecking for requests (comments with !MountainProject)...", ConsoleColor.Blue);
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await BotFunctions.RespondToRequests(subredditsAndRecentComments.SelectMany(p => p.Value).ToList());
-                    BotUtilities.WriteToConsoleWithColor($"\tDone with requests ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
+                    ConsoleHelper.Write($"\tDone with requests ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
 
-                    BotUtilities.WriteToConsoleWithColor("\tChecking for MP links...", ConsoleColor.Blue);
+                    ConsoleHelper.Write("\tChecking for MP links...", ConsoleColor.Blue);
                     elapsed = stopwatch.ElapsedMilliseconds;
                     await BotFunctions.RespondToMPUrls(subredditsAndRecentComments);
-                    BotUtilities.WriteToConsoleWithColor($"\tDone with MP links ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
+                    ConsoleHelper.Write($"\tDone with MP links ({stopwatch.ElapsedMilliseconds - elapsed} ms)", ConsoleColor.Blue);
                 }
                 catch (Exception e)
                 {
@@ -149,7 +150,7 @@ namespace MountainProjectBot
                     {
                         foreach (Exception innerException in aggregateException.InnerExceptions)
                         {
-                            BotUtilities.WriteToConsoleWithColor($"Inner exception ({innerException.GetType()}: {innerException.Message}) thrown at \n\n{innerException.StackTrace}", ConsoleColor.Red);
+                            ConsoleHelper.Write($"Inner exception ({innerException.GetType()}: {innerException.Message}) thrown at \n\n{innerException.StackTrace}", ConsoleColor.Red);
                         }
                     }
 
@@ -164,7 +165,7 @@ namespace MountainProjectBot
                     }
                     else //If it isn't one of the errors above, it might be more serious. So throw it to be caught as an unhandled exception
                     {
-                        BotUtilities.WriteToConsoleWithColor($"Exception ({e.GetType()}: {e.Message}) thrown at \n\n{e.StackTrace}", ConsoleColor.Red);
+                        ConsoleHelper.Write($"Exception ({e.GetType()}: {e.Message}) thrown at \n\n{e.StackTrace}", ConsoleColor.Red);
                         throw;
                     }
                 }
@@ -200,34 +201,6 @@ namespace MountainProjectBot
                 BotUtilities.SendDiscordMessage("Approval server is back up");
                 alerted = false;
             }
-        }
-    }
-
-    public class OutputCapture : TextWriter, IDisposable //Todo: this should eventually be moved to a "Common" location
-    {
-        private TextWriter stdOutWriter;
-        public TextWriter Captured { get; private set; }
-        public override Encoding Encoding { get { return Encoding.ASCII; } }
-
-        public OutputCapture()
-        {
-            this.stdOutWriter = Console.Out;
-            Console.SetOut(this);
-            Captured = new StringWriter();
-        }
-
-        override public void Write(string output)
-        {
-            // Capture the output and also send it to StdOut
-            Captured.Write(output);
-            stdOutWriter.Write(output);
-        }
-
-        override public void WriteLine(string output)
-        {
-            // Capture the output and also send it to StdOut
-            Captured.WriteLine(output);
-            stdOutWriter.WriteLine(output);
         }
     }
 }

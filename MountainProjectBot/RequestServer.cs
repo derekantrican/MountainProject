@@ -49,7 +49,6 @@ namespace MountainProjectBot
             thread.Start();
         }
 
-        public (DateTime, Exception) LastException;
         public StringWriter Activity { get; set; } = new StringWriter();
 
         private void WaitForRequests()
@@ -100,7 +99,6 @@ namespace MountainProjectBot
                 }
                 catch (Exception ex)
                 {
-                    LastException = (DateTime.Now, ex);
                     if (requestString != null)
                     {
                         ex.Data["path"] = requestString;
