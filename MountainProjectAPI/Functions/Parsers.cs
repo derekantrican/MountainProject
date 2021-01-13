@@ -85,7 +85,7 @@ namespace MountainProjectAPI
             inputArea.PopularRouteIDs = GetPopularRouteIDs(doc, 3);
 
             //Get Area's routes
-            IElement routesTable = doc.GetElementsByTagName("table").Where(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table").FirstOrDefault();
+            IElement routesTable = doc.GetElementsByTagName("table").FirstOrDefault(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table");
             List<IElement> htmlRoutes = routesTable == null ? new List<IElement>() : routesTable.GetElementsByTagName("a").ToList();
 
             //Get Area's areas
@@ -430,7 +430,7 @@ namespace MountainProjectAPI
         public static string ParseAreaNameFromSidebar(IHtmlDocument doc)
         {
             IElement leftColumnDiv = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar");
-            IElement nameElementInSidebar = doc.GetElementsByTagName("h3").Where(p => p.ParentElement == leftColumnDiv).FirstOrDefault();
+            IElement nameElementInSidebar = doc.GetElementsByTagName("h3").FirstOrDefault(p => p.ParentElement == leftColumnDiv);
             if (nameElementInSidebar != null)
                 return nameElementInSidebar.TextContent.Replace("Routes in ", "").Replace("Areas in ", "").Trim();
             else
