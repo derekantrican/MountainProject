@@ -226,7 +226,7 @@ namespace MountainProjectDBBuilder
         private static void BuildFullDB()
         {
             Parsers.TotalTimer = totalTimer;
-            List<Area> destAreas = Parsers.GetDestAreas().Take(1).ToList(); //TEMP: Only look at Alabama for profiler
+            List<Area> destAreas = Parsers.GetDestAreas();
 
             //Todo: there should possibly be a cmd arg for switching this (something like "fast") because I don't think the progress feature really works here. Though maybe we could use these
             //tasks to fix progress instead? (percentage seems to be roughly accurate, but maybe not time remaining)
