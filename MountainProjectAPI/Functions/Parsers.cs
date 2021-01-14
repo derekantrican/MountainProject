@@ -36,33 +36,32 @@ namespace MountainProjectAPI
         public static List<Area> GetDestAreas()
         {
             List<Area> destAreas = new List<Area>();
-
-            IHtmlDocument doc = Utilities.GetHtmlDoc(Utilities.ALLLOCATIONSURL);
-            List<IElement> destAreaNodes = doc.GetElementsByTagName("a").Where(x => x.Attributes["href"] != null &&
-                                                                                    Utilities.MatchesStateUrlRegex(x.Attributes["href"].Value)).ToList();
-            destAreaNodes = (from s in destAreaNodes
-                             orderby s.TextContent
-                             group s by s.Attributes["href"].Value into g
-                             select g.First()).ToList();
-
-            //Move international to the end
-            IElement internationalArea = destAreaNodes.Find(p => p.TextContent == "International");
-            destAreaNodes.Remove(internationalArea);
-            destAreaNodes.Add(internationalArea);
-
-            //Convert to DestArea objects
-            foreach (IElement destAreaElement in destAreaNodes)
+            using (IHtmlDocument doc = Utilities.GetHtmlDoc(Utilities.ALLLOCATIONSURL))
             {
-                Area destArea = new Area()
+                List<IElement> destAreaNodes = doc.GetElementsByTagName("a").Where(x => x.Attributes["href"] != null &&
+                                                                                            Utilities.MatchesStateUrlRegex(x.Attributes["href"].Value)).ToList();
+                destAreaNodes = (from s in destAreaNodes
+                                 orderby s.TextContent
+                                 group s by s.Attributes["href"].Value into g
+                                 select g.First()).ToList();
+
+                //Move international to the end
+                IElement internationalArea = destAreaNodes.Find(p => p.TextContent == "International");
+                destAreaNodes.Remove(internationalArea);
+                destAreaNodes.Add(internationalArea);
+
+                //Convert to DestArea objects
+                foreach (IElement destAreaElement in destAreaNodes)
                 {
-                    ID = Utilities.GetID(destAreaElement.Attributes["href"].Value)
-                };
+                    Area destArea = new Area()
+                    {
+                        ID = Utilities.GetID(destAreaElement.Attributes["href"].Value)
+                    };
 
-                destAreas.Add(destArea);
-                TotalAreas++;
+                    destAreas.Add(destArea);
+                    TotalAreas++;
+                }
             }
-
-            doc.Dispose();
 
             return destAreas;
         }
