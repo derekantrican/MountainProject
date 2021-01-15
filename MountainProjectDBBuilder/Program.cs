@@ -12,6 +12,7 @@ using System.Xml;
 using System.ServiceModel.Syndication;
 using Base;
 using System.Collections.Concurrent;
+using System.Threading;
 
 namespace MountainProjectDBBuilder
 {
@@ -20,7 +21,8 @@ namespace MountainProjectDBBuilder
         None,
         Parse,
         BuildDB,
-        DownloadFile
+        DownloadFile,
+        Benchmark
     }
     
     class Program
@@ -52,6 +54,9 @@ namespace MountainProjectDBBuilder
                     ParseInputString();
                     break;
                 case Mode.DownloadFile:
+                    break;
+                case Mode.Benchmark:
+                    RunBenchmarkTests();
                     break;
             }
         }
@@ -92,6 +97,11 @@ namespace MountainProjectDBBuilder
                             DownloadGoogleDriveFileFromUrl(arg);
                             Environment.Exit(0);
                         }
+                    },
+                    {
+                        "benchmark",
+                        "Run back-to-back benchmark test",
+                        (arg) => { programMode = Mode.Benchmark; }
                     }
                 };
 
@@ -220,6 +230,35 @@ namespace MountainProjectDBBuilder
             {
                 File.AppendAllText(logPath, outputCapture.ToString());
                 outputCapture.Dispose();
+            }
+        }
+
+        private static void RunBenchmarkTests()
+        {
+            Parsers.TotalTimer = totalTimer;
+
+            List<long> elapsedTimes = new List<long>();
+            for (int i = 0; i < 3; i++) //Run 3 times
+            {
+                totalTimer.Restart();
+                Parsers.TotalAreas = 0;
+                Parsers.TotalRoutes = 0;
+
+                List<Area> destAreas = Parsers.GetDestAreas().Take(3).ToList(); //Limit to first 3 states for testing
+
+                Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
+                ConcurrentBag<Task> areaTasks = new ConcurrentBag<Task>();
+                Parallel.ForEach(destAreas, destArea =>
+                {
+                    areaTasks.Add(Parsers.ParseAreaAsync(destArea));
+                });
+
+                Task.WaitAll(areaTasks.ToArray());
+
+                totalTimer.Stop();
+                elapsedTimes.Add(totalTimer.ElapsedMilliseconds);
+
+                Thread.Sleep(TimeSpan.FromMinutes(15)); //Hopefully if we sleep for 15 minutes we don't hit any sort of "hot path" that messes up results
             }
         }
 
