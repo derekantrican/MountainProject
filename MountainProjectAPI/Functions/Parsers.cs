@@ -2,6 +2,7 @@
 using AngleSharp.Html.Dom;
 using Base;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -15,6 +16,9 @@ namespace MountainProjectAPI
 {
     public static class Parsers
     {
+        public static bool Fast = true; //TEMP unless we truly see better build times after a few weeks (then this should be made into a cmd line arg)
+        public static ConcurrentQueue<Task> Tasks = new ConcurrentQueue<Task>();
+
         public static int TotalAreas = 0;
         public static int TotalRoutes = 0;
         public static int TargetTotalRoutes = 0;
@@ -105,22 +109,38 @@ namespace MountainProjectAPI
                 inputArea.Routes.Add(route);
                 TotalRoutes++;
 
-                await ParseRouteAsync(route); //Parse route
+                if (Fast)
+                {
+                    Tasks.Enqueue(Task.Run(() => ParseRouteAsync(route))); //Parse route
+                }
+                else
+                {
+                    await ParseRouteAsync(route); //Parse route
+                }
             }
 
             //Populate sub area details
             foreach (IElement areaElement in htmlSubAreas)
             {
-                Area subArea = new Area() 
-                { 
-                    ID = Utilities.GetID(areaElement.Attributes["href"].Value) 
+                Area subArea = new Area()
+                {
+                    ID = Utilities.GetID(areaElement.Attributes["href"].Value)
                 };
 
                 inputArea.SubAreas.Add(subArea);
                 TotalAreas++;
 
                 if (recursive)
-                    await ParseAreaAsync(subArea); //Parse sub area
+                {
+                    if (Fast)
+                    {
+                        Tasks.Enqueue(Task.Run(() => ParseAreaAsync(subArea))); //Parse sub area
+                    }
+                    else
+                    {
+                        await ParseAreaAsync(subArea); //Parse sub area
+                    }
+                }
             }
 
             Console.WriteLine($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");

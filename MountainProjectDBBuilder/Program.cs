@@ -67,7 +67,7 @@ namespace MountainProjectDBBuilder
             {
                 bool help = false;
 
-                var p = new OptionSet()
+                var p = new OptionSet() //Todo: should implement better cmd arg parsing like https://github.com/commandlineparser/commandline
                 {
                     {
                         "h|help|?",
@@ -240,6 +240,8 @@ namespace MountainProjectDBBuilder
             List<long> elapsedTimes = new List<long>();
             for (int i = 0; i < 3; i++) //Run 3 times
             {
+                Parsers.Tasks = new ConcurrentQueue<Task>();
+
                 totalTimer.Restart();
                 Parsers.TotalAreas = 0;
                 Parsers.TotalRoutes = 0;
@@ -247,13 +249,18 @@ namespace MountainProjectDBBuilder
                 List<Area> destAreas = Parsers.GetDestAreas().Take(3).ToList(); //Limit to first 3 states for testing
 
                 Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
-                ConcurrentBag<Task> areaTasks = new ConcurrentBag<Task>();
-                Parallel.ForEach(destAreas, destArea =>
+                foreach (Area destArea in destAreas)
                 {
-                    areaTasks.Add(Parsers.ParseAreaAsync(destArea));
-                });
+                    Parsers.Tasks.Enqueue(Parsers.ParseAreaAsync(destArea));
+                }
 
-                Task.WaitAll(areaTasks.ToArray());
+                while (Parsers.Tasks.Count > 0)
+                {
+                    if (Parsers.Tasks.TryDequeue(out Task task))
+                    {
+                        task.Wait();
+                    }
+                }
 
                 totalTimer.Stop();
                 elapsedTimes.Add(totalTimer.ElapsedMilliseconds);
@@ -265,20 +272,39 @@ namespace MountainProjectDBBuilder
         private static void BuildFullDB()
         {
             Parsers.TotalTimer = totalTimer;
+            Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
             List<Area> destAreas = Parsers.GetDestAreas();
 
             //Todo: there should possibly be a cmd arg for switching this (something like "fast") because I don't think the progress feature really works here. Though maybe we could use these
             //tasks to fix progress instead? (percentage seems to be roughly accurate, but maybe not time remaining)
             //Todo: Should also look into "compiling" any regexes to possibly improve time https://docs.microsoft.com/en-us/dotnet/standard/base-types/compilation-and-reuse-in-regular-expressions
 
-            Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
-            ConcurrentBag<Task> areaTasks = new ConcurrentBag<Task>();
-            Parallel.ForEach(destAreas, destArea =>
-            {
-                areaTasks.Add(Parsers.ParseAreaAsync(destArea));
-            });
 
-            Task.WaitAll(areaTasks.ToArray());
+            if (Parsers.Fast)
+            {
+                foreach (Area destArea in destAreas)
+                {
+                    Parsers.Tasks.Enqueue(Parsers.ParseAreaAsync(destArea));
+                }
+
+                while (Parsers.Tasks.Count > 0)
+                {
+                    if (Parsers.Tasks.TryDequeue(out Task task))
+                    {
+                        task.Wait();
+                    }
+                }
+            }
+            else
+            {
+                ConcurrentBag<Task> areaTasks = new ConcurrentBag<Task>();
+                Parallel.ForEach(destAreas, destArea =>
+                {
+                    areaTasks.Add(Parsers.ParseAreaAsync(destArea));
+                });
+
+                Task.WaitAll(areaTasks.ToArray());
+            }
 
             totalTimer.Stop();
             Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
