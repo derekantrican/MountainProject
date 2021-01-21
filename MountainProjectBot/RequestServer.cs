@@ -44,58 +44,60 @@ namespace MountainProjectBot
 
         public void Start()
         {
+            Log("Starting server...");
             listener.Start();
             thread = new Thread(WaitForRequests);
             thread.Start();
+            Log("Server started");
         }
 
         public StringWriter Activity { get; set; } = new StringWriter();
+        private void Log(string itemToLog) => Activity.WriteLine($"[{DateTime.Now:yyyy.MM.dd.HH.mm.ss.fff}] {itemToLog}");
 
         private void WaitForRequests()
         {
-            void log(string itemToLog) => Activity.WriteLine($"[{DateTime.Now:yyyy.MM.dd.HH.mm.ss.fff}] {itemToLog}");
-
             while (true)
             {
                 string requestString = null;
                 try
                 {
-                    log("Waiting for client...");
+                    Log("Waiting for client...");
                     TcpClient client = listener.AcceptTcpClient();
-                    log("Accepted client");
+                    Log("Accepted client");
 
-                    log("Opening streamreader...");
+                    Log("Opening streamreader...");
                     StreamReader sr = new StreamReader(client.GetStream());
-                    log("Opened streamreader");
-                    log("Opening streamwriter...");
+                    Log("Opened streamreader");
+                    Log("Opening streamwriter...");
                     StreamWriter sw = new StreamWriter(client.GetStream());
-                    log("Opened streamwriter");
+                    Log("Opened streamwriter");
 
-                    log("Reading streamreader...");
+                    Log("Reading streamreader...");
                     requestString = sr.ReadLine();
-                    log("Read streamreader");
+                    Log("Read streamreader");
 
-                    log("Writing status...");
+                    Log("Writing status...");
                     sw.WriteLine("HTTP/1.0 200 OK\n"); //Send ok response to requester
-                    log("Wrote status");
+                    Log("Wrote status");
 
-                    log("Parsing request...");
+                    Log("Parsing request...");
                     ServerRequest request = ServerRequest.Parse(requestString);
-                    log("Parsed request");
+                    Log("Parsed request");
                     if (HandleRequest != null && request != null)
                     {
-                        log("Invoking HandleRequest...");
+                        Log("Invoking HandleRequest...");
+                        Log($"Request: {request.Path}");
                         sw.WriteLine(HandleRequest.Invoke(request));
-                        log("Invoked HandleRequest");
+                        Log("Invoked HandleRequest");
                     }
 
-                    log("Flushing streamwriter...");
+                    Log("Flushing streamwriter...");
                     sw.Flush();
-                    log("Flushed streamwriter");
+                    Log("Flushed streamwriter");
 
-                    log("Closing client connection...");
+                    Log("Closing client connection...");
                     client.Close();
-                    log("Closed client connection");
+                    Log("Closed client connection");
                 }
                 catch (Exception ex)
                 {
@@ -104,17 +106,19 @@ namespace MountainProjectBot
                         ex.Data["path"] = requestString;
                     }
 
-                    log("Invoking ExceptionHandling...");
+                    Log("Invoking ExceptionHandling...");
                     ExceptionHandling?.Invoke(ex);
-                    log("Invoked ExceptionHandling");
+                    Log("Invoked ExceptionHandling");
                 }
             }
         }
 
         public void Stop()
         {
+            Log("Stopping server...");
             listener.Stop();
             thread.Abort();
+            Log("Server stopped");
         }
 
         public Func<ServerRequest, string> HandleRequest { get; set; }

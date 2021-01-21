@@ -200,6 +200,15 @@ namespace MountainProjectBot
             {
                 BotUtilities.SendDiscordMessage("Approval server is back up");
                 alerted = false;
+
+                string activityFile = $"Server activity {DateTime.Now:yyyy.MM.dd.HH.mm.ss}.log";
+                string serverActivity = "";
+                string[] serverLines = BotUtilities.ApprovalServer.Activity.ToString().Split('\n');
+                foreach (string line in serverLines.Skip(Math.Max(0, serverLines.Count() - 200)))
+                        serverActivity += $"{line}\n";
+
+                File.WriteAllText(activityFile, serverActivity);
+                BotUtilities.SendDiscordMessage($"Wrote recent server activity to {activityFile}");
             }
         }
     }
