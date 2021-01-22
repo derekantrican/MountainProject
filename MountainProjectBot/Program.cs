@@ -87,6 +87,16 @@ namespace MountainProjectBot
 
             return exceptionString;
         }
+
+        private static bool IsInternetConnectionException(Exception ex)
+        {
+            return ex is RedditHttpException ||
+                ex is HttpRequestException ||
+                ex is WebException ||
+                ex is TaskCanceledException ||
+                ex is OperationCanceledException ||
+                (ex is AggregateException aggregateEx && aggregateEx.InnerExceptions.Any(e => IsInternetConnectionException(e)));
+        }
         #endregion Error Handling
 
         private static void ExitAfterKeyPress()
@@ -155,11 +165,7 @@ namespace MountainProjectBot
                     }
 
                     //Handle all sorts of "timeout" or internet connection errors
-                    if (e is RedditHttpException ||
-                        e is HttpRequestException ||
-                        e is WebException ||
-                        e is TaskCanceledException ||
-                        e is OperationCanceledException)
+                    if (IsInternetConnectionException(e))
                     {
                         Console.WriteLine($"\tIssue connecting to reddit: {e.Message}");
                     }
