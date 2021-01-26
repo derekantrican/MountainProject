@@ -65,18 +65,19 @@ namespace MountainProjectBot
                     TcpClient client = listener.AcceptTcpClient();
                     Log("Accepted client");
 
+                    NetworkStream networkStream = client.GetStream();
                     Log("Opening streamreader...");
-                    StreamReader sr = new StreamReader(client.GetStream());
+                    StreamReader sr = new StreamReader(networkStream);
                     Log("Opened streamreader");
                     Log("Opening streamwriter...");
-                    StreamWriter sw = new StreamWriter(client.GetStream());
+                    StreamWriter sw = new StreamWriter(networkStream);
                     Log("Opened streamwriter");
 
-                    Log("Reading streamreader...");
-                    requestString = sr.ReadLine();
+                    Log($"Reading streamreader (CanRead: {networkStream.CanRead})...");
+                    requestString = sr.ReadLine(); //This line may be the one hanging when the server stops responding
                     Log("Read streamreader");
 
-                    Log("Writing status...");
+                    Log($"Writing status (CanWrite: {networkStream.CanWrite})...");
                     sw.WriteLine("HTTP/1.0 200 OK\n"); //Send ok response to requester
                     Log("Wrote status");
 
