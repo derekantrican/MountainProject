@@ -168,7 +168,7 @@ namespace MountainProjectBot
                 return new Dictionary<string, string>();
             }
 
-            return Path.Split('?')[1].Split('&').Select(p => p.Split('=')).ToDictionary(kvp => kvp[0].ToLower(), kvp => kvp.Length > 1 ? WebUtility.HtmlDecode(kvp[1]) : "");
+            return Path.Split('?')[1].Split('&').Select(p => p.Split('=')).ToDictionary(kvp => kvp[0].ToLower(), kvp => kvp.Length > 1 ? WebUtility.UrlDecode(kvp[1]) : "");
         }
     }
 }

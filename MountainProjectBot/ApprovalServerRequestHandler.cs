@@ -2,9 +2,9 @@
 using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
+using System.IO;
 using System.Linq;
-using System.Text;
+using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 
@@ -22,6 +22,12 @@ namespace MountainProjectBot
                 if (parameters.ContainsKey("status")) //UpTimeRobot will ping this
                 {
                     return "UP";
+                }
+                else if (parameters.ContainsKey("posthistory"))
+                {
+                    string query = parameters.ContainsKey("query") ? parameters["query"] : "";
+                    int page = parameters.ContainsKey("page") ? Convert.ToInt32(parameters["page"]) : 1;
+                    return ShowPostHistory(query, page);
                 }
                 else if (parameters.ContainsKey("postid") && (parameters.ContainsKey("approve") || parameters.ContainsKey("approveall") || parameters.ContainsKey("approveother")))
                 {
@@ -126,5 +132,108 @@ namespace MountainProjectBot
             return htmlPicker;
         }
 
+        private static string ShowPostHistory(string query, int page = 1)
+        {
+            string html = "<html>" +
+                          "<head>" +
+                          "<meta charset=\"UTF-8\">" +
+                          "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js\"></script>" +
+                          "<style>" +
+                          "#search {" +
+                          "  width: 75%;" +
+                          "  font-size: 16px;" +
+                          "  margin-bottom: 12px;" +
+                          "}" +
+                          "#navigation * {" +
+                          "	display: inline-block;" +
+                          "    padding: 8px;" +
+                          "}" +
+                          "#data {" +
+                          "  font-family: Arial, Helvetica, sans-serif;" +
+                          "  border-collapse: collapse;" +
+                          "  width: 100%;" +
+                          "}" +
+                          "" +
+                          "#data td, #data th {" +
+                          "  border: 1px solid #ddd;" +
+                          "  padding: 8px;" +
+                          "}" +
+                          "#data tr:nth-child(even){background-color: #f2f2f2;}" +
+                          "#data tr:hover {background-color: #ddd;}" +
+                          "#data th {" +
+                          "  padding-top: 12px;" +
+                          "  padding-bottom: 12px;" +
+                          "  text-align: left;" +
+                          "  background-color: #4287F5;" +
+                          "  color: white;" +
+                          "}" +
+                          "</style>" +
+                          "</head>" +
+                          "<body>" +
+                          "<div id=\"navigation\">" +
+                          $"	<input type=\"text\" id=\"search\" placeholder=\"Find a specific post by id\"" +
+                          $"{(!string.IsNullOrEmpty(query) ? $"value=\"{query}\"" : "")}>" +
+                          $"    <a id=\"navButton\" href=\"{BotUtilities.ApprovalServerUrl}?posthistory{(!string.IsNullOrEmpty(query) ? $"&query={WebUtility.UrlEncode(query)}" : "")}&page={Math.Max(1, page - 1)}\">" +
+                          $"&lt;&lt; Prev</a>" +
+                          $"    <a id=\"navButton\" href=\"{BotUtilities.ApprovalServerUrl}?posthistory{(!string.IsNullOrEmpty(query) ? $"&query={WebUtility.UrlEncode(query)}" : "")}&page={page + 1}\">" +
+                          $"Next &gt;&gt;</a>" +
+                          "</div>" +
+                          "<table id=\"data\">" +
+                          "  <tr>" +
+                          "    <th>Date</th>" +
+                          "    <th>Subreddit</th>" +
+                          "    <th style=\"width:75%\">Post</th>" +
+                          "    <th>Reason</th>" +
+                          "  </tr>";
+
+            string formatPostToRow(Post post, string reason)
+            {
+                return "<tr>" +
+                       $"  <td>{post.CreatedUTC.ToLocalTime():M/d/yy HH:mm:ss}</td>" +
+                       $"  <td>{post.SubredditName}</td>" +
+                       $"  <td><a href=\"{post.Shortlink}\">{post.Title}</a></td>" +
+                       $"  <td>{reason}</td>" +
+                       "</tr>";
+            }
+
+            IEnumerable<string> seenPostLines = File.ReadAllLines(BotUtilities.SeenPostsPath).Reverse();
+            if (!string.IsNullOrEmpty(query))
+            {
+                string matchingLine = seenPostLines.FirstOrDefault(l => l.Split('\t')[0] == query);
+                if (!string.IsNullOrEmpty(matchingLine))
+                {
+                    string[] arr = matchingLine.Split('\t');
+                    Post post = BotFunctions.RedditHelper.GetPost(arr[0]).Result;
+                    html += formatPostToRow(post, arr.Length > 1 ? arr[1] : "");
+                }
+            }
+            else
+            {
+                Dictionary<Task<Post>, string> getPostTasks = new Dictionary<Task<Post>, string>();
+                foreach (string line in seenPostLines.Skip((page - 1) * 25).Take(25)) //25 per page
+                {
+                    string[] arr = line.Split('\t');
+                    getPostTasks.Add(Task.Run(() => BotFunctions.RedditHelper.GetPost(arr[0])), arr.Length > 1 ? arr[1] : "");
+                }
+
+                Task.WaitAll(getPostTasks.Keys.ToArray());
+                foreach (KeyValuePair<Task<Post>, string> postAndReason in getPostTasks)
+                {
+                    html += formatPostToRow(postAndReason.Key.Result, postAndReason.Value);
+                }
+            }
+
+            html += "</table>" +
+                    "<script>" +
+                    "	$('#search').on('keyup', function (e){" +
+                    "    	if (e.key === 'Enter'){" +
+                    $"        	window.location.replace(\"{BotUtilities.ApprovalServerUrl}?posthistory&query=\" + encodeURI($('#search').val()));" +
+                    "        }" +
+                    "    });" +
+                    "</script>" +
+                    "</body></html>";
+
+            return html;
+        }
     }
 }

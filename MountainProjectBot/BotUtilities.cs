@@ -21,7 +21,7 @@ namespace MountainProjectBot
         private const string XMLNAME = "MountainProjectAreas.xml";
         private const string CREDENTIALSNAME = "Credentials.txt";
         private static string repliedToPath = "RepliedTo.txt";
-        private static string seenPostsPath = @"RepliedToPosts.txt";
+        public static string SeenPostsPath = @"RepliedToPosts.txt";
         private static string blacklistedPath = "BlacklistedUsers.txt";
         private static string xmlPath = Path.Combine(@"..\..\MountainProjectDBBuilder\bin\", XMLNAME);
         private static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
@@ -49,7 +49,7 @@ namespace MountainProjectBot
                 repliedToPath = args.FirstOrDefault(p => p.Contains("repliedto=")).Split('=')[1];
 
             if (args.FirstOrDefault(p => p.Contains("repliedtoposts=")) != null)
-                seenPostsPath = args.FirstOrDefault(p => p.Contains("repliedtoposts=")).Split('=')[1];
+                SeenPostsPath = args.FirstOrDefault(p => p.Contains("repliedtoposts=")).Split('=')[1];
 
             if (args.FirstOrDefault(p => p.Contains("blacklisted=")) != null)
                 blacklistedPath = args.FirstOrDefault(p => p.Contains("blacklisted=")).Split('=')[1];
@@ -225,13 +225,13 @@ namespace MountainProjectBot
 
         public static void LogPostBeenSeen(Post post, string reason = "")
         {
-            if (!File.Exists(seenPostsPath))
-                File.Create(seenPostsPath).Close();
+            if (!File.Exists(SeenPostsPath))
+                File.Create(SeenPostsPath).Close();
 
             if (!string.IsNullOrEmpty(reason))
-                File.AppendAllLines(seenPostsPath, new string[] { $"{post.Id}\t{reason}" });
+                File.AppendAllLines(SeenPostsPath, new string[] { $"{post.Id}\t{reason}" });
             else
-                File.AppendAllLines(seenPostsPath, new string[] { post.Id });
+                File.AppendAllLines(SeenPostsPath, new string[] { post.Id });
         }
 
         public static List<Comment> RemoveAlreadyRepliedTo(List<Comment> comments)
@@ -247,10 +247,10 @@ namespace MountainProjectBot
 
         public static List<Post> RemoveAlreadySeenPosts(List<Post> posts)
         {
-            if (!File.Exists(seenPostsPath))
-                File.Create(seenPostsPath).Close();
+            if (!File.Exists(SeenPostsPath))
+                File.Create(SeenPostsPath).Close();
 
-            string[] lines = File.ReadAllLines(seenPostsPath);
+            string[] lines = File.ReadAllLines(SeenPostsPath);
             posts.RemoveAll(p => lines.Any(l => l.StartsWith(p.Id)));
 
             return posts;
