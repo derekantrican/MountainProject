@@ -191,7 +191,7 @@ namespace MountainProjectBot
                 return "<tr>" +
                        $"  <td>{post.CreatedUTC.ToLocalTime():M/d/yy HH:mm:ss}</td>" +
                        $"  <td>{post.SubredditName}</td>" +
-                       $"  <td><a href=\"{post.Shortlink}\">{post.Title}</a></td>" +
+                       $"  <td><a href=\"{post.Shortlink}\">{post.Title}{(post.IsRemoved.HasValue && post.IsRemoved.Value ? " [DELETED]" : "")}</a></td>" +
                        $"  <td>{reason}</td>" +
                        "</tr>";
             }
