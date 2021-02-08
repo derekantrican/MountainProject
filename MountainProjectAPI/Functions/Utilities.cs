@@ -173,14 +173,24 @@ namespace MountainProjectAPI
             return html;
         }
 
-        static readonly HtmlParser parser = new HtmlParser();
+        static HtmlParser parser;
         public static IHtmlDocument GetHtmlDoc(string url)
         {
+            if (parser == null)
+            {
+                parser = new HtmlParser();
+            }
+
             return parser.ParseDocument(GetHtml(url));
         }
 
         public static async Task<IHtmlDocument> GetHtmlDocAsync(string url)
         {
+            if (parser == null)
+            {
+                parser = new HtmlParser();
+            }
+
             string html = await GetHtmlAsync(url);
             return await parser.ParseDocumentAsync(html);
         }
