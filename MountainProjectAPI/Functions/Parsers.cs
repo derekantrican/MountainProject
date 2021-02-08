@@ -16,9 +16,6 @@ namespace MountainProjectAPI
 {
     public static class Parsers
     {
-        public static bool Fast = true; //TEMP unless we truly see better build times after a few weeks (then this should be made into a cmd line arg)
-        public static ConcurrentQueue<Task> Tasks = new ConcurrentQueue<Task>();
-
         public static int TotalAreas = 0;
         public static int TotalRoutes = 0;
         public static int TargetTotalRoutes = 0;
@@ -109,14 +106,7 @@ namespace MountainProjectAPI
                 inputArea.Routes.Add(route);
                 TotalRoutes++;
 
-                if (Fast)
-                {
-                    Tasks.Enqueue(Task.Run(() => ParseRouteAsync(route))); //Parse route
-                }
-                else
-                {
-                    await ParseRouteAsync(route); //Parse route
-                }
+                await ParseRouteAsync(route); //Parse route
             }
 
             //Populate sub area details
@@ -132,14 +122,7 @@ namespace MountainProjectAPI
 
                 if (recursive)
                 {
-                    if (Fast)
-                    {
-                        Tasks.Enqueue(Task.Run(() => ParseAreaAsync(subArea))); //Parse sub area
-                    }
-                    else
-                    {
-                        await ParseAreaAsync(subArea); //Parse sub area
-                    }
+                    await ParseAreaAsync(subArea); //Parse sub area
                 }
             }
 
