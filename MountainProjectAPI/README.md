@@ -4,6 +4,8 @@
 
 *This is a C# API for the website [MountainProject.com](https://mountainproject.com). For a brief history of why this exists or other attempts to create a 3rd-party MountainProject API, go here: https://github.com/derekantrican/MountainProject/blob/master/MountainProjectDBBuilder/README.md*
 
+If you are looking for a typical REST API, check out https://openbeta.io/api
+
 ### How To Implement the API in your Project
 
 1. Clone the [MountainProjecAPI folder](https://github.com/derekantrican/MountainProject/tree/master/MountainProjectAPI) to your computer
