@@ -13,6 +13,7 @@ using System.ServiceModel.Syndication;
 using Base;
 using System.Collections.Concurrent;
 using System.Threading;
+using Newtonsoft.Json;
 
 namespace MountainProjectDBBuilder
 {
@@ -24,6 +25,12 @@ namespace MountainProjectDBBuilder
         DownloadFile,
         Benchmark
     }
+
+    public enum FileType
+    {
+        XML,
+        JSON
+    }
     
     class Program
     {
@@ -32,6 +39,7 @@ namespace MountainProjectDBBuilder
         private static readonly StringWriter outputCapture = new StringWriter();
         private static readonly Stopwatch totalTimer = new Stopwatch();
         private static Mode programMode = Mode.None;
+        private static FileType fileType = FileType.XML;
         private static bool buildAll = true;
 
         static void Main(string[] args)
@@ -80,6 +88,11 @@ namespace MountainProjectDBBuilder
                         "parse",
                         "Parse an input string",
                         (arg) => { programMode = Mode.Parse; }
+                    },
+                    {
+                        "filetype=",
+                        "File type to serialize as (xml or json - xml is default)",
+                        (arg) => { fileType = (FileType)Enum.Parse(typeof(FileType), arg); }
                     },
                     { 
                         "onlyNew",
@@ -336,10 +349,18 @@ namespace MountainProjectDBBuilder
         private static void SerializeResults(List<Area> inputAreas)
         {
             Console.WriteLine("[SerializeResults] Serializing areas to file");
-            TextWriter writer = new StreamWriter(serializationPath);
-            XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<Area>));
-            xmlSerializer.Serialize(writer, inputAreas);
-            writer.Close();
+            if (fileType == FileType.XML)
+            {
+                using (TextWriter writer = new StreamWriter(serializationPath))
+                {
+                    XmlSerializer xmlSerializer = new XmlSerializer(typeof(List<Area>));
+                    xmlSerializer.Serialize(writer, inputAreas);
+                }
+            }
+            else
+            {
+                File.WriteAllText(serializationPath, JsonConvert.SerializeObject(inputAreas));
+            }
         }
 
         private static void SendReport(string subject, string message)

@@ -5,6 +5,7 @@ using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Xml.Serialization;
+using Newtonsoft.Json;
 
 namespace MountainProjectAPI
 {
@@ -14,14 +15,22 @@ namespace MountainProjectAPI
         public static List<Area> DestAreas = new List<Area>();
 
         #region Public Methods
-        public static void InitMountainProjectData(string xmlPath)
+        public static void InitMountainProjectData(string dataPath)
         {
             WriteToConsole("Deserializing info from MountainProject");
 
-            using (FileStream fileStream = new FileStream(xmlPath, FileMode.Open))
+            string ext = Path.GetExtension(dataPath);
+            if (ext == ".xml")
             {
-                XmlSerializer xmlDeserializer = new XmlSerializer(typeof(List<Area>));
-                DestAreas = (List<Area>)xmlDeserializer.Deserialize(fileStream);
+                using (FileStream fileStream = new FileStream(dataPath, FileMode.Open))
+                {
+                    XmlSerializer xmlDeserializer = new XmlSerializer(typeof(List<Area>));
+                    DestAreas = (List<Area>)xmlDeserializer.Deserialize(fileStream);
+                }
+            }
+            else if (ext == ".json")
+            {
+                DestAreas = JsonConvert.DeserializeObject<List<Area>>(File.ReadAllText(dataPath));
             }
 
             if (DestAreas.Count == 0)
