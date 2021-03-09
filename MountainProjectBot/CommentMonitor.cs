@@ -21,7 +21,9 @@ namespace MountainProjectBot
         public int ExpirationHours { get; set; }
         public VotableThing Parent { get; set; }
         public Comment BotResponseComment { get; set; }
-        public bool Alerted { get; set; }
+        public bool AlertedBadBot { get; set; }
+        public bool Alerted10Points { get; set; }
+        public bool AlertedNegativePoints { get; set; }
         public int FailedTimes { get; set; } = 0;
         public string CreatorMethodName { get; set; }
     }

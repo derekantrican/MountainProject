@@ -52,10 +52,22 @@ namespace MountainProjectBot
                         continue;
                     }
 
-                    if (!monitor.Alerted && botResponseComment.Comments.Any(c => Regex.IsMatch(c.Body, "bad bot|wrong", RegexOptions.IgnoreCase)))
+                    if (!monitor.AlertedBadBot && botResponseComment.Comments.Any(c => Regex.IsMatch(c.Body, "bad bot|wrong", RegexOptions.IgnoreCase)))
                     {
                         BotUtilities.SendDiscordMessage($"There was a \"bad bot\"/\"wrong\" reply to this comment. Might want to investigate:\n\n{RedditHelper.GetFullLink(botResponseComment.Shortlink)}");
-                        monitor.Alerted = true;
+                        monitor.AlertedBadBot = true;
+                    }
+
+                    if (!monitor.AlertedNegativePoints && botResponseComment.Score < 0)
+                    {
+                        BotUtilities.SendDiscordMessage($"The bot's recent comment has a negative score. Might want to investigate:\n\n{RedditHelper.GetFullLink(botResponseComment.Shortlink)}");
+                        monitor.AlertedNegativePoints = true;
+                    }
+
+                    if (!monitor.Alerted10Points && botResponseComment.Score >= 10)
+                    {
+                        BotUtilities.SendDiscordMessage($"The bot's recent comment has gotten more than 10 points! Check it out:\n\n{RedditHelper.GetFullLink(botResponseComment.Shortlink)}");
+                        monitor.Alerted10Points = true;
                     }
 
                     if (monitor.Parent is Post && botResponseComment.Score <= -3)
