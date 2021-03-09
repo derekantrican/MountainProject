@@ -241,11 +241,7 @@ namespace MountainProjectBot
                 popularRoutes = area.GetPopularRoutes(3);
             else
             {
-                List<MPObject> itemsToSearch = new List<MPObject>();
-                itemsToSearch.AddRange(area.SubAreas);
-                itemsToSearch.AddRange(area.Routes);
-
-                area.PopularRouteIDs.ForEach(id => popularRoutes.Add(MountainProjectDataSearch.GetItemWithMatchingID(id, itemsToSearch) as Route));
+                area.PopularRouteIDs.ForEach(id => popularRoutes.Add(MountainProjectDataSearch.GetItemWithMatchingID(id, MountainProjectDataSearch.DestAreas) as Route));
             }
 
             foreach (Route popularRoute in popularRoutes)

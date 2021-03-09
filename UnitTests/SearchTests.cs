@@ -19,8 +19,7 @@ namespace UnitTests
         string[,] testCriteria_search = new string[,]
         {
             { "Red River Gorge", "/area/105841134/red-river-gorge" },
-            { "Exit 38: Deception Crags", "/area/105791955/exit-38-deception-crags" },
-            { "Deception Crags", "/area/105791955/exit-38-deception-crags" }, //Partial name match
+            { "Deception Crags", "/area/105791955/exit-38-deception-crags" },
             { "Helm's Deep", "/route/106887440/helms-deep" }, //Special character (apostrophe)
             { "Helm’s Deep", "/route/106887440/helms-deep" },  //Special character (single quotation mark)
             { "Royale with Cheese -location:Niagara Glen", "/route/114609759/royale-with-cheese" }, //Location operator
@@ -80,9 +79,8 @@ namespace UnitTests
         string[,] testCriteria_location = new string[,]
         {
             { "Red River Gorge", "Kentucky" },
-            { "Exit 38: Deception Crags", "Exit 38, Washington" },
             { "Deception Crags", "Exit 38, Washington" },
-            { "no-rang-na-rang", "Seoul/Gyeonggi-do (Northwest Korea), South Korea" }, //International
+            { "no-rang-na-rang", "Gwanaksan (Anyang/South Seoul), South Korea" }, //International
             { "Sweet Dreams", "Blue Mountains, Australia"}, //Australia route (special case for Australia)
             { "Grab Your Balls", "Breakneck, Pennsylvania" }, //https://github.com/derekantrican/MountainProject/issues/12
             { "Sandy Cheeks", "Kistachie Boulder Longleaf Vista, Louisiana" }, //Parent is 1 less than state (ie Louisiana -> Kistachie Boulder Longleaf Vista -> Sandy Cheeks)
@@ -185,9 +183,9 @@ namespace UnitTests
             {"/route/106832048/swing-dance", GradeSystem.Hueco, @"V6\8"}, //V6\8 should equal V7
             {"/route/107371613/pookie", GradeSystem.Hueco, @"V7"}, //V7 should equal V7-8
             {"/route/107362365/chevy", GradeSystem.Hueco, @"V7"}, //V7 should equal V7+
-            {"/route/106129151/checkerboard", GradeSystem.Hueco, "V7/8"}, //V7/8 should equal V7-8
-            {"/route/106129151/checkerboard", GradeSystem.Hueco, @"V7\8"}, //V7\8 should equal V7-8
-            {"/route/106129151/checkerboard", GradeSystem.Hueco, "V7-8"}, //V7-8 should equal V7-8
+            {"/route/106095521/water-saps", GradeSystem.Hueco, "V7/8"}, //V7/8 should equal V7-8
+            {"/route/106095521/water-saps", GradeSystem.Hueco, @"V7\8"}, //V7\8 should equal V7-8
+            {"/route/106095521/water-saps", GradeSystem.Hueco, "V7-8"}, //V7-8 should equal V7-8
             {"/route/105734687/the-great-roof", GradeSystem.YDS, "5.10b"}, //5.10b should equal 5.10b
             {"/route/105734687/the-great-roof", GradeSystem.YDS, "5.10"}, //5.10 should equal 5.10b
             {"/route/105988502/pumpkin-patches", GradeSystem.YDS, "5.9"}, //5.9 should equal 5.9+
