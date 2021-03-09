@@ -68,7 +68,7 @@ namespace MountainProjectAPI
         }
 
         #region Parse Area
-        public static async Task ParseAreaAsync(Area inputArea, bool recursive = true)
+        public static async Task ParseAreaAsync(Area inputArea, bool recursive = true, bool consoleMessages = true)
         {
             Stopwatch areaStopwatch = Stopwatch.StartNew();
 
@@ -79,7 +79,8 @@ namespace MountainProjectAPI
                 if (string.IsNullOrEmpty(inputArea.Name))
                     inputArea.Name = Utilities.CleanExtraPartsFromName(ParseAreaNameFromSidebar(doc));
 
-                Console.WriteLine($"Current Area: {inputArea.Name}");
+                if (consoleMessages)
+                    Console.WriteLine($"Current Area: {inputArea.Name}");
 
                 inputArea.Name = FilterName(inputArea.Name);
                 inputArea.NameForMatch = FilterNameForMatch(inputArea.Name, inputArea.ID);
@@ -126,7 +127,8 @@ namespace MountainProjectAPI
                 }
             }
 
-            Console.WriteLine($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
+            if (consoleMessages)
+                Console.WriteLine($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
         }
 
         public static List<string> GetPopularRouteIDs(IHtmlDocument doc, int numberToReturn)
@@ -182,9 +184,10 @@ namespace MountainProjectAPI
         #endregion Parse Area
 
         #region Parse Route
-        public static async Task ParseRouteAsync(Route inputRoute)
+        public static async Task ParseRouteAsync(Route inputRoute, bool consoleMessages = true)
         {
-            Console.WriteLine($"Current Route: {inputRoute.Name}");
+            if (consoleMessages)
+                Console.WriteLine($"Current Route: {inputRoute.Name}");
 
             Stopwatch routeStopwatch = Stopwatch.StartNew();
 
@@ -205,13 +208,16 @@ namespace MountainProjectAPI
                 inputRoute.ParentIDs = GetParentIDs(doc);
             }
 
-            Console.WriteLine($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
-
-            if (TotalTimer != null && !double.IsNaN(Progress))
+            if (consoleMessages)
             {
-                long elapsedMS = TotalTimer.ElapsedMilliseconds;
-                TimeSpan estTimeRemaining = TimeSpan.FromMilliseconds((elapsedMS / Progress) - elapsedMS);
-                ConsoleHelper.RecordProgress(Progress, estTimeRemaining);
+                Console.WriteLine($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
+
+                if (TotalTimer != null && !double.IsNaN(Progress))
+                {
+                    long elapsedMS = TotalTimer.ElapsedMilliseconds;
+                    TimeSpan estTimeRemaining = TimeSpan.FromMilliseconds((elapsedMS / Progress) - elapsedMS);
+                    ConsoleHelper.RecordProgress(Progress, estTimeRemaining);
+                }
             }
         }
 

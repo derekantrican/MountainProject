@@ -118,39 +118,47 @@ namespace MountainProjectBot
             if (searchResult.FilteredResult is Area)
             {
                 Area inputArea = searchResult.FilteredResult as Area;
-                if (!string.IsNullOrEmpty(inputArea.Statistics.ToString()))
-                    result += $"{Markdown.Bold(inputArea.Name)} [{inputArea.Statistics}]" + Markdown.NewLine;
-                else
-                    result += $"{Markdown.Bold(inputArea.Name)}" + Markdown.NewLine;
 
-                result += GetLocationString(inputArea, searchResult.RelatedLocation);
-                result += GetPopularRoutes(inputArea, parameters);
+                Area latestAreaData = new Area { ID = inputArea.ID };
+                Parsers.ParseAreaAsync(latestAreaData, false, false).Wait(); //Get most updated data (straight from MountainProject page)
+
+                if (!string.IsNullOrEmpty(latestAreaData.Statistics.ToString()))
+                    result += $"{Markdown.Bold(latestAreaData.Name)} [{latestAreaData.Statistics}]" + Markdown.NewLine;
+                else
+                    result += $"{Markdown.Bold(latestAreaData.Name)}" + Markdown.NewLine;
+
+                result += GetLocationString(latestAreaData, searchResult.RelatedLocation);
+                result += GetPopularRoutes(latestAreaData, parameters);
 
                 if (includeUrl)
-                    result += inputArea.URL;
+                    result += latestAreaData.URL;
             }
             else if (searchResult.FilteredResult is Route)
             {
                 Route inputRoute = searchResult.FilteredResult as Route;
-                result += $"{Markdown.Bold(inputRoute.Name)} {GetRouteAdditionalInfo(inputRoute, parameters, showGrade: false, showHeight: false)}";
+
+                Route latestRouteData = new Route { ID = inputRoute.ID };
+                Parsers.ParseRouteAsync(latestRouteData, false).Wait(); //Get most updated data (straight from MountainProject page)
+
+                result += $"{Markdown.Bold(latestRouteData.Name)} {GetRouteAdditionalInfo(latestRouteData, parameters, showGrade: false, showHeight: false)}";
 
                 result += Markdown.NewLine;
 
-                result += $"Type: {string.Join(", ", inputRoute.Types)}" + Markdown.NewLine;
-                result += $"Grade: {GetRouteGrade(inputRoute, parameters)}" + Markdown.NewLine;
+                result += $"Type: {string.Join(", ", latestRouteData.Types)}" + Markdown.NewLine;
+                result += $"Grade: {GetRouteGrade(latestRouteData, parameters)}" + Markdown.NewLine;
 
-                if (inputRoute.Height != null && inputRoute.Height.Value != 0)
+                if (latestRouteData.Height != null && latestRouteData.Height.Value != 0)
                 {
-                    result += $"Height: {Math.Round(inputRoute.Height.GetValue(Dimension.Units.Feet), 1)} ft/" +
-                              $"{Math.Round(inputRoute.Height.GetValue(Dimension.Units.Meters), 1)} m" +
+                    result += $"Height: {Math.Round(latestRouteData.Height.GetValue(Dimension.Units.Feet), 1)} ft/" +
+                              $"{Math.Round(latestRouteData.Height.GetValue(Dimension.Units.Meters), 1)} m" +
                               Markdown.NewLine;
                 }
 
-                result += $"Rating: {inputRoute.Rating}/4" + Markdown.NewLine;
-                result += GetLocationString(inputRoute, searchResult.RelatedLocation);
+                result += $"Rating: {latestRouteData.Rating}/4" + Markdown.NewLine;
+                result += GetLocationString(latestRouteData, searchResult.RelatedLocation);
 
                 if (includeUrl)
-                    result += inputRoute.URL;
+                    result += latestRouteData.URL;
             }
 
             return result;
