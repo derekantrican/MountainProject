@@ -93,7 +93,20 @@ namespace MountainProjectBot
 
         public static void InitStreams()
         {
-            MountainProjectDataSearch.InitMountainProjectData(xmlPath);
+            while (true)
+            {
+                try
+                {
+                    MountainProjectDataSearch.InitMountainProjectData(xmlPath);
+                    break;
+                }
+                catch
+                {
+                    ConsoleHelper.Write("MountainProjectAreas.xml is in use. Waiting 5s before trying again...");
+                    Thread.Sleep(TimeSpan.FromSeconds(5));
+                }
+            }
+
             BotFunctions.RedditHelper = new RedditHelper();
             BotFunctions.RedditHelper.Auth(credentialsPath).Wait();
             requestForApprovalURL = GetCredentialValue(credentialsPath, "requestForApprovalURL");
