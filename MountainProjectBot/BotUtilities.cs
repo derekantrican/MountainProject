@@ -219,7 +219,10 @@ namespace MountainProjectBot
                 if (usersWithBlacklist.ContainsKey(post.AuthorName))
                 {
                     if (blacklistLevels.Contains(usersWithBlacklist[post.AuthorName]))
+                    {
                         result.Remove(post);
+                        LogPostBeenSeen(post, "blacklisted"); //Log the reason we skipped it for accessing posthistory later
+                    }
                 }
             }
 
