@@ -119,7 +119,7 @@ namespace MountainProjectBot
                 Console.WriteLine("\tGetting comments...");
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 long elapsed;
-                
+
                 try
                 {
                     BotFunctions.RedditHelper.Actions = 0; //Reset number of actions
@@ -211,7 +211,7 @@ namespace MountainProjectBot
                 string serverActivity = "";
                 string[] serverLines = BotUtilities.ApprovalServer.Activity.ToString().Split('\n');
                 foreach (string line in serverLines.Skip(Math.Max(0, serverLines.Count() - 200)))
-                        serverActivity += $"{line}\n";
+                    serverActivity += $"{line}\n";
 
                 File.WriteAllText(activityFile, serverActivity);
                 BotUtilities.SendDiscordMessage($"Wrote recent server activity to {activityFile}");

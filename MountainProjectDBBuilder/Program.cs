@@ -31,7 +31,7 @@ namespace MountainProjectDBBuilder
         XML,
         JSON
     }
-    
+
     class Program
     {
         private static string serializationPath;
@@ -47,8 +47,8 @@ namespace MountainProjectDBBuilder
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             ConsoleHelper.WriteToAdditionalTarget(outputCapture);
 
-            logPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss") + " Log.txt");
-            serializationPath = Path.Combine(Path.GetDirectoryName(System.Windows.Forms.Application.ExecutablePath), "MountainProjectAreas.xml");
+            logPath = $"{DateTime.Now:yyyy.MM.dd.HH.mm.ss} Log.txt";
+            serializationPath = "MountainProjectAreas.xml";
 
             ParseStartupArguments(args);
 
@@ -94,7 +94,7 @@ namespace MountainProjectDBBuilder
                         "File type to serialize as (xml or json - xml is default)",
                         (arg) => { fileType = (FileType)Enum.Parse(typeof(FileType), arg); }
                     },
-                    { 
+                    {
                         "onlyNew",
                         "Only add new items since the last time the database was built",
                         (arg) => { buildAll = false; }

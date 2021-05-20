@@ -64,7 +64,7 @@ namespace MountainProjectBot
 
         public async Task<List<Post>> GetPosts(Subreddit subreddit, int amount = 100)
         {
-            return await subreddit.GetPosts(Subreddit.Sort.New, amount).ToList();
+            return await subreddit.GetPosts(Subreddit.Sort.New, amount).ToListAsync();
         }
 
         public async Task<Dictionary<Subreddit, List<Comment>>> GetRecentComments()
@@ -73,7 +73,7 @@ namespace MountainProjectBot
             foreach (Subreddit subreddit in Subreddits)
             {
                 int amountOfCommentsToGet = subredditNamesAndCommentAmounts[subreddit.Name.ToLower()];
-                subredditsAndRecentComments.Add(subreddit, await subreddit.GetComments(amountOfCommentsToGet, amountOfCommentsToGet).ToList());
+                subredditsAndRecentComments.Add(subreddit, await subreddit.GetComments(amountOfCommentsToGet, amountOfCommentsToGet).ToListAsync());
             }
 
             return subredditsAndRecentComments;
@@ -121,7 +121,7 @@ namespace MountainProjectBot
 
         public async Task<List<PrivateMessage>> GetMessages()
         {
-            return await redditService.User.GetPrivateMessages().ToList();
+            return await redditService.User.GetPrivateMessages().ToListAsync();
         }
 
         public static string GetFullLink(Uri relativeLink)

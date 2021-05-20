@@ -242,7 +242,7 @@ namespace MountainProjectBot
                     if (ageInMin > 30)
                     {
                         subredditPosts.Remove(post);
-                        ConsoleHelper.Write($"\tSkipping {post.Id} (too old: {Math.Round(ageInMin,2)} min)", ConsoleColor.Red);
+                        ConsoleHelper.Write($"\tSkipping {post.Id} (too old: {Math.Round(ageInMin, 2)} min)", ConsoleColor.Red);
                         BotUtilities.LogPostBeenSeen(post, $"too old ({Math.Round(ageInMin, 2)} min)");
                     }
                 }

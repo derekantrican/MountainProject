@@ -68,7 +68,7 @@ namespace UnitTests
                     Assert.IsNull(searchResult.FilteredResult, "Failed for " + testCriteria_search[i, 0]);
                 else
                 {
-                    Assert.AreEqual(Utilities.GetSimpleURL(Utilities.MPBASEURL + expectedUrl), 
+                    Assert.AreEqual(Utilities.GetSimpleURL(Utilities.MPBASEURL + expectedUrl),
                                     searchResult.FilteredResult.URL, "Failed for " + testCriteria_search[i, 0]);
                 }
 

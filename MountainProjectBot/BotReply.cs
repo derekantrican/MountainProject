@@ -188,12 +188,12 @@ namespace MountainProjectBot
                 {
                     //Convert grades to strings, but "inject" Aid grade if it exists
                     Grade aidGrade = route.Grades.Find(g => g.System == GradeSystem.Aid);
-                    List<string> gradeStrings = grades.Select(g => 
+                    List<string> gradeStrings = grades.Select(g =>
                     {
                         if (g.System == GradeSystem.YDS && aidGrade != null)
                             return $"{g.ToString(false)} ({aidGrade.ToString(false)})";
                         else
-                            return g.ToString(false); 
+                            return g.ToString(false);
                     }).ToList();
 
                     return string.Join(" | ", gradeStrings);

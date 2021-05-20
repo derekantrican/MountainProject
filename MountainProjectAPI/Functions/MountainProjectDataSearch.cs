@@ -148,10 +148,10 @@ namespace MountainProjectAPI
                 SearchResult searchResult = Search(possibleRouteName, new SearchParameters() { OnlyRoutes = true });
                 if (!searchResult.IsEmpty() && searchResult.AllResults.Count < 75) //If the number of matching results is greater than 75, it was probably a very generic word for a search (eg "There")
                 {
-                    List<PossibleRouteResult> allSearchResults = searchResult.AllResults.Select(r => new PossibleRouteResult 
+                    List<PossibleRouteResult> allSearchResults = searchResult.AllResults.Select(r => new PossibleRouteResult
                     {
-                        Route = r as Route, 
-                        Area = searchResult.RelatedLocation, 
+                        Route = r as Route,
+                        Area = searchResult.RelatedLocation,
                         RemainingInputString = inputWithoutName,
                     }).ToList();
 
@@ -458,12 +458,12 @@ namespace MountainProjectAPI
             string possibleRouteName = "";
             foreach (string word in Utilities.GetWords(postTitle, false))
             {
-                if ((!string.IsNullOrWhiteSpace(word) && 
-                        char.IsUpper(word[0]) && 
-                        word.Length > 1 && 
-                        !ignoredWords.Contains(word.ToLower()) && 
+                if ((!string.IsNullOrWhiteSpace(word) &&
+                        char.IsUpper(word[0]) &&
+                        word.Length > 1 &&
+                        !ignoredWords.Contains(word.ToLower()) &&
                         (!string.IsNullOrEmpty(possibleRouteName) || !ignoredStartingWords.Contains(word.ToLower()))) ||
-                    (connectingWords.Contains(word.ToLower()) && !string.IsNullOrWhiteSpace(possibleRouteName)) || 
+                    (connectingWords.Contains(word.ToLower()) && !string.IsNullOrWhiteSpace(possibleRouteName)) ||
                     Utilities.IsNumber(word))
                 {
                     possibleRouteName += word + " ";

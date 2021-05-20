@@ -1,6 +1,5 @@
 ﻿using Base;
 using MountainProjectAPI;
-using Newtonsoft.Json.Linq;
 using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
@@ -117,9 +116,9 @@ namespace MountainProjectBot
             ApprovalServer = new Server(9999)
             {
                 HandleRequest = ApprovalServerRequestHandler.HandleRequest,
-                ExceptionHandling = (Exception ex) => 
+                ExceptionHandling = (Exception ex) =>
                 {
-                    ConsoleHelper.Write($"Sever error: ({ex.GetType()}): {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red); 
+                    ConsoleHelper.Write($"Sever error: ({ex.GetType()}): {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red);
                 }
             };
             ApprovalServer.Start();
