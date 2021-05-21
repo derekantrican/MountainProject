@@ -28,7 +28,10 @@ namespace Base
 
             Write(text, ConsoleColor.Green);
 
-            Console.Title = $"MountainProjectDBBuilder - {text}";
+            if (Console.Title != $"MountainProjectDBBuilder - {text}")
+            {
+                Console.Title = $"MountainProjectDBBuilder - {text}";
+            }
         }
 
         public static void WriteToAdditionalTarget(TextWriter additionalTarget)

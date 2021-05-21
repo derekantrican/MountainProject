@@ -115,7 +115,11 @@ namespace MountainProjectBot
             //Start approval server
             ApprovalServer = new Server(9999)
             {
-                HandleRequest = ApprovalServerRequestHandler.HandleRequest
+                HandleRequest = ApprovalServerRequestHandler.HandleRequest,
+                ExceptionHandling = (Exception ex) =>
+                {
+                    ConsoleHelper.Write($"Sever error: ({ex.GetType()}): {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red);
+                }
             };
             ApprovalServer.Start();
         }

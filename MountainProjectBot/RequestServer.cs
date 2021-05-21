@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Sockets;
 using System.Text.RegularExpressions;
-using NetCoreServer;
+using System.Threading;
 
 namespace MountainProjectBot
 {
@@ -19,54 +21,110 @@ namespace MountainProjectBot
         Options
     }
 
-    public class Server : HttpServer
+    public class Server
     {
-        public class HandleRequestSession : HttpSession
+        private TcpListener listener;
+        private Thread thread;
+
+        public bool IsAlive
         {
-            public Func<ServerRequest, string> HandleRequest { get; set; }
-
-            public HandleRequestSession(HttpServer server, Func<ServerRequest, string> handleRequest) : base(server)
+            get
             {
-                HandleRequest = handleRequest;
-            }
-
-            protected override void OnReceivedRequest(HttpRequest request)
-            {
-                ServerRequest serverRequest = new ServerRequest
-                {
-                    RequestMethod = (HttpMethod)Enum.Parse(typeof(HttpMethod), request.Method, true),
-                    Path = request.Url.Trim('/'),
-                };
-
-                Console.WriteLine($"received request... {serverRequest.RequestMethod} {serverRequest.Path} ");
-                if (HandleRequest != null && serverRequest != null)
-                {
-                    string response = HandleRequest(new ServerRequest
-                    {
-                        RequestMethod = (HttpMethod)Enum.Parse(typeof(HttpMethod), request.Method, true),
-                        Path = request.Url.Trim('/'),
-                    });
-                    Console.WriteLine($"sending response to {serverRequest.Path} ...");
-                    SendResponseAsync(Response.MakeGetResponse(response, "text/html; charset=UTF-8"));
-                }
+                return this.thread != null && this.thread.IsAlive;
             }
         }
 
         public int Port { get; private set; }
 
-        public Server(int port) : base(IPAddress.Any, port)
+        public Server(int port)
         {
+            listener = new TcpListener(IPAddress.Any, port);
             Port = port;
         }
 
-        protected override HttpSession CreateSession()
+        public void Start()
         {
-            return new HandleRequestSession(this, HandleRequest);
+            Log("Starting server...");
+            listener.Start();
+            thread = new Thread(WaitForRequests);
+            thread.Start();
+            Log("Server started");
         }
 
         public StringWriter Activity { get; set; } = new StringWriter();
+        private void Log(string itemToLog) => Activity.WriteLine($"[{DateTime.Now:yyyy.MM.dd.HH.mm.ss.fff}] {itemToLog}");
+
+        private void WaitForRequests()
+        {
+            while (true)
+            {
+                string requestString = null;
+                try
+                {
+                    Log("Waiting for client...");
+                    TcpClient client = listener.AcceptTcpClient();
+                    Log("Accepted client");
+
+                    NetworkStream networkStream = client.GetStream();
+                    Log("Opening streamreader...");
+                    StreamReader sr = new StreamReader(networkStream);
+                    Log("Opened streamreader");
+                    Log("Opening streamwriter...");
+                    StreamWriter sw = new StreamWriter(networkStream);
+                    Log("Opened streamwriter");
+
+                    Log($"Reading streamreader (CanRead: {networkStream.CanRead})...");
+                    requestString = sr.ReadLine(); //This line may be the one hanging when the server stops responding
+                    Log("Read streamreader");
+
+                    Log($"Writing status (CanWrite: {networkStream.CanWrite})...");
+                    sw.WriteLine("HTTP/1.0 200 OK\n"); //Send ok response to requester
+                    Log("Wrote status");
+
+                    Log("Parsing request...");
+                    ServerRequest request = ServerRequest.Parse(requestString);
+                    Log("Parsed request");
+                    if (HandleRequest != null && request != null)
+                    {
+                        Log("Invoking HandleRequest...");
+                        Log($"Request: {request.Path}");
+                        sw.WriteLine(HandleRequest.Invoke(request));
+                        Log("Invoked HandleRequest");
+                    }
+
+                    Log("Flushing streamwriter...");
+                    sw.Flush();
+                    Log("Flushed streamwriter");
+
+                    Log("Closing client connection...");
+                    client.Close();
+                    Log("Closed client connection");
+                }
+                catch (Exception ex)
+                {
+                    if (requestString != null)
+                    {
+                        ex.Data["path"] = requestString;
+                    }
+
+                    Log("Invoking ExceptionHandling...");
+                    ExceptionHandling?.Invoke(ex);
+                    Log("Invoked ExceptionHandling");
+                }
+            }
+        }
+
+        public void Stop()
+        {
+            Log("Stopping server...");
+            listener.Stop();
+            thread.Abort();
+            Log("Server stopped");
+        }
 
         public Func<ServerRequest, string> HandleRequest { get; set; }
+
+        public Action<Exception> ExceptionHandling { get; set; }
     }
 
     public class ServerRequest
