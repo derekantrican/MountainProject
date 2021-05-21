@@ -5,10 +5,10 @@ git fetch --all
 git reset --hard origin/master
 
 REM restore nuget packages
-nuget restore ..\
+dotnet restore ..\
 
 REM Build sln
-"C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\msbuild.exe"  ..\MountainProject.sln /p:Configuration=Debug
+dotnet build  ..\MountainProject.sln
 if %errorlevel% neq 0 exit /b %errorlevel%
 
 REM Run bot to update the replied txt files
