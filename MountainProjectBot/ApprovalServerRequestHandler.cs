@@ -14,8 +14,6 @@ namespace MountainProjectBot
     {
         public static string HandleRequest(ServerRequest request)
         {
-            string result = $"Path '{request.Path}' not understood";
-
             if (request.RequestMethod == HttpMethod.Get && !request.IsFaviconRequest && !request.IsDefaultPageRequest)
             {
                 Dictionary<string, string> parameters = request.GetParameters();
@@ -46,17 +44,39 @@ namespace MountainProjectBot
                     }
                     else
                     {
-                        result = $"Post '{parameters["postid"]}' expired<br><br><input type=\"button\" onclick=\"force()\" value=\"Force\">" +
-                                 $"<script>" +
-                                 $"  function force(){{" +
-                                 $"    window.location.replace(\"{BotUtilities.ApprovalServerUrl}?{string.Join("&", parameters.Select(p => $"{p.Key}={p.Value}").Concat(new[] { "force" }))}\");" +
-                                 $"}}" +
-                                 $"</script>";
+                        return WrapHtml($"<h1>Post '{parameters["postid"]}' expired</h1>" +
+                                        $"<br>" +
+                                        $"<br>" +
+                                        $"<input type=\"button\" onclick=\"force()\" value=\"Force\">" +
+                                        $"<script>" +
+                                        $"  function force(){{" +
+                                        $"    window.location.replace(\"{BotUtilities.ApprovalServerUrl}?{string.Join("&", parameters.Select(p => $"{p.Key}={p.Value}").Concat(new[] { "force" }))}\");" +
+                                        $"}}" +
+                                        $"</script>");
                     }
                 }
             }
 
-            return $"<h1>{result}</h1>";
+            return WrapHtml($"<h1>Path '{request.Path}' not understood</h1>");
+        }
+
+        //Add viewport, charset, & darkmode for better experience approving via mobile
+        private static string WrapHtml(string content, string otherStyles = "", string otherHead = "")
+        {
+            return "<html>" +
+                   "  <head>" +
+                   "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">" +
+                   "    <meta charset=\"UTF-8\">" +
+                        otherHead +
+                   "    <style>" +
+                   "      :root {" +
+                   "        color-scheme: dark;" +
+                   "      }" +
+                          otherStyles +
+                   "    </style>" +
+                   "  </head>" +
+                     content +
+                   "</html>";
         }
 
         private static string GetApproval(Dictionary<string, string> parameters, ApprovalRequest approvalRequest)
@@ -102,12 +122,12 @@ namespace MountainProjectBot
                 result = $"Approved:<br>{string.Join("<br>", approvalRequest.ApprovedResults.Select(r => $"&#8226; {r.Name} ({r.ID})"))}"; //Print out approved results as a bulleted list
             }
 
-            return $"<h1>{result}</h1>";
+            return WrapHtml($"<h1>{result}</h1>");
         }
 
         private static string ShowApproveOtherPicker(Dictionary<string, string> parameters, ApprovalRequest approvalRequest)
         {
-            string htmlPicker = "<html><form>";
+            string htmlPicker = "<form>";
             foreach (MPObject option in approvalRequest.SearchResult.AllResults)
             {
                 htmlPicker += $"<input type=\"radio\" name=\"options\" value=\"{option.ID}\"{(approvalRequest.SearchResult.AllResults.IndexOf(option) == 0 ? " checked=\"true\"" : "")}>" +
@@ -127,49 +147,14 @@ namespace MountainProjectBot
                             "    }" +
                             "  }" +
                             "}" +
-                            "</script></html>";
+                            "</script>";
 
-            return htmlPicker;
+            return WrapHtml(htmlPicker);
         }
 
         private static string ShowPostHistory(string query, int page = 1)
         {
-            string html = "<html>" +
-                          "<head>" +
-                          "<meta charset=\"UTF-8\">" +
-                          "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js\"></script>" +
-                          "<style>" +
-                          "#search {" +
-                          "  width: 75%;" +
-                          "  font-size: 16px;" +
-                          "  margin-bottom: 12px;" +
-                          "}" +
-                          "#navigation * {" +
-                          "	display: inline-block;" +
-                          "    padding: 8px;" +
-                          "}" +
-                          "#data {" +
-                          "  font-family: Arial, Helvetica, sans-serif;" +
-                          "  border-collapse: collapse;" +
-                          "  width: 100%;" +
-                          "}" +
-                          "" +
-                          "#data td, #data th {" +
-                          "  border: 1px solid #ddd;" +
-                          "  padding: 8px;" +
-                          "}" +
-                          "#data tr:nth-child(even){background-color: #f2f2f2;}" +
-                          "#data tr:hover {background-color: #ddd;}" +
-                          "#data th {" +
-                          "  padding-top: 12px;" +
-                          "  padding-bottom: 12px;" +
-                          "  text-align: left;" +
-                          "  background-color: #4287F5;" +
-                          "  color: white;" +
-                          "}" +
-                          "</style>" +
-                          "</head>" +
-                          "<body>" +
+            string html = "<body>" +
                           "<div id=\"navigation\">" +
                           $"	<input type=\"text\" id=\"search\" placeholder=\"Find a specific post by id\"" +
                           $"{(!string.IsNullOrEmpty(query) ? $"value=\"{query}\"" : "")}>" +
@@ -231,9 +216,38 @@ namespace MountainProjectBot
                     "        }" +
                     "    });" +
                     "</script>" +
-                    "</body></html>";
+                    "</body>";
 
-            return html;
+            return WrapHtml(html,
+                            otherHead: "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js\"></script>",
+                            otherStyles: "#search {" +
+                                      "  width: 75%;" +
+                                      "  font-size: 16px;" +
+                                      "  margin-bottom: 12px;" +
+                                      "}" +
+                                      "#navigation * {" +
+                                      "	display: inline-block;" +
+                                      "    padding: 8px;" +
+                                      "}" +
+                                      "#data {" +
+                                      "  font-family: Arial, Helvetica, sans-serif;" +
+                                      "  border-collapse: collapse;" +
+                                      "  width: 100%;" +
+                                      "}" +
+                                      "" +
+                                      "#data td, #data th {" +
+                                      "  border: 1px solid #ddd;" +
+                                      "  padding: 8px;" +
+                                      "}" +
+                                      "#data tr:nth-child(even){background-color: #f2f2f2;}" +
+                                      "#data tr:hover {background-color: #ddd;}" +
+                                      "#data th {" +
+                                      "  padding-top: 12px;" +
+                                      "  padding-bottom: 12px;" +
+                                      "  text-align: left;" +
+                                      "  background-color: #4287F5;" +
+                                      "  color: white;" +
+                                      "}");
         }
     }
 }
