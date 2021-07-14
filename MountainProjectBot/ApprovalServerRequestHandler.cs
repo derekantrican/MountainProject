@@ -221,33 +221,31 @@ namespace MountainProjectBot
             return WrapHtml(html,
                             otherHead: "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js\"></script>",
                             otherStyles: "#search {" +
-                                      "  width: 75%;" +
-                                      "  font-size: 16px;" +
-                                      "  margin-bottom: 12px;" +
-                                      "}" +
-                                      "#navigation * {" +
-                                      "	display: inline-block;" +
-                                      "    padding: 8px;" +
-                                      "}" +
-                                      "#data {" +
-                                      "  font-family: Arial, Helvetica, sans-serif;" +
-                                      "  border-collapse: collapse;" +
-                                      "  width: 100%;" +
-                                      "}" +
-                                      "" +
-                                      "#data td, #data th {" +
-                                      "  border: 1px solid #ddd;" +
-                                      "  padding: 8px;" +
-                                      "}" +
-                                      "#data tr:nth-child(even){background-color: #f2f2f2;}" +
-                                      "#data tr:hover {background-color: #ddd;}" +
-                                      "#data th {" +
-                                      "  padding-top: 12px;" +
-                                      "  padding-bottom: 12px;" +
-                                      "  text-align: left;" +
-                                      "  background-color: #4287F5;" +
-                                      "  color: white;" +
-                                      "}");
+                                         "  width: 75%;" +
+                                         "  font-size: 16px;" +
+                                         "  margin-bottom: 12px;" +
+                                         "}" +
+                                         "#navigation * {" +
+                                         "	display: inline-block;" +
+                                         "    padding: 8px;" +
+                                         "}" +
+                                         "#data {" +
+                                         "  font-family: Arial, Helvetica, sans-serif;" +
+                                         "  border-collapse: collapse;" +
+                                         "  width: 100%;" +
+                                         "}" +
+                                         "" +
+                                         "#data td, #data th {" +
+                                         "  border: 1px solid #ddd;" +
+                                         "  padding: 8px;" +
+                                         "}" +
+                                         "#data th {" +
+                                         "  padding-top: 12px;" +
+                                         "  padding-bottom: 12px;" +
+                                         "  text-align: left;" +
+                                         "  background-color: #4287F5;" +
+                                         "  color: white;" +
+                                         "}");
         }
     }
 }
