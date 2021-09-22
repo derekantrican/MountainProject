@@ -271,15 +271,24 @@ namespace MountainProjectDBBuilder
             Parsers.TotalTimer = totalTimer;
             List<Area> destAreas = Parsers.GetDestAreas();
 
-            DateTime lastBuild = File.GetLastWriteTime(serializationPath);
-            string rssUrl = $"https://www.mountainproject.com/rss/new?selectedIds={string.Join(",", destAreas.Select(p => p.ID))}&routes=on&areas=on";
-            SyndicationFeed feed = null;
-            using (XmlReader reader = XmlReader.Create(rssUrl))
+            DateTime lastBuild = DateTime.Now.AddHours(-1);//File.GetLastWriteTime(serializationPath);
+            List<string> newlyAddedItemUrls = new List<string>();
+            foreach (Area destArea in destAreas)
             {
-                feed = SyndicationFeed.Load(reader);
+                //Even though MP supports a single RSS feed for multiple areas (eg selectedIds=105907743,105905173,105909311&routes=on&areas=on), the resulting feed is not collated by date
+                //but rather "all new items for the first area, THEN all new items for the second area, etc". This means - without knowing how to paginate a SyndicationFeed - we are better
+                //off just parsing an individual RSS feed for each destination area. This is slower (51 web requests rather than 1) but less complicated than paginating the single, huge
+                //feed to make sure we get anything new for all areas.
+                string rssUrl = $"https://www.mountainproject.com/rss/new?selectedIds={destArea.ID}&routes=on&areas=on";
+                SyndicationFeed feed = null;
+                using (XmlReader reader = XmlReader.Create(rssUrl))
+                {
+                    feed = SyndicationFeed.Load(reader);
+                }
+
+                newlyAddedItemUrls.AddRange(feed.Items.Where(p => p.PublishDate.DateTime.ToLocalTime() > lastBuild).OrderBy(p => p.PublishDate).Select(p => p.Links[0].Uri.ToString()));
             }
 
-            IEnumerable<string> newlyAddedItemUrls = feed.Items.Where(p => p.PublishDate > lastBuild).OrderBy(p => p.PublishDate).Select(p => p.Links[0].Uri.ToString());
             MountainProjectDataSearch.InitMountainProjectData(serializationPath);
 
             foreach (string newItemUrl in newlyAddedItemUrls)
