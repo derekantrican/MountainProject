@@ -33,7 +33,7 @@ namespace MountainProjectAPI
             return int.Parse(Regex.Match(element.TextContent.Replace(",", ""), @"\d+").Value);
         }
 
-        public static List<Area> GetDestAreas()
+        public static List<Area> GetDestAreas(bool populateNames = false)
         {
             List<Area> destAreas = new List<Area>();
             using (IHtmlDocument doc = Utilities.GetHtmlDoc(Utilities.ALLLOCATIONSURL))
@@ -55,7 +55,8 @@ namespace MountainProjectAPI
                 {
                     Area destArea = new Area()
                     {
-                        ID = Utilities.GetID(destAreaElement.Attributes["href"].Value)
+                        ID = Utilities.GetID(destAreaElement.Attributes["href"].Value),
+                        Name = populateNames ? Utilities.CleanExtraPartsFromName(destAreaElement.TextContent) : null,
                     };
 
                     destAreas.Add(destArea);

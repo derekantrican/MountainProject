@@ -269,7 +269,7 @@ namespace MountainProjectDBBuilder
         private static void AddNewItems()
         {
             Parsers.TotalTimer = totalTimer;
-            List<Area> destAreas = Parsers.GetDestAreas();
+            List<Area> destAreas = Parsers.GetDestAreas(true);
 
             DateTime lastBuild = File.GetLastWriteTime(serializationPath);
             List<string> newlyAddedItemUrls = new List<string>();
@@ -279,6 +279,7 @@ namespace MountainProjectDBBuilder
                 //but rather "all new items for the first area, THEN all new items for the second area, etc". This means - without knowing how to paginate a SyndicationFeed - we are better
                 //off just parsing an individual RSS feed for each destination area. This is slower (51 web requests rather than 1) but less complicated than paginating the single, huge
                 //feed to make sure we get anything new for all areas.
+                Console.WriteLine($"Getting new routes & areas for {destArea.Name}...");
                 string rssUrl = $"https://www.mountainproject.com/rss/new?selectedIds={destArea.ID}&routes=on&areas=on";
                 SyndicationFeed feed = null;
                 using (XmlReader reader = XmlReader.Create(rssUrl))
