@@ -271,7 +271,7 @@ namespace MountainProjectDBBuilder
             Parsers.TotalTimer = totalTimer;
             List<Area> destAreas = Parsers.GetDestAreas();
 
-            DateTime lastBuild = DateTime.Now.AddHours(-1);//File.GetLastWriteTime(serializationPath);
+            DateTime lastBuild = File.GetLastWriteTime(serializationPath);
             List<string> newlyAddedItemUrls = new List<string>();
             foreach (Area destArea in destAreas)
             {
