@@ -273,6 +273,7 @@ namespace MountainProjectDBBuilder
 
             DateTime lastBuild = File.GetLastWriteTime(serializationPath);
             List<string> newlyAddedItemUrls = new List<string>();
+            List<Exception> errors = new List<Exception>();
             foreach (Area destArea in destAreas)
             {
                 //Even though MP supports a single RSS feed for multiple areas (eg selectedIds=105907743,105905173,105909311&routes=on&areas=on), the resulting feed is not collated by date
@@ -281,13 +282,22 @@ namespace MountainProjectDBBuilder
                 //feed to make sure we get anything new for all areas.
                 Console.WriteLine($"Getting new routes & areas for {destArea.Name}...");
                 string rssUrl = $"https://www.mountainproject.com/rss/new?selectedIds={destArea.ID}&routes=on&areas=on";
-                SyndicationFeed feed = null;
-                using (XmlReader reader = XmlReader.Create(rssUrl))
+                try
                 {
-                    feed = SyndicationFeed.Load(reader);
-                }
+                    SyndicationFeed feed = null;
+                    using (XmlReader reader = XmlReader.Create(rssUrl))
+                    {
+                        feed = SyndicationFeed.Load(reader);
+                    }
 
-                newlyAddedItemUrls.AddRange(feed.Items.Where(p => p.PublishDate.DateTime.ToLocalTime() > lastBuild).OrderBy(p => p.PublishDate).Select(p => p.Links[0].Uri.ToString()));
+                    newlyAddedItemUrls.AddRange(feed.Items.Where(p => p.PublishDate.DateTime.ToLocalTime() > lastBuild).OrderBy(p => p.PublishDate).Select(p => p.Links[0].Uri.ToString()));
+                }
+                catch (Exception ex)
+                {
+                    string errorMsg = $"An error occurred when trying to get the new items for {destArea.Name}: {ex.Message}";
+                    Console.WriteLine(errorMsg);
+                    errors.Add(new Exception(errorMsg, ex));
+                }
             }
 
             MountainProjectDataSearch.InitMountainProjectData(serializationPath);
@@ -344,6 +354,15 @@ namespace MountainProjectDBBuilder
             Console.WriteLine();
             Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
             SerializeResults(destAreas);
+
+            if (errors.Count == 1)
+            {
+                throw errors[0];
+            }
+            else if (errors.Count > 1)
+            {
+                throw new AggregateException("Some areas failed to return new items", errors);
+            }
 
             SendReport($"MountainProjectDBBuilder database updated SUCCESSFULLY in {totalTimer.Elapsed}", $"{newlyAddedItemUrls.Count()} new items:\n\n{string.Join("\n", newlyAddedItemUrls)}");
         }
