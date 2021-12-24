@@ -421,7 +421,7 @@ namespace MountainProjectAPI
             foreach (IElement parentElement in parentList)
             {
                 string url = parentElement.Attributes["href"].Value;
-                if (url != "https://www.mountainproject.com/route-guide")
+                if (url != Utilities.ALLLOCATIONSURL)
                     result.Add(Utilities.GetID(url));
             }
 

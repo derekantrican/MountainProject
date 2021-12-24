@@ -13,12 +13,23 @@ namespace MountainProjectAPI
 {
     public static class Utilities
     {
-        public const string MPBASEURL = "https://www.mountainproject.com";
-        public const string MPROUTEURL = "https://www.mountainproject.com/route";
-        public const string MPAREAURL = "https://www.mountainproject.com/area";
-        public const string ALLLOCATIONSURL = "https://www.mountainproject.com/route-guide";
-        public const string INTERNATIONALURL = "https://www.mountainproject.com/area/105907743/international";
-        public const string AUSTRALIAURL = "https://www.mountainproject.com/area/105907756/australia";
+        /* =========================================================
+         * NOTE: somewhere around 12/23/2021 MP changed a bunch of their links such that:
+         * - most anchor (<a> tags) on the site were downgraded to "http" rather than "https"
+         * - many urls now return "301: Moved" response if the url is not exact (eg just ".../area/105907743" without the name on the end)
+         * 
+         * I've done a bit of work to get around these changes but really url matching/replacing should be http/https agnostic
+         * =========================================================
+         */
+        public const string HTTP = "http://";
+        public const string HTTPS = "https://";
+
+        public const string MPBASEURL = "http://www.mountainproject.com";
+        public const string MPROUTEURL = "http://www.mountainproject.com/route";
+        public const string MPAREAURL = "http://www.mountainproject.com/area";
+        public const string ALLLOCATIONSURL = "http://www.mountainproject.com/route-guide";
+        public const string INTERNATIONALURL = "http://www.mountainproject.com/area/105907743/international";
+        public const string AUSTRALIAURL = "http://www.mountainproject.com/area/105907756/australia";
 
         public static bool MatchesStateUrlRegex(string urlToMatch)
         {
@@ -122,8 +133,14 @@ namespace MountainProjectAPI
                         html = client.DownloadString(url);
                         break;
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        //Follow redirects
+                        if (ex is WebException webEx && (webEx.Response as HttpWebResponse).StatusCode == HttpStatusCode.Moved)
+                        {
+                            url = (webEx.Response as HttpWebResponse).Headers["Location"];
+                        }
+
                         if (retries <= 5)
                         {
                             Console.WriteLine($"Download string failed. Trying again ({retries})");
@@ -154,8 +171,14 @@ namespace MountainProjectAPI
                         html = await client.DownloadStringTaskAsync(url);
                         break;
                     }
-                    catch
+                    catch (Exception ex)
                     {
+                        //Follow redirects
+                        if (ex is WebException webEx && (webEx.Response as HttpWebResponse).StatusCode == HttpStatusCode.Moved)
+                        {
+                            url = (webEx.Response as HttpWebResponse).Headers["Location"];
+                        }
+
                         if (retries <= 5)
                         {
                             Console.WriteLine($"Download string failed. Trying again ({retries})");
@@ -367,7 +390,8 @@ namespace MountainProjectAPI
 
         public static string GetID(string mpURL)
         {
-            return mpURL?.Replace($"{MPROUTEURL}/", "").Replace($"{MPAREAURL}/", "").Split('/')[0];
+            //Todo: should not need .Replace(HTTPS, HTTP) (see note at the top about http vs https)
+            return mpURL?.Replace(HTTPS, HTTP).Replace($"{MPROUTEURL}/", "").Replace($"{MPAREAURL}/", "").Split('/')[0];
         }
 
         public static string GetSimpleURL(string mpUrl)
