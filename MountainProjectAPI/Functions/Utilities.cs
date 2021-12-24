@@ -396,7 +396,8 @@ namespace MountainProjectAPI
 
         public static string GetSimpleURL(string mpUrl)
         {
-            return Regex.Match(mpUrl, $@"{MPBASEURL}/(route|area)/\d+").Value;
+            //Todo: should not need .Replace(HTTPS, HTTP) (see note at the top about http vs https)
+            return Regex.Match(mpUrl.Replace(HTTPS, HTTP), $@"{MPBASEURL}/(route|area)/\d+").Value;
         }
 
         public static bool IsNumber(string inputString)
