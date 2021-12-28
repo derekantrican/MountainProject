@@ -6,6 +6,7 @@ namespace MountainProjectAPI
 {
     public class MPObject
     {
+        private string url;
         public MPObject(string name, string id)
         {
             this.Name = WebUtility.HtmlDecode(name);
@@ -33,12 +34,21 @@ namespace MountainProjectAPI
         {
             get
             {
+                if (!string.IsNullOrEmpty(url))
+                {
+                    return url;
+                }
+
                 if (this is Route)
                     return $"{Utilities.MPROUTEURL}/{ID}";
                 else if (this is Area)
                     return $"{Utilities.MPAREAURL}/{ID}";
 
                 return null;
+            }
+            set
+            {
+                url = value;
             }
         }
 

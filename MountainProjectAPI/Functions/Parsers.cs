@@ -53,9 +53,11 @@ namespace MountainProjectAPI
                 //Convert to DestArea objects
                 foreach (IElement destAreaElement in destAreaNodes)
                 {
+                    string areaUrl = destAreaElement.Attributes["href"].Value;
                     Area destArea = new Area()
                     {
-                        ID = Utilities.GetID(destAreaElement.Attributes["href"].Value),
+                        ID = Utilities.GetID(areaUrl),
+                        URL = areaUrl,
                         Name = populateNames ? Utilities.CleanExtraPartsFromName(destAreaElement.TextContent) : null,
                     };
 
@@ -103,7 +105,9 @@ namespace MountainProjectAPI
             //Populate route details
             foreach (IElement routeElement in htmlRoutes)
             {
-                Route route = new Route(routeElement.TextContent, Utilities.GetID(routeElement.Attributes["href"].Value));
+                string routeUrl = routeElement.Attributes["href"].Value;
+                Route route = new Route(routeElement.TextContent, Utilities.GetID(routeUrl));
+                route.URL = routeUrl;
                 inputArea.Routes.Add(route);
                 TotalRoutes++;
 
@@ -113,9 +117,11 @@ namespace MountainProjectAPI
             //Populate sub area details
             foreach (IElement areaElement in htmlSubAreas)
             {
+                string areaUrl = areaElement.Attributes["href"].Value;
                 Area subArea = new Area()
                 {
-                    ID = Utilities.GetID(areaElement.Attributes["href"].Value)
+                    ID = Utilities.GetID(areaUrl),
+                    URL = areaUrl,
                 };
 
                 inputArea.SubAreas.Add(subArea);

@@ -40,7 +40,7 @@ namespace MountainProjectAPI
             {
                 string sanitizedString = MPBASEURL.Replace("/", "\\/").Replace(".", "\\.");
                 Regex stateRegex = new Regex(sanitizedString + "\\/area\\/\\d*\\/" + state.Replace(" ", "-").ToLower() + "$");
-                if (stateRegex.IsMatch(urlToMatch))
+                if (stateRegex.IsMatch(urlToMatch.Replace(HTTPS, HTTP))) //Todo: should not need .Replace(HTTPS, HTTP) (see note at the top about http vs https)
                     return true;
             }
 
@@ -136,9 +136,9 @@ namespace MountainProjectAPI
                     catch (Exception ex)
                     {
                         //Follow redirects
-                        if (ex is WebException webEx && (webEx.Response as HttpWebResponse).StatusCode == HttpStatusCode.Moved)
+                        if (ex is WebException webEx)
                         {
-                            url = (webEx.Response as HttpWebResponse).Headers["Location"];
+                            url = GetRedirectUrlFromResponse(url, webEx.Response as HttpWebResponse);
                         }
 
                         if (retries <= 5)
@@ -174,9 +174,9 @@ namespace MountainProjectAPI
                     catch (Exception ex)
                     {
                         //Follow redirects
-                        if (ex is WebException webEx && (webEx.Response as HttpWebResponse).StatusCode == HttpStatusCode.Moved)
+                        if (ex is WebException webEx)
                         {
-                            url = (webEx.Response as HttpWebResponse).Headers["Location"];
+                            url = GetRedirectUrlFromResponse(url, webEx.Response as HttpWebResponse);
                         }
 
                         if (retries <= 5)
@@ -345,29 +345,7 @@ namespace MountainProjectAPI
                     req.Method = "HEAD";
                     req.AllowAutoRedirect = false;
                     resp = (HttpWebResponse)req.GetResponse();
-                    switch (resp.StatusCode)
-                    {
-                        case HttpStatusCode.OK:
-                            return newUrl;
-                        case HttpStatusCode.Redirect:
-                        case HttpStatusCode.MovedPermanently:
-                        case HttpStatusCode.RedirectKeepVerb:
-                        case HttpStatusCode.RedirectMethod:
-                            newUrl = resp.Headers["Location"];
-                            if (newUrl == null)
-                                return url;
-
-                            if (newUrl.IndexOf("://", System.StringComparison.Ordinal) == -1)
-                            {
-                                // Doesn't have a URL Schema, meaning it's a relative or absolute URL
-                                Uri u = new Uri(new Uri(url), newUrl);
-                                newUrl = u.ToString();
-                            }
-                            break;
-                        default:
-                            return newUrl;
-                    }
-                    url = newUrl;
+                    url = GetRedirectUrlFromResponse(url, resp);
                 }
                 catch (WebException)
                 {
@@ -384,6 +362,35 @@ namespace MountainProjectAPI
                         resp.Close();
                 }
             } while (maxRedirCount-- > 0);
+
+            return newUrl;
+        }
+
+        private static string GetRedirectUrlFromResponse(string originalUrl, HttpWebResponse response)
+        {
+            string newUrl = originalUrl;
+            switch (response.StatusCode)
+            {
+                case HttpStatusCode.OK:
+                    return newUrl;
+                case HttpStatusCode.Redirect:
+                case HttpStatusCode.MovedPermanently:
+                case HttpStatusCode.RedirectKeepVerb:
+                case HttpStatusCode.RedirectMethod:
+                    newUrl = response.Headers["Location"];
+                    if (newUrl == null)
+                        return originalUrl;
+
+                    if (newUrl.IndexOf("://", StringComparison.Ordinal) == -1)
+                    {
+                        // Doesn't have a URL Schema, meaning it's a relative or absolute URL
+                        Uri u = new Uri(new Uri(originalUrl), newUrl);
+                        newUrl = u.ToString();
+                    }
+                    break;
+                default:
+                    return newUrl;
+            }
 
             return newUrl;
         }

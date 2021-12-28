@@ -89,7 +89,7 @@ namespace UnitTests
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            Area testSubDestArea = new Area() { ID = Utilities.GetID(url) };
+            Area testSubDestArea = new Area() { URL = url };
 
             Parsers.ParseAreaAsync(testSubDestArea, false).Wait();
 
@@ -105,7 +105,7 @@ namespace UnitTests
             if (!url.Contains(Utilities.MPBASEURL))
                 url = Utilities.MPBASEURL + url;
 
-            Area testSubDestArea = new Area() { ID = Utilities.GetID(url) };
+            Area testSubDestArea = new Area() { URL = url };
 
             Parsers.ParseAreaAsync(testSubDestArea, false).Wait();
 
@@ -171,7 +171,7 @@ namespace UnitTests
         [DataRow("/route/109063052/geflugelfrikadelle", GradeSystem.YDS, "5.12b/c")] //Has a slash
         [DataRow("/route/105890633/black-dike", GradeSystem.Ice, "WI4-5 M3")] //No YDS/Heuco present
         [DataRow("/route/105931000/myan-problem", GradeSystem.Hueco, "V-easy")] //Not a usual grade format
-        [DataRow("/route/106238998/price-glacier-route", GradeSystem.YDS, "Easy 5th")] //Not a usual grade format
+        [DataRow("/route/106238998/price-glacier", GradeSystem.YDS, "Easy 5th")] //Not a usual grade format
         [DataRow("/route/108170851/new-dawn", GradeSystem.Aid, "A3")] //Includes "Aid rating"
         public void TestRouteGradeParse(string url, GradeSystem expectedGradeSystem, string expectedValue)
         {
@@ -219,7 +219,7 @@ namespace UnitTests
         }
 
         [DataTestMethod] //https://stackoverflow.com/a/54296734/2246411
-        [DataRow("/area/105791955/exit-38-deception-crags", new object[] { new[] { "/area/105708966/washington", "/area/108471374/central-west-cascades-seattle", "/area/108471684/north-bend-vicinity", "/area/114278624/exit-38" } })] //Area
+        [DataRow("/area/105791955/deception-crags", new object[] { new[] { "/area/105708966/washington", "/area/108471374/central-west-cascades-seattle", "/area/108471684/north-bend-vicinity", "/area/114278624/exit-38" } })] //Area
         [DataRow("/route/112177605/no-rang-na-rang", new object[] { new[] { "/area/105907743/international", "/area/106661515/asia", "/area/106225629/south-korea", "/area/119456750/seoulgyeonggi-do-northwest-korea", "/area/120088159/gwanaksan-anyangsouth-seoul", "/area/112177596/jah-un-crag" } })] //Route
         public void TestParentParse(string url, object[] expectedParentUrls)
         {
