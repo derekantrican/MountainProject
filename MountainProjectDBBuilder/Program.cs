@@ -310,7 +310,7 @@ namespace MountainProjectDBBuilder
                     continue;
 
                 MPObject newItem;
-                if (newItemUrl.Contains(Utilities.MPAREAURL))
+                if (newItemUrl.Replace(Utilities.HTTPS, Utilities.HTTP).Contains(Utilities.MPAREAURL))
                 {
                     newItem = new Area { ID = newId };
                     Parsers.ParseAreaAsync(newItem as Area).Wait();
