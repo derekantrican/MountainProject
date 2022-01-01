@@ -86,8 +86,8 @@ namespace UnitTests
         [DataRow("/area/108184422/deception-wall", 0)] //Walls don't have subareas
         public void TestAreaSubAreaParse(string url, int expectedSubAreas)
         {
-            if (!url.Contains(Utilities.MPBASEURL))
-                url = Utilities.MPBASEURL + url;
+            if (!Url.Contains(url, Utilities.MPBASEURL))
+                url = Url.BuildFullUrl(Utilities.MPBASEURL + url);
 
             Area testSubDestArea = new Area() { URL = url };
 
@@ -102,8 +102,8 @@ namespace UnitTests
         [DataRow("/area/108184422/deception-wall", 20)] //Walls have routes
         public void TestAreaRouteParse(string url, int expectedRoutes)
         {
-            if (!url.Contains(Utilities.MPBASEURL))
-                url = Utilities.MPBASEURL + url;
+            if (!Url.Contains(url, Utilities.MPBASEURL))
+                url = Url.BuildFullUrl(Utilities.MPBASEURL + url);
 
             Area testSubDestArea = new Area() { URL = url };
 
@@ -118,12 +118,12 @@ namespace UnitTests
         [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", new object[] { new string[0] })] //No popular routes listed
         public void TestAreaPopularClimbsParse(string url, object[] expectedPopClimbs)
         {
-            if (!url.Contains(Utilities.MPBASEURL))
-                url = Utilities.MPBASEURL + url;
+            if (!Url.Contains(url, Utilities.MPBASEURL))
+                url = Url.BuildFullUrl(Utilities.MPBASEURL + url);
 
             List<string> popularRoutes = Parsers.GetPopularRouteIDs(Utilities.GetHtmlDoc(url), 3);
             for (int i = 0; i < expectedPopClimbs.Length; i++)
-                expectedPopClimbs[i] = Utilities.GetID(Utilities.MPBASEURL + (string)expectedPopClimbs[i]);
+                expectedPopClimbs[i] = Utilities.GetID((string)expectedPopClimbs[i]);
 
             CollectionAssert.AreEqual(expectedPopClimbs, popularRoutes);
         }
@@ -139,8 +139,8 @@ namespace UnitTests
         [DataRow("/area/107373214/turtle-rock-area-corridors-area", "Turtle Rock/ Corridors")] //Remove "Area" both before and after slash
         public void TestNameParse(string url, string expectedName)
         {
-            if (!url.Contains(Utilities.MPBASEURL))
-                url = Utilities.MPBASEURL + url;
+            if (!Url.Contains(url, Utilities.MPBASEURL))
+                url = Url.BuildFullUrl(Utilities.MPBASEURL + url);
 
             string name;
             if (url.Contains("route"))
@@ -158,8 +158,8 @@ namespace UnitTests
         [DataRow("/route/110425910/birds-of-a-feather", new[] { RouteType.Sport, RouteType.TopRope })] //Top Rope
         public void TestRouteTypeParse(string url, RouteType[] expectedTypes)
         {
-            if (!url.Contains(Utilities.MPBASEURL))
-                url = Utilities.MPBASEURL + url;
+            if (!Url.Contains(url, Utilities.MPBASEURL))
+                url = Url.BuildFullUrl(Utilities.MPBASEURL + url);
 
             List<RouteType> routeTypes = Parsers.ParseRouteTypes(Utilities.GetHtmlDoc(url));
 
@@ -175,8 +175,8 @@ namespace UnitTests
         [DataRow("/route/108170851/new-dawn", GradeSystem.Aid, "A3")] //Includes "Aid rating"
         public void TestRouteGradeParse(string url, GradeSystem expectedGradeSystem, string expectedValue)
         {
-            if (!url.Contains(Utilities.MPBASEURL))
-                url = Utilities.MPBASEURL + url;
+            if (!Url.Contains(url, Utilities.MPBASEURL))
+                url = Url.BuildFullUrl(Utilities.MPBASEURL + url);
 
             List<Grade> parsedGrades = Parsers.ParseRouteGrades(Utilities.GetHtmlDoc(url));
             Grade gradeMatchingExpected = parsedGrades.Find(p => p.System == expectedGradeSystem && p.Value == expectedValue);
@@ -189,8 +189,8 @@ namespace UnitTests
         [DataRow("/route/109063052/geflugelfrikadelle", 4)] //No decimal
         public void TestRouteRatingParse(string url, double expectedRating)
         {
-            if (!url.Contains(Utilities.MPBASEURL))
-                url = Utilities.MPBASEURL + url;
+            if (!Url.Contains(url, Utilities.MPBASEURL))
+                url = Url.BuildFullUrl(Utilities.MPBASEURL + url);
 
             double rating = Parsers.ParseRouteRating(Utilities.GetHtmlDoc(url));
 
@@ -204,8 +204,8 @@ namespace UnitTests
         [DataRow("/route/107530893/a-new-beginning", "", null)] //No additional info
         public void TestRouteAdditionalInfoParse(string url, string expectedAdditionalInfo, double? expectedHeightInFeet)
         {
-            if (!url.Contains(Utilities.MPBASEURL))
-                url = Utilities.MPBASEURL + url;
+            if (!Url.Contains(url, Utilities.MPBASEURL))
+                url = Url.BuildFullUrl(Utilities.MPBASEURL + url);
 
             string additionalInfo = Parsers.ParseAdditionalRouteInfo(Utilities.GetHtmlDoc(url));
             Dimension height = Parsers.ParseRouteHeight(ref additionalInfo);
@@ -223,12 +223,12 @@ namespace UnitTests
         [DataRow("/route/112177605/no-rang-na-rang", new object[] { new[] { "/area/105907743/international", "/area/106661515/asia", "/area/106225629/south-korea", "/area/119456750/seoulgyeonggi-do-northwest-korea", "/area/120088159/gwanaksan-anyangsouth-seoul", "/area/112177596/jah-un-crag" } })] //Route
         public void TestParentParse(string url, object[] expectedParentUrls)
         {
-            if (!url.Contains(Utilities.MPBASEURL))
-                url = Utilities.MPBASEURL + url;
+            if (!Url.Contains(url, Utilities.MPBASEURL))
+                url = Url.BuildFullUrl(Utilities.MPBASEURL + url);
 
             List<string> parents = Parsers.GetParentIDs(Utilities.GetHtmlDoc(url));
             for (int i = 0; i < expectedParentUrls.Length; i++)
-                expectedParentUrls[i] = Utilities.GetID(Utilities.MPBASEURL + (string)expectedParentUrls[i]);
+                expectedParentUrls[i] = Utilities.GetID((string)expectedParentUrls[i]);
 
             CollectionAssert.AreEqual(expectedParentUrls, parents); //Compare collections WITH order
         }
@@ -239,8 +239,8 @@ namespace UnitTests
         [DataRow("/route/111859673/side-dish", "")] //Statistics aren't generated for routes
         public void TestStatisticsParse(string url, string expectedStatistics)
         {
-            if (!url.Contains(Utilities.MPBASEURL))
-                url = Utilities.MPBASEURL + url;
+            if (!Url.Contains(url, Utilities.MPBASEURL))
+                url = Url.BuildFullUrl(Utilities.MPBASEURL + url);
 
             AreaStats testStats = Parsers.PopulateStatistics(Utilities.GetHtmlDoc(url));
 

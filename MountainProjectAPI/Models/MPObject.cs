@@ -40,9 +40,9 @@ namespace MountainProjectAPI
                 }
 
                 if (this is Route)
-                    return $"{Utilities.MPROUTEURL}/{ID}";
+                    return Url.BuildFullUrl($"{Utilities.MPROUTEURL}/{ID}");
                 else if (this is Area)
-                    return $"{Utilities.MPAREAURL}/{ID}";
+                    return Url.BuildFullUrl($"{Utilities.MPAREAURL}/{ID}");
 
                 return null;
             }

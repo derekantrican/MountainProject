@@ -13,38 +13,22 @@ namespace MountainProjectAPI
 {
     public static class Utilities
     {
-        /* =========================================================
-         * NOTE: somewhere around 12/23/2021 MP changed a bunch of their links such that:
-         * - most anchor (<a> tags) on the site were downgraded to "http" rather than "https"
-         * - many urls now return "301: Moved" response if the url is not exact (eg just ".../area/105907743" without the name on the end)
-         * 
-         * I've done a bit of work to get around these changes but really url matching/replacing should be http/https agnostic
-         * =========================================================
-         */
-        public const string HTTP = "http://";
-        public const string HTTPS = "https://";
+        public const string MPBASEURL = "mountainproject.com";
+        public const string MPROUTEURL = "mountainproject.com/route";
+        public const string MPAREAURL = "mountainproject.com/area";
+        public const string ALLLOCATIONSURL = "mountainproject.com/route-guide";
+        public const string INTERNATIONALURL = "mountainproject.com/area/105907743/international";
 
-        public const string MPBASEURL = "http://www.mountainproject.com";
-        public const string MPROUTEURL = "http://www.mountainproject.com/route";
-        public const string MPAREAURL = "http://www.mountainproject.com/area";
-        public const string ALLLOCATIONSURL = "http://www.mountainproject.com/route-guide";
-        public const string INTERNATIONALURL = "http://www.mountainproject.com/area/105907743/international";
-        public const string AUSTRALIAURL = "http://www.mountainproject.com/area/105907756/australia";
+        private const string RegexAgnosticBaseUrl = @"(https?:\/\/)?(www\.)?mountainproject\.com\/";
+        public static Regex AllLocationsRegex = new Regex($@"{RegexAgnosticBaseUrl}route-guide");
 
         public static bool MatchesStateUrlRegex(string urlToMatch)
         {
             List<string> states = StatesWithAbbr.Keys.ToList();
             states.Add("International");
 
-            foreach (string state in states)
-            {
-                string sanitizedString = MPBASEURL.Replace("/", "\\/").Replace(".", "\\.");
-                Regex stateRegex = new Regex(sanitizedString + "\\/area\\/\\d*\\/" + state.Replace(" ", "-").ToLower() + "$");
-                if (stateRegex.IsMatch(urlToMatch.Replace(HTTPS, HTTP))) //Todo: should not need .Replace(HTTPS, HTTP) (see note at the top about http vs https)
-                    return true;
-            }
-
-            return false;
+            Regex stateUrlRegex = new Regex($@"{RegexAgnosticBaseUrl}area\/\d{{9}}\/({string.Join('|', states.Select(s => s.Replace(' ', '-').ToLower()))})$");
+            return stateUrlRegex.IsMatch(urlToMatch);
         }
 
         public static Dictionary<string, string> StatesWithAbbr = new Dictionary<string, string>
@@ -130,7 +114,7 @@ namespace MountainProjectAPI
                 {
                     try
                     {
-                        html = client.DownloadString(url);
+                        html = client.DownloadString(Url.BuildFullUrl(url));
                         break;
                     }
                     catch (Exception ex)
@@ -168,7 +152,7 @@ namespace MountainProjectAPI
                 {
                     try
                     {
-                        html = await client.DownloadStringTaskAsync(url);
+                        html = await client.DownloadStringTaskAsync(Url.BuildFullUrl(url));
                         break;
                     }
                     catch (Exception ex)
@@ -395,16 +379,21 @@ namespace MountainProjectAPI
             return newUrl;
         }
 
-        public static string GetID(string mpURL)
+        /// <summary>
+        /// Gets a MP ID from a url
+        /// </summary>
+        public static string GetID(string mpUrl)
         {
-            //Todo: should not need .Replace(HTTPS, HTTP) (see note at the top about http vs https)
-            return mpURL?.Replace(HTTPS, HTTP).Replace($"{MPROUTEURL}/", "").Replace($"{MPAREAURL}/", "").Split('/')[0];
+            return mpUrl == null ? null : Regex.Match(mpUrl, @"\d{9}").Value;
         }
 
+        /// <summary>
+        /// Returns the &quot;ID URL&quot; (eg https://www.mountainproject.com/area/105907743) from a url. NOTE: this method
+        /// IS protocol/www agnostic, but it does NOT add missing protocol/www
+        /// </summary>
         public static string GetSimpleURL(string mpUrl)
         {
-            //Todo: should not need .Replace(HTTPS, HTTP) (see note at the top about http vs https)
-            return Regex.Match(mpUrl.Replace(HTTPS, HTTP), $@"{MPBASEURL}/(route|area)/\d+").Value;
+            return new Regex($@"{RegexAgnosticBaseUrl}(area|route)\/\d{{9}}").Match(mpUrl).Value;
         }
 
         public static bool IsNumber(string inputString)

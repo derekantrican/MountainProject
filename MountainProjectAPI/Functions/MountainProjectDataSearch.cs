@@ -610,12 +610,14 @@ namespace MountainProjectAPI
         /// <returns></returns>
         public static MPObject GetOuterParent(MPObject child)
         {
+            const string AUSTRALIAID = "105907756";
+
             MPObject parent = GetParent(child, 0); //Get state that route/area is in
-            if (parent?.URL == Utilities.GetSimpleURL(Utilities.INTERNATIONALURL)) //If this is international, get the country instead of the state (eg "China")
+            if (Url.Equals(parent?.URL, Utilities.GetSimpleURL(Utilities.INTERNATIONALURL))) //If this is international, get the country instead of the state (eg "China")
             {
                 if (child.ParentIDs.Count > 3)
                 {
-                    if (child.ParentIDs.Contains(Utilities.GetID(Utilities.AUSTRALIAURL))) //Australia is both a continent and a country so it is an exception
+                    if (child.ParentIDs.Contains(AUSTRALIAID)) //Australia is both a continent and a country so it is an exception
                         parent = GetParent(child, 1);
                     else
                         parent = GetParent(child, 2);
@@ -645,7 +647,7 @@ namespace MountainProjectAPI
             else if (child is Area)
                 parent = GetParent(child, -1); //Get immediate parent
 
-            if (parent != null && parent.URL == Utilities.GetSimpleURL(Utilities.INTERNATIONALURL)) //If "child" is an area like "Europe"
+            if (parent != null && Url.Equals(parent.URL, Utilities.GetSimpleURL(Utilities.INTERNATIONALURL))) //If "child" is a top-level area like "Europe"
                 parent = null;
 
             return parent;

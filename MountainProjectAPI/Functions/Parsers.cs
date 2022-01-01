@@ -99,7 +99,7 @@ namespace MountainProjectAPI
                 IElement leftColumnDiv = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar");
                 htmlSubAreas = doc.GetElementsByTagName("a").Where(p => p.ParentElement.ParentElement.ParentElement == leftColumnDiv).ToList();
                 htmlSubAreas.RemoveAll(p => p.ParentElement.ParentElement.Attributes["id"] != null && p.ParentElement.ParentElement.Attributes["id"].Value == "nearbyMTBRides");
-                htmlSubAreas.RemoveAll(p => !p.Attributes["href"].Value.Replace(Utilities.HTTPS, Utilities.HTTP).Contains(Utilities.MPBASEURL));
+                htmlSubAreas.RemoveAll(p => !Url.Contains(p.Attributes["href"].Value, Utilities.MPBASEURL));
             }
 
             //Populate route details
@@ -427,7 +427,7 @@ namespace MountainProjectAPI
             foreach (IElement parentElement in parentList)
             {
                 string url = parentElement.Attributes["href"].Value;
-                if (url.Replace(Utilities.HTTPS, Utilities.HTTP) != Utilities.ALLLOCATIONSURL)
+                if (!Url.Equals(url, Utilities.ALLLOCATIONSURL))
                     result.Add(Utilities.GetID(url));
             }
 

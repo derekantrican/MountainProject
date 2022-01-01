@@ -160,7 +160,7 @@ namespace MountainProjectDBBuilder
                     Console.WriteLine($"Found {matchedObjectsByPopularity.Count} items match that search query (found in {stopwatch.ElapsedMilliseconds} ms):");
                     foreach (MPObject result in matchedObjectsByPopularity)
                     {
-                        string url = result.URL.Replace(Utilities.MPBASEURL, "");
+                        string url = Url.Replace(result.URL, Utilities.MPBASEURL, "");
                         if (result is Route)
                             Console.WriteLine($"    Route: {result.Name} (Pop: {result.Popularity}) | Location: {GetLocationString(result)} | {url}");
                         else if (result is Area)
@@ -310,7 +310,7 @@ namespace MountainProjectDBBuilder
                     continue;
 
                 MPObject newItem;
-                if (newItemUrl.Replace(Utilities.HTTPS, Utilities.HTTP).Contains(Utilities.MPAREAURL))
+                if (Url.Contains(newItemUrl, Utilities.MPAREAURL))
                 {
                     newItem = new Area { ID = newId };
                     Parsers.ParseAreaAsync(newItem as Area).Wait();

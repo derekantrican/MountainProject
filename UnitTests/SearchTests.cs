@@ -68,8 +68,8 @@ namespace UnitTests
                     Assert.IsNull(searchResult.FilteredResult, "Failed for " + testCriteria_search[i, 0]);
                 else
                 {
-                    Assert.AreEqual(Utilities.GetSimpleURL(Utilities.MPBASEURL + expectedUrl),
-                                    searchResult.FilteredResult.URL, "Failed for " + testCriteria_search[i, 0]);
+                    Assert.IsTrue(Url.Equals(Utilities.GetSimpleURL(Utilities.MPBASEURL + expectedUrl),
+                                    searchResult.FilteredResult.URL), "Failed for " + testCriteria_search[i, 0]);
                 }
 
                 Assert.IsTrue(searchResult.TimeSpanTaken().TotalSeconds < 5, $"{query} took too long ({searchResult.TimeTakenMS} ms)");
@@ -126,7 +126,7 @@ namespace UnitTests
                 string expectedUrl = testCriteria_keyword[i, 1];
                 string resultReply = BotReply.GetReplyForRequest(commentBody);
 
-                Assert.IsTrue(resultReply.Contains(Utilities.GetSimpleURL(Utilities.MPBASEURL + expectedUrl)), "Failed for " + testCriteria_keyword[i, 0]);
+                Assert.IsTrue(Url.TextContains(resultReply, Utilities.GetSimpleURL(Utilities.MPBASEURL + expectedUrl)), "Failed for " + testCriteria_keyword[i, 0]);
             }
         }
 
@@ -210,7 +210,7 @@ namespace UnitTests
                 string inputGrade = testCriteria_gradeEquality[i, 2].ToString();
                 Grade expectedGrade = Grade.ParseString(inputGrade)[0];
 
-                Route route = MountainProjectDataSearch.GetItemWithMatchingID(Utilities.GetID(Utilities.MPBASEURL + inputUrl)) as Route;
+                Route route = MountainProjectDataSearch.GetItemWithMatchingID(Utilities.GetID(inputUrl)) as Route;
 
                 Assert.IsTrue(route.Grades.Any(g => expectedGrade.Equals(g, true, true)));
             }
@@ -255,7 +255,7 @@ namespace UnitTests
                 if (isGoogleSheetsTest)
                 {
                     inputPostTitle = lineParts[2];
-                    expectedMPLink = lineParts[9].ToUpper() == "YES" ? Utilities.GetSimpleURL(lineParts[7]) : !string.IsNullOrEmpty(lineParts[10]) ? $"{Utilities.MPROUTEURL}/{lineParts[10]}" : null;
+                    expectedMPLink = lineParts[9].ToUpper() == "YES" ? Utilities.GetSimpleURL(lineParts[7]) : !string.IsNullOrEmpty(lineParts[10]) ? Url.BuildFullUrl($"{Utilities.MPROUTEURL}/{lineParts[10]}") : null;
                     comment = lineParts.Length > 11 && !string.IsNullOrEmpty(lineParts[11]) ? $"//{lineParts[11]}" : null;
                 }
                 else
@@ -291,7 +291,7 @@ namespace UnitTests
                 }
                 else
                 {
-                    if (route == null || route.URL != expectedMPLink)
+                    if (route == null || !Url.Equals(route.URL, expectedMPLink))
                     {
                         writer.WriteLine($"FAILED (confidence {result.Confidence}). EXPECTED: {expectedMPLink} , ACTUAL: {route?.URL} {comment}");
                         totalFailures++;
