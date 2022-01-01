@@ -99,9 +99,9 @@ namespace MountainProjectBot
                     return $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
             }
             else if (searchResult.AllResults.Count > 1)
-                return $"I found the following info (out of {searchResult.AllResults.Count} total results):" + Markdown.HRule + GetFormattedString(searchResult, resultParameters);
+                return $"I found the following info (out of {searchResult.AllResults.Count} total results):{Markdown.HRule}{GetFormattedString(searchResult, resultParameters)}";
             else
-                return $"I found the following info:" + Markdown.HRule + GetFormattedString(searchResult, resultParameters);
+                return $"I found the following info:{Markdown.HRule}{GetFormattedString(searchResult, resultParameters)}";
         }
 
         public static string GetFormattedString(MPObject finalResult, ResultParameters parameters = null, bool includeUrl = true)
@@ -115,10 +115,8 @@ namespace MountainProjectBot
                 return null;
 
             string result = "";
-            if (searchResult.FilteredResult is Area)
+            if (searchResult.FilteredResult is Area inputArea)
             {
-                Area inputArea = searchResult.FilteredResult as Area;
-
                 Area latestAreaData = new Area { ID = inputArea.ID };
                 Parsers.ParseAreaAsync(latestAreaData, false, false).Wait(); //Get most updated data (straight from MountainProject page)
 
@@ -133,10 +131,8 @@ namespace MountainProjectBot
                 if (includeUrl)
                     result += latestAreaData.URL;
             }
-            else if (searchResult.FilteredResult is Route)
+            else if (searchResult.FilteredResult is Route inputRoute)
             {
-                Route inputRoute = searchResult.FilteredResult as Route;
-
                 Route latestRouteData = new Route { ID = inputRoute.ID };
                 Parsers.ParseRouteAsync(latestRouteData, false).Wait(); //Get most updated data (straight from MountainProject page)
 
