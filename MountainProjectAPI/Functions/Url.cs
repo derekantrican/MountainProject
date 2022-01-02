@@ -36,7 +36,14 @@ namespace MountainProjectAPI
             url1 = CleanParts(url1, ignoreProtocol, ignoreWWW);
             url2 = CleanParts(url2, ignoreProtocol, ignoreWWW);
 
-            return url1.Equals(url2);
+            if (url1 == null)
+            {
+                return url2 == null ? true : false;
+            }
+            else
+            {
+                return url1.Equals(url2);
+            }
         }
 
         public static bool RegexMatch(Regex regex, string url, bool ignoreProtocol = true, bool ignoreWWW = true)

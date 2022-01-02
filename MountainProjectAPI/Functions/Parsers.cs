@@ -111,7 +111,7 @@ namespace MountainProjectAPI
                 inputArea.Routes.Add(route);
                 TotalRoutes++;
 
-                await ParseRouteAsync(route); //Parse route
+                await ParseRouteAsync(route, consoleMessages); //Parse route
             }
 
             //Populate sub area details
@@ -129,7 +129,7 @@ namespace MountainProjectAPI
 
                 if (recursive)
                 {
-                    await ParseAreaAsync(subArea); //Parse sub area
+                    await ParseAreaAsync(subArea, consoleMessages: consoleMessages); //Parse sub area
                 }
             }
 
@@ -199,8 +199,23 @@ namespace MountainProjectAPI
 
             using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL))
             {
+                string redactedLink = $"{Utilities.MPBASEURL}/object/updates/{inputRoute.ID}/redacted";
+                IElement redactedLinkElement = doc.GetElementsByTagName("a").FirstOrDefault(p => p.Attributes["href"] != null && Url.Contains(p.Attributes["href"].Value, redactedLink));
+                if (redactedLinkElement != null) //This could be applied to areas too, but for now I think there are just redactions on routes
+                {
+                    inputRoute.IsNameRedacted = true;
+                    using (IHtmlDocument objectUpdatesDoc = await Utilities.GetHtmlDocAsync(Url.BuildFullUrl(redactedLink)))
+                    {
+                        IElement update = objectUpdatesDoc.GetElementsByTagName("h1").FirstOrDefault(e => e.TextContent == "Original Name").ParentElement;
+                        Regex regex = new Regex("Mountain Project has chosen not to publish the original name of this route:\\s*\"(?<original_name>.*)\"");
+                        inputRoute.Name = regex.Match(update.GetElementsByTagName("p").First().TextContent).Groups["original_name"].Value;
+                    }
+                }
+
                 if (string.IsNullOrEmpty(inputRoute.Name))
+                {
                     inputRoute.Name = ParseNameFromHeader(doc);
+                }
 
                 inputRoute.Name = FilterName(inputRoute.Name);
                 inputRoute.NameForMatch = FilterNameForMatch(inputRoute.Name, inputRoute.ID);

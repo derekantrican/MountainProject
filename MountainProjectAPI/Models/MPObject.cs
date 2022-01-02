@@ -23,11 +23,24 @@ namespace MountainProjectAPI
 
         public string Name { get; set; }
         public string NameForMatch { get; set; }
+        public bool IsNameRedacted { get; set; }
         public string ID { get; set; }
         public int Popularity { get; set; }
         public List<string> ParentIDs { get; set; }
         [XmlIgnore]
         public List<MPObject> Parents { get; set; }
+
+        public void PopulateParents()
+        {
+            foreach (string id in ParentIDs)
+            {
+                MPObject matchingObject = MountainProjectDataSearch.GetItemWithMatchingID(id);
+                if (!Parents.Contains(matchingObject))
+                {
+                    Parents.Add(matchingObject);
+                }
+            }
+        }
 
         [XmlIgnore]
         public string URL

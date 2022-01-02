@@ -119,6 +119,7 @@ namespace MountainProjectBot
             {
                 Area latestAreaData = new Area { ID = inputArea.ID };
                 Parsers.ParseAreaAsync(latestAreaData, false, false).Wait(); //Get most updated data (straight from MountainProject page)
+                latestAreaData.PopulateParents();
 
                 if (!string.IsNullOrEmpty(latestAreaData.Statistics.ToString()))
                     result += $"{Markdown.Bold(latestAreaData.Name)} [{latestAreaData.Statistics}]" + Markdown.NewLine;
@@ -135,8 +136,18 @@ namespace MountainProjectBot
             {
                 Route latestRouteData = new Route { ID = inputRoute.ID };
                 Parsers.ParseRouteAsync(latestRouteData, false).Wait(); //Get most updated data (straight from MountainProject page)
+                latestRouteData.PopulateParents();
 
-                result += $"{Markdown.Bold(latestRouteData.Name)} {GetRouteAdditionalInfo(latestRouteData, parameters, showGrade: false, showHeight: false)}";
+                if (latestRouteData.IsNameRedacted)
+                {
+                    result += $"{Markdown.Bold("[REDACTED]")} {Markdown.Spoiler($"({latestRouteData.Name})")}";
+                }
+                else
+                {
+                    result += Markdown.Bold(latestRouteData.Name);
+                }
+                
+                result += $" {GetRouteAdditionalInfo(latestRouteData, parameters, showGrade: false, showHeight: false)}";
 
                 result += Markdown.NewLine;
 
@@ -239,6 +250,8 @@ namespace MountainProjectBot
             {
                 area.PopularRouteIDs.ForEach(id => popularRoutes.Add(MountainProjectDataSearch.GetItemWithMatchingID(id, MountainProjectDataSearch.DestAreas) as Route));
             }
+
+            popularRoutes.RemoveAll(r => r == null);
 
             foreach (Route popularRoute in popularRoutes)
                 result += $"\n- {Markdown.Link(popularRoute.Name, popularRoute.URL)} {GetRouteAdditionalInfo(popularRoute, parameters)}";

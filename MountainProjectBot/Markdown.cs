@@ -17,6 +17,11 @@
             return $"`{text.Trim('`')}`";
         }
 
+        public static string Spoiler(string text)
+        {
+            return $">!{text}!<";
+        }
+
         public static string HRule { get { return "\n\n-----\n\n"; } }
 
         public static string NewLine { get { return "\n\n"; } }
