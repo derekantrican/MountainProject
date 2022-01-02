@@ -355,7 +355,7 @@ namespace MountainProjectBot
                 filteredComments = BotUtilities.RemoveAlreadyRepliedTo(filteredComments);
                 filteredComments.RemoveAll(c => c.IsArchived);
                 filteredComments = BotUtilities.RemoveBlacklisted(filteredComments, new[] { BlacklistLevel.OnlyKeywordReplies, BlacklistLevel.Total }); //Remove comments from users who don't want the bot to automatically reply to them
-                filteredComments = await BotUtilities.RemoveCommentsOnSelfPosts(subreddit, filteredComments); //Don't reply to self posts (aka text posts)
+                //filteredComments = await BotUtilities.RemoveCommentsOnSelfPosts(subreddit, filteredComments); //Don't reply to self posts (aka text posts)
                 subredditsAndRecentComments[subreddit] = filteredComments;
             }
 
