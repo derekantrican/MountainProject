@@ -802,8 +802,7 @@ namespace MountainProjectAPI
                 if (Utilities.StringContains(subDestArea.NameForMatch, input, useRegex: subDestArea.NameForMatch.Contains("|")))
                     matchedObjects.Add(subDestArea);
 
-                if (subDestArea.SubAreas != null &&
-                    subDestArea.SubAreas.Count() > 0)
+                if (subDestArea.SubAreas != null && subDestArea.SubAreas.Count > 0)
                 {
                     List<MPObject> matchedSubAreas = SearchSubAreasForMatch(input, subDestArea.SubAreas);
                     matchedSubAreas.ForEach(a =>
@@ -814,8 +813,7 @@ namespace MountainProjectAPI
                     matchedObjects.AddRange(matchedSubAreas);
                 }
 
-                if (subDestArea.Routes != null &&
-                    subDestArea.Routes.Count() > 0)
+                if (subDestArea.Routes != null && subDestArea.Routes.Count > 0)
                 {
                     List<MPObject> matchedRoutes = SearchRoutes(input, subDestArea.Routes);
                     matchedRoutes.ForEach(r =>

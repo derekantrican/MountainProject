@@ -10,12 +10,20 @@ namespace MountainProjectBot
 {
     public class RedditHelper
     {
-        public const string REDDITPREFIX = "https://reddit.com";
+        public const string REDDITBASEURL = "https://reddit.com";
         Reddit redditService;
         Dictionary<string, int> subredditNamesAndCommentAmounts = new Dictionary<string, int>()
         {
-            {"climbing", 1000 }, {"climbingporn", 30}, {"bouldering", 600}, {"socalclimbing", 50}, {"climbingvids", 30}, {"mountainprojectbot", 500},
-            {"climbergirls", 200 }, {"iceclimbing", 30 }, {"rockclimbing", 50}, {"tradclimbing", 100}
+            { "climbing", 1000 },
+            { "climbingporn", 30 },
+            { "bouldering", 600 },
+            { "socalclimbing", 50 },
+            { "climbingvids", 30 },
+            { "mountainprojectbot", 500 },
+            { "climbergirls", 200 },
+            { "iceclimbing", 30 },
+            { "rockclimbing", 50 },
+            { "tradclimbing", 100 },
         };
         public List<Subreddit> Subreddits = new List<Subreddit>();
 
@@ -81,12 +89,12 @@ namespace MountainProjectBot
 
         public async Task<Comment> GetComment(Uri commentPermalink)
         {
-            return await redditService.GetCommentAsync(new Uri(REDDITPREFIX + commentPermalink));
+            return await redditService.GetCommentAsync(new Uri(REDDITBASEURL + commentPermalink));
         }
 
         public async Task<Post> GetPost(string postId)
         {
-            return await redditService.GetPostAsync(new Uri($"{REDDITPREFIX}/comments/{postId}"));
+            return await redditService.GetPostAsync(new Uri($"{REDDITBASEURL}/comments/{postId}"));
         }
 
         public async Task<Comment> ReplyToComment(Comment comment, string replyText)
@@ -131,7 +139,7 @@ namespace MountainProjectBot
 
         public static string GetFullLink(string relativeLink)
         {
-            return REDDITPREFIX + relativeLink;
+            return REDDITBASEURL + relativeLink;
         }
 
         public static string GetPostLinkFromComment(Comment comment)
