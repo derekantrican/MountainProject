@@ -72,69 +72,79 @@ namespace MountainProjectAPI
         #region Parse Area
         public static async Task ParseAreaAsync(Area inputArea, bool recursive = true, bool consoleMessages = true)
         {
-            Stopwatch areaStopwatch = Stopwatch.StartNew();
-
-            List<IElement> htmlRoutes = new List<IElement>();
-            List<IElement> htmlSubAreas = new List<IElement>();
-            using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL))
+            try
             {
-                if (string.IsNullOrEmpty(inputArea.Name))
-                    inputArea.Name = Utilities.CleanExtraPartsFromName(ParseAreaNameFromSidebar(doc));
+                Stopwatch areaStopwatch = Stopwatch.StartNew();
+
+                List<IElement> htmlRoutes = new List<IElement>();
+                List<IElement> htmlSubAreas = new List<IElement>();
+                using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL))
+                {
+                    if (string.IsNullOrEmpty(inputArea.Name))
+                        inputArea.Name = Utilities.CleanExtraPartsFromName(ParseAreaNameFromSidebar(doc));
+
+                    if (consoleMessages)
+                        Console.WriteLine($"Current Area: {inputArea.Name}");
+
+                    inputArea.Name = FilterName(inputArea.Name);
+                    inputArea.NameForMatch = FilterNameForMatch(inputArea.Name, inputArea.ID);
+                    inputArea.Statistics = PopulateStatistics(doc);
+                    inputArea.Popularity = ParsePopularity(doc);
+                    inputArea.ParentIDs = GetParentIDs(doc);
+                    inputArea.PopularRouteIDs = GetPopularRouteIDs(doc, 3);
+
+                    //Get Area's routes
+                    IElement routesTable = doc.GetElementsByTagName("table").FirstOrDefault(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table");
+                    htmlRoutes = routesTable == null ? new List<IElement>() : routesTable.GetElementsByTagName("a").ToList();
+
+                    //Get Area's areas
+                    IElement leftColumnDiv = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar");
+                    htmlSubAreas = doc.GetElementsByTagName("a").Where(p => p.ParentElement.ParentElement.ParentElement == leftColumnDiv).ToList();
+                    htmlSubAreas.RemoveAll(p => p.ParentElement.ParentElement.Attributes["id"] != null && p.ParentElement.ParentElement.Attributes["id"].Value == "nearbyMTBRides");
+                    htmlSubAreas.RemoveAll(p => !Url.Contains(p.Attributes["href"].Value, Utilities.MPBASEURL));
+                }
+
+                //Populate route details
+                foreach (IElement routeElement in htmlRoutes)
+                {
+                    string routeUrl = routeElement.Attributes["href"].Value;
+                    Route route = new Route(routeElement.TextContent, Utilities.GetID(routeUrl));
+                    route.URL = routeUrl;
+                    inputArea.Routes.Add(route);
+                    TotalRoutes++;
+
+                    await ParseRouteAsync(route, consoleMessages); //Parse route
+                }
+
+                //Populate sub area details
+                foreach (IElement areaElement in htmlSubAreas)
+                {
+                    string areaUrl = areaElement.Attributes["href"].Value;
+                    Area subArea = new Area()
+                    {
+                        ID = Utilities.GetID(areaUrl),
+                        URL = areaUrl,
+                    };
+
+                    inputArea.SubAreas.Add(subArea);
+                    TotalAreas++;
+
+                    if (recursive)
+                    {
+                        await ParseAreaAsync(subArea, consoleMessages: consoleMessages); //Parse sub area
+                    }
+                }
 
                 if (consoleMessages)
-                    Console.WriteLine($"Current Area: {inputArea.Name}");
-
-                inputArea.Name = FilterName(inputArea.Name);
-                inputArea.NameForMatch = FilterNameForMatch(inputArea.Name, inputArea.ID);
-                inputArea.Statistics = PopulateStatistics(doc);
-                inputArea.Popularity = ParsePopularity(doc);
-                inputArea.ParentIDs = GetParentIDs(doc);
-                inputArea.PopularRouteIDs = GetPopularRouteIDs(doc, 3);
-
-                //Get Area's routes
-                IElement routesTable = doc.GetElementsByTagName("table").FirstOrDefault(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table");
-                htmlRoutes = routesTable == null ? new List<IElement>() : routesTable.GetElementsByTagName("a").ToList();
-
-                //Get Area's areas
-                IElement leftColumnDiv = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar");
-                htmlSubAreas = doc.GetElementsByTagName("a").Where(p => p.ParentElement.ParentElement.ParentElement == leftColumnDiv).ToList();
-                htmlSubAreas.RemoveAll(p => p.ParentElement.ParentElement.Attributes["id"] != null && p.ParentElement.ParentElement.Attributes["id"].Value == "nearbyMTBRides");
-                htmlSubAreas.RemoveAll(p => !Url.Contains(p.Attributes["href"].Value, Utilities.MPBASEURL));
+                    Console.WriteLine($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
             }
-
-            //Populate route details
-            foreach (IElement routeElement in htmlRoutes)
+            catch (Exception ex)
             {
-                string routeUrl = routeElement.Attributes["href"].Value;
-                Route route = new Route(routeElement.TextContent, Utilities.GetID(routeUrl));
-                route.URL = routeUrl;
-                inputArea.Routes.Add(route);
-                TotalRoutes++;
-
-                await ParseRouteAsync(route, consoleMessages); //Parse route
-            }
-
-            //Populate sub area details
-            foreach (IElement areaElement in htmlSubAreas)
-            {
-                string areaUrl = areaElement.Attributes["href"].Value;
-                Area subArea = new Area()
+                throw new ParseException($"Failed to parse area with id {inputArea?.ID}", ex)
                 {
-                    ID = Utilities.GetID(areaUrl),
-                    URL = areaUrl,
+                    RelatedObject = inputArea,
                 };
-
-                inputArea.SubAreas.Add(subArea);
-                TotalAreas++;
-
-                if (recursive)
-                {
-                    await ParseAreaAsync(subArea, consoleMessages: consoleMessages); //Parse sub area
-                }
             }
-
-            if (consoleMessages)
-                Console.WriteLine($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
         }
 
         public static List<string> GetPopularRouteIDs(IHtmlDocument doc, int numberToReturn)
@@ -192,53 +202,64 @@ namespace MountainProjectAPI
         #region Parse Route
         public static async Task ParseRouteAsync(Route inputRoute, bool consoleMessages = true)
         {
-            if (consoleMessages)
-                Console.WriteLine($"Current Route: {inputRoute.Name}");
-
-            Stopwatch routeStopwatch = Stopwatch.StartNew();
-
-            using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL))
+            try
             {
-                string redactedLink = $"{Utilities.MPBASEURL}/object/updates/{inputRoute.ID}/redacted";
-                IElement redactedLinkElement = doc.GetElementsByTagName("a").FirstOrDefault(p => p.Attributes["href"] != null && Url.Contains(p.Attributes["href"].Value, redactedLink));
-                if (redactedLinkElement != null) //This could be applied to areas too, but for now I think there are just redactions on routes
+                if (consoleMessages)
+                    Console.WriteLine($"Current Route: {inputRoute.Name}");
+
+                Stopwatch routeStopwatch = Stopwatch.StartNew();
+
+                using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL))
                 {
-                    inputRoute.IsNameRedacted = true;
-                    using (IHtmlDocument objectUpdatesDoc = await Utilities.GetHtmlDocAsync(Url.BuildFullUrl(redactedLink)))
+                    string redactedLink = $"{Utilities.MPBASEURL}/object/updates/{inputRoute.ID}/redacted";
+                    IElement redactedLinkElement = doc.GetElementsByTagName("a").FirstOrDefault(p => p.Attributes["href"] != null && Url.Contains(p.Attributes["href"].Value, redactedLink) && 
+                        p.GetElementsByTagName("img").FirstOrDefault(i => i.Attributes["data-original-title"] != null && i.Attributes["data-original-title"].Value == "The original name has been redacted. Click for more info.") != null);
+                    if (redactedLinkElement != null) //This could be applied to areas too, but for now I think there are just redactions on routes
                     {
-                        IElement update = objectUpdatesDoc.GetElementsByTagName("h1").FirstOrDefault(e => e.TextContent == "Original Name").ParentElement;
-                        Regex regex = new Regex("Mountain Project has chosen not to publish the original name of this route:\\s*\"(?<original_name>.*)\"");
-                        inputRoute.Name = regex.Match(update.GetElementsByTagName("p").First().TextContent).Groups["original_name"].Value;
+                        inputRoute.IsNameRedacted = true;
+                        using (IHtmlDocument objectUpdatesDoc = await Utilities.GetHtmlDocAsync(Url.BuildFullUrl(redactedLink)))
+                        {
+                            IElement update = objectUpdatesDoc.GetElementsByTagName("h1").FirstOrDefault(e => e.TextContent == "Original Name").ParentElement;
+                            Regex regex = new Regex("Mountain Project has chosen not to publish the original name of this route:\\s*\"(?<original_name>.*)\"");
+                            inputRoute.Name = regex.Match(update.GetElementsByTagName("p").First().TextContent).Groups["original_name"].Value;
+                        }
+                    }
+
+                    if (string.IsNullOrEmpty(inputRoute.Name))
+                    {
+                        inputRoute.Name = ParseNameFromHeader(doc);
+                    }
+
+                    inputRoute.Name = FilterName(inputRoute.Name);
+                    inputRoute.NameForMatch = FilterNameForMatch(inputRoute.Name, inputRoute.ID);
+                    inputRoute.Types = ParseRouteTypes(doc);
+                    inputRoute.Popularity = ParsePopularity(doc);
+                    inputRoute.Rating = ParseRouteRating(doc);
+                    inputRoute.Grades = ParseRouteGrades(doc);
+                    string additionalInfo = ParseAdditionalRouteInfo(doc);
+                    inputRoute.Height = ParseRouteHeight(ref additionalInfo);
+                    inputRoute.AdditionalInfo = additionalInfo;
+                    inputRoute.ParentIDs = GetParentIDs(doc);
+                }
+
+                if (consoleMessages)
+                {
+                    Console.WriteLine($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
+
+                    if (TotalTimer != null && !double.IsNaN(Progress))
+                    {
+                        long elapsedMS = TotalTimer.ElapsedMilliseconds;
+                        TimeSpan estTimeRemaining = TimeSpan.FromMilliseconds((elapsedMS / Progress) - elapsedMS);
+                        ConsoleHelper.RecordProgress(Progress, estTimeRemaining);
                     }
                 }
-
-                if (string.IsNullOrEmpty(inputRoute.Name))
-                {
-                    inputRoute.Name = ParseNameFromHeader(doc);
-                }
-
-                inputRoute.Name = FilterName(inputRoute.Name);
-                inputRoute.NameForMatch = FilterNameForMatch(inputRoute.Name, inputRoute.ID);
-                inputRoute.Types = ParseRouteTypes(doc);
-                inputRoute.Popularity = ParsePopularity(doc);
-                inputRoute.Rating = ParseRouteRating(doc);
-                inputRoute.Grades = ParseRouteGrades(doc);
-                string additionalInfo = ParseAdditionalRouteInfo(doc);
-                inputRoute.Height = ParseRouteHeight(ref additionalInfo);
-                inputRoute.AdditionalInfo = additionalInfo;
-                inputRoute.ParentIDs = GetParentIDs(doc);
             }
-
-            if (consoleMessages)
+            catch (Exception ex)
             {
-                Console.WriteLine($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
-
-                if (TotalTimer != null && !double.IsNaN(Progress))
+                throw new ParseException($"Failed to parse area with id {inputRoute?.ID}", ex)
                 {
-                    long elapsedMS = TotalTimer.ElapsedMilliseconds;
-                    TimeSpan estTimeRemaining = TimeSpan.FromMilliseconds((elapsedMS / Progress) - elapsedMS);
-                    ConsoleHelper.RecordProgress(Progress, estTimeRemaining);
-                }
+                    RelatedObject = inputRoute,
+                };
             }
         }
 
