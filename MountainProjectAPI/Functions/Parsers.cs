@@ -216,12 +216,12 @@ namespace MountainProjectAPI
                         p.GetElementsByTagName("img").FirstOrDefault(i => i.Attributes["data-original-title"] != null && i.Attributes["data-original-title"].Value == "The original name has been redacted. Click for more info.") != null);
                     if (redactedLinkElement != null) //This could be applied to areas too, but for now I think there are just redactions on routes
                     {
-                        inputRoute.IsNameRedacted = true;
                         using (IHtmlDocument objectUpdatesDoc = await Utilities.GetHtmlDocAsync(Url.BuildFullUrl(redactedLink)))
                         {
                             IElement update = objectUpdatesDoc.GetElementsByTagName("h1").FirstOrDefault(e => e.TextContent == "Original Name").ParentElement;
                             Regex regex = new Regex("Mountain Project has chosen not to publish the original name of this route:\\s*\"(?<original_name>.*)\"");
                             inputRoute.Name = regex.Match(update.GetElementsByTagName("p").First().TextContent).Groups["original_name"].Value;
+                            inputRoute.IsNameRedacted = true;
                         }
                     }
 
