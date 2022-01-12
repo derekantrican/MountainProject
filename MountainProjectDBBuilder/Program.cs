@@ -228,13 +228,46 @@ namespace MountainProjectDBBuilder
             }
             catch (Exception ex)
             {
+                string exceptionString = "";
+                if (ex is AggregateException aggregateException)
+                {
+                    foreach (Exception innerException in aggregateException.InnerExceptions)
+                    {
+                        if (innerException is ParseException parseException)
+                        {
+                            ParseException innerMostParseException = parseException.GetInnermostParseException();
+                            exceptionString += $"FAILING MPOBJECT: {innerMostParseException.RelatedObject.URL}\n";
+                            exceptionString += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
+                            exceptionString += $"STACK TRACE: {innerMostParseException.InnerException?.StackTrace}\n\n";
+                        }
+                        else
+                        {
+                            exceptionString += $"EXCEPTION MESSAGE: {innerException?.Message}\n";
+                            exceptionString += $"STACK TRACE: {innerException?.StackTrace}\n\n";
+                        }
+                    }
+                }
+                else
+                {
+                    if (ex is ParseException parseException)
+                    {
+                        ParseException innerMostParseException = parseException.GetInnermostParseException();
+                        exceptionString += $"FAILING MPOBJECT: {innerMostParseException.RelatedObject.URL}\n";
+                        exceptionString += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
+                        exceptionString += $"STACK TRACE: {innerMostParseException.InnerException?.StackTrace}\n";
+                    }
+                    else
+                    {
+                        exceptionString += $"EXCEPTION MESSAGE: {ex?.Message}\n";
+                        exceptionString += $"INNER EXCEPTION: {ex?.InnerException?.Message}\n";
+                        exceptionString += $"STACK TRACE: {ex?.StackTrace}\n";
+                    }
+                }
+
                 Console.WriteLine(Environment.NewLine + Environment.NewLine);
                 Console.WriteLine("!!!-------------EXCEPTION ENCOUNTERED-------------!!!");
-                Console.WriteLine($"EXCEPTION MESSAGE: {ex?.Message}\n");
-                Console.WriteLine($"INNER EXCEPTION: {ex?.InnerException}\n");
-                Console.WriteLine($"STACK TRACE: {ex?.StackTrace}\n");
-                SendReport($"MountainProjectDBBuilder completed WITH ERRORS in {totalTimer.Elapsed}",
-                    $"{ex?.Message}\n{ex.InnerException}\n{ex?.StackTrace}");
+                Console.WriteLine(exceptionString);
+                SendReport($"MountainProjectDBBuilder completed WITH ERRORS in {totalTimer.Elapsed}", exceptionString);
             }
             finally
             {

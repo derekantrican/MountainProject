@@ -11,7 +11,7 @@ namespace MountainProjectAPI
 
         public MPObject RelatedObject { get; set; }
 
-        public MPObject GetInnermostFailingObject()
+        public ParseException GetInnermostParseException()
         {
             ParseException ex = this;
             while (ex.InnerException != null && ex.InnerException is ParseException)
@@ -19,7 +19,7 @@ namespace MountainProjectAPI
                 ex = ex.InnerException as ParseException;
             }
 
-            return ex.RelatedObject;
+            return ex;
         }
     }
 }
