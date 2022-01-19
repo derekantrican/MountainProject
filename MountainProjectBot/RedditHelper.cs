@@ -87,6 +87,17 @@ namespace MountainProjectBot
             return subredditsAndRecentComments;
         }
 
+        public async Task<List<Comment>> GetOwnComments()
+        {
+            RedditUser botUser = await redditService.GetUserAsync("MountainProjectBot");
+            return await botUser.GetComments(100).ToListAsync();
+        }
+
+        public async Task<Thing> GetThing(string id)
+        {
+            return await redditService.GetThingByFullnameAsync(id);
+        }
+
         public async Task<Comment> GetComment(Uri commentPermalink)
         {
             return await redditService.GetCommentAsync(new Uri(REDDITBASEURL + commentPermalink));
