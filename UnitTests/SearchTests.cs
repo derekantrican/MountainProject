@@ -216,14 +216,10 @@ namespace UnitTests
             }
         }
 
-        //[DataTestMethod]
-        //[DataRow(false, false)] //This would be preferred but causes duplicate runs: https://github.com/microsoft/testfx/issues/488
-        [TestMethod]
-        public void TestPostTitleParse(/*bool outputExtraInfo, bool isGoogleSheetsTest*/)
+        [DataTestMethod]
+        [DataRow(false, false)]
+        public void TestPostTitleParse(bool outputExtraInfo, bool isGoogleSheetsTest)
         {
-            bool outputExtraInfo = false;
-            bool isGoogleSheetsTest = false;
-
             Stopwatch totalStopwatch = Stopwatch.StartNew();
 
             int totalPasses = 0;
