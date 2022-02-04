@@ -80,7 +80,12 @@ namespace MountainProjectAPI
                 List<IElement> htmlSubAreas = new List<IElement>();
                 using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL))
                 {
-                    inputArea.Name = await TryGetRedactedName(doc, inputArea.ID);
+                    string redactedName = await TryGetRedactedName(doc, inputArea.ID);
+                    if (!string.IsNullOrEmpty(redactedName))
+                    {
+                        inputArea.Name = redactedName;
+                        inputArea.IsNameRedacted = true;
+                    }
 
                     if (string.IsNullOrEmpty(inputArea.Name))
                     {
@@ -217,7 +222,12 @@ namespace MountainProjectAPI
 
                 using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL))
                 {
-                    inputRoute.Name = await TryGetRedactedName(doc, inputRoute.ID);
+                    string redactedName = await TryGetRedactedName(doc, inputRoute.ID);
+                    if (!string.IsNullOrEmpty(redactedName))
+                    {
+                        inputRoute.Name = redactedName;
+                        inputRoute.IsNameRedacted = true;
+                    }
 
                     if (string.IsNullOrEmpty(inputRoute.Name))
                     {
