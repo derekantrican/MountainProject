@@ -80,11 +80,17 @@ namespace MountainProjectAPI
                 List<IElement> htmlSubAreas = new List<IElement>();
                 using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL))
                 {
+                    inputArea.Name = await TryGetRedactedName(doc, inputArea.ID);
+
                     if (string.IsNullOrEmpty(inputArea.Name))
+                    {
                         inputArea.Name = Utilities.CleanExtraPartsFromName(ParseAreaNameFromSidebar(doc));
+                    }
 
                     if (consoleMessages)
+                    {
                         Console.WriteLine($"Current Area: {inputArea.Name}");
+                    }
 
                     inputArea.Name = FilterName(inputArea.Name);
                     inputArea.NameForMatch = FilterNameForMatch(inputArea.Name, inputArea.ID);
@@ -211,19 +217,7 @@ namespace MountainProjectAPI
 
                 using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL))
                 {
-                    string redactedLink = $"{Utilities.MPBASEURL}/object/updates/{inputRoute.ID}/redacted";
-                    IElement redactedLinkElement = doc.GetElementsByTagName("a").FirstOrDefault(p => p.Attributes["href"] != null && Url.Contains(p.Attributes["href"].Value, redactedLink) && 
-                        p.GetElementsByTagName("img").FirstOrDefault(i => i.Attributes["data-original-title"] != null && i.Attributes["data-original-title"].Value == "The original name has been redacted. Click for more info.") != null);
-                    if (redactedLinkElement != null) //This could be applied to areas too, but for now I think there are just redactions on routes
-                    {
-                        using (IHtmlDocument objectUpdatesDoc = await Utilities.GetHtmlDocAsync(Url.BuildFullUrl(redactedLink)))
-                        {
-                            IElement update = objectUpdatesDoc.GetElementsByTagName("h1").FirstOrDefault(e => e.TextContent == "Original Name").ParentElement;
-                            Regex regex = new Regex("Mountain Project has chosen not to publish the original name of this route:\\s*\"(?<original_name>.*)\"");
-                            inputRoute.Name = regex.Match(update.GetElementsByTagName("p").First().TextContent).Groups["original_name"].Value;
-                            inputRoute.IsNameRedacted = true;
-                        }
-                    }
+                    inputRoute.Name = await TryGetRedactedName(doc, inputRoute.ID);
 
                     if (string.IsNullOrEmpty(inputRoute.Name))
                     {
@@ -430,6 +424,24 @@ namespace MountainProjectAPI
         #endregion Parse Route
 
         #region Common Parse Methods
+        public static async Task<string> TryGetRedactedName(IHtmlDocument doc, string currentId)
+        {
+            string redactedLink = $"{Utilities.MPBASEURL}/object/updates/{currentId}/redacted";
+            IElement redactedLinkElement = doc.GetElementsByTagName("a").FirstOrDefault(p => p.Attributes["href"] != null && Url.Contains(p.Attributes["href"].Value, redactedLink) &&
+                p.GetElementsByTagName("img").FirstOrDefault(i => i.Attributes["data-original-title"] != null && i.Attributes["data-original-title"].Value == "The original name has been redacted. Click for more info.") != null);
+            if (redactedLinkElement != null)
+            {
+                using (IHtmlDocument objectUpdatesDoc = await Utilities.GetHtmlDocAsync(Url.BuildFullUrl(redactedLink)))
+                {
+                    IElement update = objectUpdatesDoc.GetElementsByTagName("h1").FirstOrDefault(e => e.TextContent == "Original Name").ParentElement;
+                    Regex regex = new Regex("Mountain Project has chosen not to publish the original name of this route:\\s*\"(?<original_name>.*)\"");
+                    return regex.Match(update.GetElementsByTagName("p").First().TextContent).Groups["original_name"].Value;
+                }
+            }
+
+            return null;
+        }
+
         public static string FilterName(string name)
         {
             if (Regex.Match(name, ", The", RegexOptions.IgnoreCase).Success)

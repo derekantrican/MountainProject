@@ -137,7 +137,8 @@ namespace UnitTests
         [DataRow("/area/108276053/area-51-boulder-area", "Area 51 Boulder")] //Remove only end "Area" from title
         [DataRow("/area/106558306/drop-area-horseshoe-area", "Drop (Horseshoe)")] //Remove "Area" both inside and outside parenthesis
         [DataRow("/area/107373214/turtle-rock-area-corridors-area", "Turtle Rock/ Corridors")] //Remove "Area" both before and after slash
-        [DataRow("/route/107889066/redacted", "Bro's Before Holes")] //Parse redacted name
+        [DataRow("/route/107889066/redacted", "Bro's Before Holes")] //Parse redacted route name
+        [DataRow("/area/113166191/redacted", "Concentration Camp")] //Parse redacted area name
         public void TestNameParse(string url, string expectedName)
         {
             if (!Url.Contains(url, Utilities.MPBASEURL))
@@ -151,7 +152,11 @@ namespace UnitTests
                 name = route.Name;
             }
             else
-                name = Utilities.CleanExtraPartsFromName(Parsers.ParseAreaNameFromSidebar(Utilities.GetHtmlDoc(url)));
+            {
+                Area area = new Area { ID = Utilities.GetID(url) };
+                Parsers.ParseAreaAsync(area, false).Wait();
+                name = area.Name;
+            }
 
             Assert.AreEqual(expectedName, name);
         }
