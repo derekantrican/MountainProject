@@ -32,9 +32,15 @@ namespace MountainProjectBot
 
             protected override void OnReceivedRequest(HttpRequest request)
             {
+                if (!Enum.TryParse(typeof(HttpMethod), request.Method, true, out object method))
+                {
+                    Console.WriteLine($"Method not understood: {request.Method}");
+                    return;
+                }
+
                 ServerRequest serverRequest = new ServerRequest
                 {
-                    RequestMethod = (HttpMethod)Enum.Parse(typeof(HttpMethod), request.Method, true),
+                    RequestMethod = (HttpMethod)method,
                     Path = request.Url.Trim('/'),
                 };
 
