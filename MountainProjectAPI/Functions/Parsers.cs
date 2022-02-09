@@ -502,6 +502,12 @@ namespace MountainProjectAPI
 
         public static string ParseAreaNameFromSidebar(IHtmlDocument doc)
         {
+            //Todo: in the future, we could probably do this better by getting the "intersection" of the header name & the sidebar name
+            //(and still defaulting to cleaning up the header name if the sidebar name does not exist).
+            //For example: https://www.mountainproject.com/area/106263225/public-sanitation-wall
+            //Sidebar: Routes in K. Public Sanitation Wall
+            //Header: Public Sanitation Wall Rock Climbing
+            //Intersection: Public Sanitation Wall
             IElement leftColumnDiv = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar");
             IElement nameElementInSidebar = doc.GetElementsByTagName("h3").FirstOrDefault(p => p.ParentElement == leftColumnDiv);
             if (nameElementInSidebar != null)
