@@ -52,7 +52,16 @@ namespace MountainProjectBot
             redditService = new Reddit(webAgent, true);
 
             foreach (string subRedditName in subredditNamesAndCommentAmounts.Keys)
-                Subreddits.Add(await redditService.GetSubredditAsync(subRedditName));
+            {
+                try
+                {
+                    Subreddits.Add(await redditService.GetSubredditAsync(subRedditName));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Could not add subreddit {subRedditName}: {ex.Message}");
+                }
+            }
 
             Console.WriteLine("Reddit authed successfully");
         }
