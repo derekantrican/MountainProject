@@ -22,7 +22,7 @@ namespace MountainProjectBot
             { "mountainprojectbot", 500 },
             { "climbergirls", 200 },
             { "iceclimbing", 30 },
-            { "rockclimbing", 50 },
+            //{ "rockclimbing", 50 },
             { "tradclimbing", 100 },
         };
         public List<Subreddit> Subreddits = new List<Subreddit>();
