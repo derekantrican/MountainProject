@@ -22,7 +22,7 @@ namespace MountainProjectBot
             { "mountainprojectbot", 500 },
             { "climbergirls", 200 },
             { "iceclimbing", 30 },
-            { "rockclimbing", 50 },
+            //{ "rockclimbing", 50 },
             { "tradclimbing", 100 },
         };
         public List<Subreddit> Subreddits = new List<Subreddit>();
@@ -52,7 +52,16 @@ namespace MountainProjectBot
             redditService = new Reddit(webAgent, true);
 
             foreach (string subRedditName in subredditNamesAndCommentAmounts.Keys)
-                Subreddits.Add(await redditService.GetSubredditAsync(subRedditName));
+            {
+                try
+                {
+                    Subreddits.Add(await redditService.GetSubredditAsync(subRedditName));
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"Could not add subreddit {subRedditName}: {ex.Message}");
+                }
+            }
 
             Console.WriteLine("Reddit authed successfully");
         }
