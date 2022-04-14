@@ -138,7 +138,7 @@ namespace UnitTests
         [DataRow("/area/106558306/drop-area-horseshoe-area", "Drop (Horseshoe)")] //Remove "Area" both inside and outside parenthesis
         [DataRow("/area/107373214/turtle-rock-area-corridors-area", "Turtle Rock/ Corridors")] //Remove "Area" both before and after slash
         [DataRow("/route/107889066/redacted", "Bro's Before Holes")] //Parse redacted route name
-        [DataRow("/area/113166191/redacted", "Concentration Camp")] //Parse redacted area name
+        [DataRow("/area/109074699/redacted", "Whipping Post Boulder")] //Parse redacted area name
         public void TestNameParse(string url, string expectedName)
         {
             if (!Url.Contains(url, Utilities.MPBASEURL))
@@ -165,7 +165,7 @@ namespace UnitTests
         [DataRow("/route/111859673/side-dish", new[] { RouteType.Sport })]
         [DataRow("/route/109063052/geflugelfrikadelle", new[] { RouteType.Trad, RouteType.Aid })]
         [DataRow("/route/116650912/dark-crystal", new[] { RouteType.Trad, RouteType.Mixed, RouteType.Ice })] //Many Types
-        [DataRow("/route/110425910/birds-of-a-feather", new[] { RouteType.Sport, RouteType.TopRope })] //Top Rope
+        [DataRow("/route/110425917/deli-faction", new[] { RouteType.Sport, RouteType.TopRope })] //Top Rope
         public void TestRouteTypeParse(string url, RouteType[] expectedTypes)
         {
             if (!Url.Contains(url, Utilities.MPBASEURL))
