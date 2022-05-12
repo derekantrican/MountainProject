@@ -161,6 +161,7 @@ namespace MountainProjectBot
                         foreach (Exception innerException in aggregateException.InnerExceptions)
                         {
                             ConsoleHelper.Write($"Inner exception ({innerException.GetType()}: {innerException.Message}) thrown at \n\n{innerException.StackTrace}", ConsoleColor.Red);
+                            BotFunctions.MainLoopExceptions.Add((DateTime.Now, innerException));
                         }
                     }
 
@@ -168,6 +169,7 @@ namespace MountainProjectBot
                     if (IsInternetConnectionException(e))
                     {
                         Console.WriteLine($"\tIssue connecting to reddit: {e.Message}");
+                        BotFunctions.MainLoopExceptions.Add((DateTime.Now, e));
                     }
                     else //If it isn't one of the errors above, it might be more serious. So throw it to be caught as an unhandled exception
                     {

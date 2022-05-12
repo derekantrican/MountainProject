@@ -23,6 +23,7 @@ namespace MountainProjectBot
         public static ConcurrentDictionary<string, ApprovalRequest> PostsPendingApproval { get; set; } = new ConcurrentDictionary<string, ApprovalRequest>();
         public static bool DryRun { get; set; }
 
+        public static ConcurrentBag<(DateTime, Exception)> MainLoopExceptions = new ConcurrentBag<(DateTime, Exception)>(); //TEMP (see below workaround block)
         public static ConcurrentBag<string> ParentsWithDuplicates { get; set; } = new ConcurrentBag<string>(); //TEMP (see below workaround block)
         public static async Task CheckMonitoredComments()
         {
@@ -34,7 +35,17 @@ namespace MountainProjectBot
             foreach (IGrouping<string, Comment> duplicateComments in recentBotComments.GroupBy(c => c.ParentId).Where(g => g.Count() > 1 && !ParentsWithDuplicates.Contains(g.Key)))
             {
                 VotableThing parent = await RedditHelper.GetThing(duplicateComments.Key) as VotableThing;
-                BotUtilities.SendDiscordMessage($"There seem to be multiple replies ({duplicateComments.Count()}) to this parent: {RedditHelper.GetFullLink(parent.Permalink)}");
+
+                string discordMsg = $"There seem to be multiple replies ({duplicateComments.Count()}) to this parent: {RedditHelper.GetFullLink(parent.Permalink)}";
+
+                //Exceptions in the main loop can also cause duplicate comments (and we should work on resolving those)
+                Exception recentException = MainLoopExceptions.FirstOrDefault(e => (DateTime.Now - e.Item1).TotalSeconds < 60).Item2;
+                if (recentException != null)
+                {
+                    discordMsg += $"\n\nThere WAS a recent main loop exception: {recentException.Message}\n{recentException.StackTrace}";
+                }
+
+                BotUtilities.SendDiscordMessage(discordMsg);
                 ParentsWithDuplicates.Add(duplicateComments.Key);
                 //Todo: if this is found to be decently reliable, we should delete the duplicates automatically
             }
