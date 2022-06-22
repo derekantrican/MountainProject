@@ -8,4 +8,5 @@ REM Wait 3 seconds
 @timeout /t 3 /nobreak >nul
 
 REM Start up MountainProjectBot.exe again
+cd %~dp0
 @start bin\MountainProjectBot.exe xmlpath=..\MountainProjectDBBuilder\bin\MountainProjectAreas.xml repliedto=bin\RepliedTo.txt repliedtoposts=bin\RepliedToPosts.txt blacklisted=bin\BlacklistedUsers.txt >nul

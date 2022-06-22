@@ -48,7 +48,7 @@ namespace MountainProjectDBBuilder
             ConsoleHelper.WriteToAdditionalTarget(outputCapture);
 
             logPath = $"{DateTime.Now:yyyy.MM.dd.HH.mm.ss} Log.txt";
-            serializationPath = "MountainProjectAreas.xml";
+            serializationPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MountainProjectAreas.xml");
 
             ParseStartupArguments(args);
 
