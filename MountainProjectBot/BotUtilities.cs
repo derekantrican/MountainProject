@@ -31,7 +31,7 @@ namespace MountainProjectBot
         public static string WebServerURL = "";
         public static string ApprovalServerUrl
         {
-            get { return $"{(Debugger.IsAttached ? "http://localhost" : WebServerURL)}:{ApprovalServer.Port}"; }
+            get { return Debugger.IsAttached ? $"http://localhost:{ApprovalServer.Port}" : WebServerURL; }
         }
         public static Server ApprovalServer;
 
