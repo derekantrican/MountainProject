@@ -29,6 +29,8 @@ namespace MountainProjectBot
         private static string spreadsheetHistoryURL = "";
 
         public static string WebServerURL = "";
+        public static string WebServerUsername = "";
+        public static string WebServerPassword = "";
         public static string ApprovalServerUrl
         {
             get { return Debugger.IsAttached ? $"http://localhost:{ApprovalServer.Port}" : WebServerURL; }
@@ -110,6 +112,8 @@ namespace MountainProjectBot
             BotFunctions.RedditHelper.Auth(credentialsPath).Wait();
             requestForApprovalURL = GetCredentialValue(credentialsPath, "requestForApprovalURL");
             WebServerURL = GetCredentialValue(credentialsPath, "webServerURL");
+            WebServerUsername = GetCredentialValue(credentialsPath, "webServerUsername");
+            WebServerPassword = GetCredentialValue(credentialsPath, "webServerPassword");
             spreadsheetHistoryURL = GetCredentialValue(credentialsPath, "spreadsheetURL");
 
             //Start approval server
@@ -157,6 +161,12 @@ namespace MountainProjectBot
                 request.Timeout = 3000;
                 request.AllowAutoRedirect = false;
                 request.Method = "HEAD";
+
+                if (!string.IsNullOrEmpty(WebServerUsername))
+                {
+                    byte[] authBytes = Encoding.GetEncoding("UTF-8").GetBytes($"{WebServerUsername}:{WebServerPassword}");
+                    request.Headers.Add("Authorization", $"Basic {Convert.ToBase64String(authBytes)}");
+                }
 
                 using (var response = request.GetResponse())
                 {
