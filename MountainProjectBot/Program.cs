@@ -195,10 +195,10 @@ namespace MountainProjectBot
         private static bool alerted = false;
         private static void ApprovalServerStatusCheck()
         {
-            bool serverUp = BotUtilities.PingUrl($"{BotUtilities.ApprovalServerUrl}?status");
+            bool serverUp = BotUtilities.PingUrl($"{BotUtilities.ApprovalServerUrl}?status", out Exception ex);
             if (!serverUp && !alerted)
             {
-                BotUtilities.SendDiscordMessage("Approval server is down (ping timed out)\nAttempting to restart...");
+                BotUtilities.SendDiscordMessage($"Approval server is down ({ex.GetType()}: {ex.Message})\nAttempting to restart...");
                 alerted = true;
 
                 BotUtilities.ApprovalServer.Restart();

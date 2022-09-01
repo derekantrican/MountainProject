@@ -148,8 +148,9 @@ namespace MountainProjectBot
             return result;
         }
 
-        public static bool PingUrl(string url)
+        public static bool PingUrl(string url, out Exception ex)
         {
+            ex = null;
             try
             {
                 HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
@@ -162,8 +163,9 @@ namespace MountainProjectBot
                     return true;
                 }
             }
-            catch
+            catch (Exception exception)
             {
+                ex = exception;
                 return false;
             }
         }
