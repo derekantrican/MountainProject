@@ -14,6 +14,9 @@ using Base;
 using System.Collections.Concurrent;
 using System.Threading;
 using Newtonsoft.Json;
+using AngleSharp.Dom;
+using AngleSharp.Html.Dom;
+using System.Text.RegularExpressions;
 
 namespace MountainProjectDBBuilder
 {
@@ -62,6 +65,10 @@ namespace MountainProjectDBBuilder
                     ParseInputString();
                     break;
                 case Mode.DownloadFile:
+                    //Todo: download XML
+                    break;
+                case Mode.Benchmark:
+                    RunBenchmark();
                     break;
             }
         }
@@ -110,7 +117,7 @@ namespace MountainProjectDBBuilder
                     },
                     {
                         "benchmark",
-                        "Run back-to-back benchmark test",
+                        "Run benchmark test (only parse Alabama and write out a stats file)",
                         (arg) => { programMode = Mode.Benchmark; }
                     }
                 };
@@ -405,6 +412,84 @@ namespace MountainProjectDBBuilder
             using (GoogleDriveDownloader downloader = new GoogleDriveDownloader())
             {
                 downloader.DownloadFile(fileUrl, serializationPath);
+            }
+        }
+
+        private static void RunBenchmark()
+        {
+            try
+            {
+                totalTimer.Start();
+                Console.WriteLine("Starting benchmark...");
+
+                Parsers.TotalTimer = totalTimer;
+
+                //Get total number of routes in Alabama (copied from Parsers.GetTargetTotalRoutes() & tweaked)
+                IHtmlDocument doc = Utilities.GetHtmlDoc(Utilities.ALLLOCATIONSURL);
+                IElement element = doc.GetElementById("route-guide").GetElementsByTagName("a").FirstOrDefault(x => x.TextContent.Contains("Alabama"));
+                element = element.ParentElement.FirstElementChild;
+
+                Parsers.TargetTotalRoutes = int.Parse(Regex.Match(element.TextContent.Replace(",", ""), @"\d+").Value);
+
+                //No particular reason we're using Alabama. It's a good size - not a tiny area (like Delaware) and not huge (like California). Also happens to be first in the list.
+                Area alabama = Parsers.GetDestAreas().FirstOrDefault(area => area.ID == "105905173");
+
+                Parsers.ParseAreaAsync(alabama).Wait();
+
+                totalTimer.Stop();
+                Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
+                Console.WriteLine();
+                Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
+
+                SendReport($"MountainProjectDBBuilder benchmark completed SUCCESSFULLY in {totalTimer.Elapsed}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
+            }
+            catch (Exception ex)
+            {
+                string exceptionString = "";
+                if (ex is AggregateException aggregateException)
+                {
+                    foreach (Exception innerException in aggregateException.InnerExceptions)
+                    {
+                        if (innerException is ParseException parseException)
+                        {
+                            ParseException innerMostParseException = parseException.GetInnermostParseException();
+                            exceptionString += $"FAILING MPOBJECT: {innerMostParseException.RelatedObject.URL}\n";
+                            exceptionString += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
+                            exceptionString += $"STACK TRACE: {innerMostParseException.InnerException?.StackTrace}\n\n";
+                        }
+                        else
+                        {
+                            exceptionString += $"EXCEPTION MESSAGE: {innerException?.Message}\n";
+                            exceptionString += $"STACK TRACE: {innerException?.StackTrace}\n\n";
+                        }
+                    }
+                }
+                else
+                {
+                    if (ex is ParseException parseException)
+                    {
+                        ParseException innerMostParseException = parseException.GetInnermostParseException();
+                        exceptionString += $"FAILING MPOBJECT: {innerMostParseException.RelatedObject.URL}\n";
+                        exceptionString += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
+                        exceptionString += $"STACK TRACE: {innerMostParseException.InnerException?.StackTrace}\n";
+                    }
+                    else
+                    {
+                        exceptionString += $"EXCEPTION MESSAGE: {ex?.Message}\n";
+                        exceptionString += $"INNER EXCEPTION: {ex?.InnerException?.Message}\n";
+                        exceptionString += $"STACK TRACE: {ex?.StackTrace}\n";
+                    }
+                }
+
+                Console.WriteLine(Environment.NewLine + Environment.NewLine);
+                Console.WriteLine("!!!-------------EXCEPTION ENCOUNTERED-------------!!!");
+                Console.WriteLine(exceptionString);
+                SendReport($"MountainProjectDBBuilder benchmark completed WITH ERRORS in {totalTimer.Elapsed}", exceptionString);
+            }
+            finally
+            {
+                File.AppendAllText(logPath, outputCapture.ToString());
+                outputCapture.Dispose();
             }
         }
 
