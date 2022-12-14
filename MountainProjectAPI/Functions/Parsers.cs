@@ -80,7 +80,7 @@ namespace MountainProjectAPI
                 List<IElement> htmlSubAreas = new List<IElement>();
                 using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL))
                 {
-                    string redactedName = await TryGetRedactedName(doc, inputArea.ID);
+                    string redactedName = await TryGetRedactedName(doc, inputArea.ID, "Area");
                     if (!string.IsNullOrEmpty(redactedName))
                     {
                         inputArea.Name = redactedName;
@@ -222,7 +222,7 @@ namespace MountainProjectAPI
 
                 using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL))
                 {
-                    string redactedName = await TryGetRedactedName(doc, inputRoute.ID);
+                    string redactedName = await TryGetRedactedName(doc, inputRoute.ID, "Route");
                     if (!string.IsNullOrEmpty(redactedName))
                     {
                         inputRoute.Name = redactedName;
@@ -434,9 +434,9 @@ namespace MountainProjectAPI
         #endregion Parse Route
 
         #region Common Parse Methods
-        public static async Task<string> TryGetRedactedName(IHtmlDocument doc, string currentId)
+        public static async Task<string> TryGetRedactedName(IHtmlDocument doc, string currentId, string objectType)
         {
-            string redactedLink = $"{Utilities.MPBASEURL}/object/updates/{currentId}/redacted";
+            string redactedLink = $"{Utilities.MPBASEURL}/updates/Climb-Lib-Models-{objectType}/{currentId}/redacted";
             IElement redactedLinkElement = doc.GetElementsByTagName("a").FirstOrDefault(p => p.Attributes["href"] != null && Url.Contains(p.Attributes["href"].Value, redactedLink) &&
                 p.GetElementsByTagName("img").FirstOrDefault(i => i.Attributes["data-original-title"] != null && i.Attributes["data-original-title"].Value == "The original name has been redacted. Click for more info.") != null);
             if (redactedLinkElement != null)
