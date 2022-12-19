@@ -158,7 +158,7 @@ namespace MountainProjectAPI
                     catch (Exception ex)
                     {
                         //Follow redirects
-                        if (ex is WebException webEx)
+                        if (ex is WebException webEx && webEx.Response != null)
                         {
                             url = GetRedirectUrlFromResponse(url, webEx.Response as HttpWebResponse);
                         }
