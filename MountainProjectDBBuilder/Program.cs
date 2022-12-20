@@ -12,7 +12,6 @@ using System.Xml;
 using System.ServiceModel.Syndication;
 using Base;
 using System.Collections.Concurrent;
-using System.Threading;
 using Newtonsoft.Json;
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
@@ -223,64 +222,13 @@ namespace MountainProjectDBBuilder
 
         private static void BuildDB()
         {
-            try
+            RunAndCatchBuildIssues("DB Build", () =>
             {
-                totalTimer.Start();
-                Console.WriteLine("Starting DB Build...");
-
                 if (!buildAll && File.Exists(serializationPath))
                     AddNewItems();
                 else
                     BuildFullDB();
-            }
-            catch (Exception ex)
-            {
-                string exceptionString = "";
-                if (ex is AggregateException aggregateException)
-                {
-                    foreach (Exception innerException in aggregateException.InnerExceptions)
-                    {
-                        if (innerException is ParseException parseException)
-                        {
-                            ParseException innerMostParseException = parseException.GetInnermostParseException();
-                            exceptionString += $"FAILING MPOBJECT: {innerMostParseException.RelatedObject.URL}\n";
-                            exceptionString += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
-                            exceptionString += $"STACK TRACE: {innerMostParseException.InnerException?.StackTrace}\n\n";
-                        }
-                        else
-                        {
-                            exceptionString += $"EXCEPTION MESSAGE: {innerException?.Message}\n";
-                            exceptionString += $"STACK TRACE: {innerException?.StackTrace}\n\n";
-                        }
-                    }
-                }
-                else
-                {
-                    if (ex is ParseException parseException)
-                    {
-                        ParseException innerMostParseException = parseException.GetInnermostParseException();
-                        exceptionString += $"FAILING MPOBJECT: {innerMostParseException.RelatedObject.URL}\n";
-                        exceptionString += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
-                        exceptionString += $"STACK TRACE: {innerMostParseException.InnerException?.StackTrace}\n";
-                    }
-                    else
-                    {
-                        exceptionString += $"EXCEPTION MESSAGE: {ex?.Message}\n";
-                        exceptionString += $"INNER EXCEPTION: {ex?.InnerException?.Message}\n";
-                        exceptionString += $"STACK TRACE: {ex?.StackTrace}\n";
-                    }
-                }
-
-                Console.WriteLine(Environment.NewLine + Environment.NewLine);
-                Console.WriteLine("!!!-------------EXCEPTION ENCOUNTERED-------------!!!");
-                Console.WriteLine(exceptionString);
-                SendReport($"MountainProjectDBBuilder completed WITH ERRORS in {totalTimer.Elapsed}", exceptionString);
-            }
-            finally
-            {
-                File.AppendAllText(logPath, outputCapture.ToString());
-                outputCapture.Dispose();
-            }
+            });
         }
 
         private static void BuildFullDB()
@@ -417,13 +365,8 @@ namespace MountainProjectDBBuilder
 
         private static void RunBenchmark()
         {
-            try
+            RunAndCatchBuildIssues("benchmark", () =>
             {
-                totalTimer.Start();
-                Console.WriteLine("Starting benchmark...");
-
-                Parsers.TotalTimer = totalTimer;
-
                 //Get total number of routes in Alabama (copied from Parsers.GetTargetTotalRoutes() & tweaked)
                 IHtmlDocument doc = Utilities.GetHtmlDoc(Utilities.ALLLOCATIONSURL);
                 IElement element = doc.GetElementById("route-guide").GetElementsByTagName("a").FirstOrDefault(x => x.TextContent.Contains("Alabama"));
@@ -442,6 +385,19 @@ namespace MountainProjectDBBuilder
                 Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
 
                 SendReport($"MountainProjectDBBuilder benchmark completed SUCCESSFULLY in {totalTimer.Elapsed}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
+            });
+        }
+
+        private static void RunAndCatchBuildIssues(string name, Action buildAction)
+        {
+            try
+            {
+                totalTimer.Start();
+                Console.WriteLine($"Starting {name}...");
+
+                Parsers.TotalTimer = totalTimer;
+
+                buildAction();
             }
             catch (Exception ex)
             {
@@ -484,7 +440,7 @@ namespace MountainProjectDBBuilder
                 Console.WriteLine(Environment.NewLine + Environment.NewLine);
                 Console.WriteLine("!!!-------------EXCEPTION ENCOUNTERED-------------!!!");
                 Console.WriteLine(exceptionString);
-                SendReport($"MountainProjectDBBuilder benchmark completed WITH ERRORS in {totalTimer.Elapsed}", exceptionString);
+                SendReport($"MountainProjectDBBuilder {name} completed WITH ERRORS in {totalTimer.Elapsed}", exceptionString);
             }
             finally
             {
