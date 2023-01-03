@@ -129,6 +129,28 @@ namespace MountainProjectAPI
             public string RemainingInputString { get; set; }
             public Dictionary<Tuple<bool, bool, bool>, List<Area>> FoundParents { get; set; } = new Dictionary<Tuple<bool, bool, bool>, List<Area>>();
         }
+
+        //Todo: these are all "single word named routes" - maybe this should be a keyword list instead? (would be more resilient against future routes with the same names)
+        private static HashSet<string> routeIdsBlacklistedFromHighConfidence = new HashSet<string>
+        {
+            "121406929", //Wasn't
+            "114301501", //Today
+            "117320702", //Slabby
+            "113653379", //Phoenix
+            "113278557", //Philly
+            "110856267", //Bishop
+            "105751387", //Finally
+            "105980855", //Finally
+            "119484798", //COVID-19
+            "109127875", //Halloween
+            "105725269", //Perhaps
+            "112861861", //Colorado
+            "108344631", //Alpine
+            "117967143", //Thanks
+            "105755206", //Fatal
+            "114093792", //Feelings
+        };
+
         public static SearchResult ParseRouteFromString(string inputString)
         {
             Stopwatch stopwatch = Stopwatch.StartNew();
@@ -228,7 +250,12 @@ namespace MountainProjectAPI
                 string unconfidentReason = null;
                 if (filteredResults.Count == 1)
                 {
-                    if (ParentsInString(filteredResults.First(), true).Any() ||
+                    if (routeIdsBlacklistedFromHighConfidence.Contains(filteredResults.First().Route.ID))
+                    {
+                        confidence = medConfidence; //Never higher than medium confidence if it is a common mismatch
+                        unconfidentReason = "Common mismatch";
+                    }
+                    else if (ParentsInString(filteredResults.First(), true).Any() ||
                         Grade.ParseString(inputString, false).Any(g => filteredResults.First().Route.Grades.Any(p => g.Equals(p))))
                         confidence = highConfidence; //Highest confidence when we also match a location in the string or if we match a full grade
                     else
