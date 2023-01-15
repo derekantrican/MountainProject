@@ -16,6 +16,9 @@ using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using System.Text.RegularExpressions;
 using CommandLine;
+using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Net.Http.Json;
 
 namespace MountainProjectDBBuilder
 {
@@ -36,8 +39,9 @@ namespace MountainProjectDBBuilder
 
     class Program
     {
-        private static string serializationPath;
-        private static string logPath;
+        private static string serializationPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MountainProjectAreas.xml");
+        private static string settingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.txt");
+        private static string logPath = $"{DateTime.Now:yyyy.MM.dd.HH.mm.ss} Log.txt";
         private static readonly StringWriter outputCapture = new StringWriter();
         private static readonly Stopwatch totalTimer = new Stopwatch();
         private static Mode programMode = Mode.None;
@@ -48,9 +52,6 @@ namespace MountainProjectDBBuilder
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             ConsoleHelper.WriteToAdditionalTarget(outputCapture);
-
-            logPath = $"{DateTime.Now:yyyy.MM.dd.HH.mm.ss} Log.txt";
-            serializationPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MountainProjectAreas.xml");
 
             new Parser(p => p.CaseInsensitiveEnumValues = true).ParseArguments<Options>(args).WithParsed(o =>
             {
@@ -221,6 +222,7 @@ namespace MountainProjectDBBuilder
             SerializeResults(destAreas);
 
             SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
+            LogParseTime($"Full Build", totalTimer.Elapsed);
         }
 
         private static void AddNewItems()
@@ -354,6 +356,7 @@ namespace MountainProjectDBBuilder
                 Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
 
                 SendReport($"[NET{Environment.Version.Major}] MountainProjectDBBuilder benchmark completed SUCCESSFULLY in {totalTimer.Elapsed}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
+                LogParseTime($"NET{Environment.Version.Major} benchmark", totalTimer.Elapsed);
             });
         }
 
@@ -437,27 +440,56 @@ namespace MountainProjectDBBuilder
 
         private static void SendReport(string subject, string message)
         {
-            if (File.Exists("settings.txt"))
+            if (File.Exists(settingsPath))
             {
                 try
                 {
                     Console.WriteLine("[SendReport] Sending report");
-                    string url = Settings.ReadSettingValue("settings.txt", "reportUrl");
+                    string url = Settings.ReadSettingValue(settingsPath, "reportUrl");
                     url += $"subjectonly={Uri.EscapeDataString(subject)}&messageonly={Uri.EscapeDataString(message)}";
 
-                    HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(url);
-                    httpRequest.AutomaticDecompression = DecompressionMethods.GZip;
-
-                    using (HttpWebResponse webResponse = (HttpWebResponse)httpRequest.GetResponse())
-                    using (Stream stream = webResponse.GetResponseStream())
-                    using (StreamReader reader = new StreamReader(stream))
+                    using (HttpClient client = new HttpClient())
                     {
-                        string response = reader.ReadToEnd();
+                        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
+                        client.Send(request);
                     }
                 }
                 catch (Exception ex)
                 {
                     Console.WriteLine("[SendReport] Could not send email: " + ex.Message);
+                }
+            }
+        }
+
+        private static void LogParseTime(string sheetName, TimeSpan timeSpan)
+        {
+            if (File.Exists(settingsPath))
+            {
+                try
+                {
+                    Console.WriteLine("[LogParseTime] Logging parse time");
+                    string url = Settings.ReadSettingValue(settingsPath, "dataLogUrl");
+                    url += $"/{sheetName}";
+
+                    using (HttpClient client = new HttpClient())
+                    {
+                        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url);
+                        request.Headers.Authorization = new AuthenticationHeaderValue("Basic", Settings.ReadSettingValue(settingsPath, "dataLogAuth"));
+                        request.Content = JsonContent.Create(new
+                        {
+                            values = new[]
+                            {
+                                DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss"),
+                                timeSpan.ToString(),
+                            },
+                        });
+
+                        client.Send(request);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine("[LogParseTime] Could not log time: " + ex.Message);
                 }
             }
         }
