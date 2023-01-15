@@ -38,7 +38,7 @@ namespace MountainProjectBot
         public static Server ApprovalServer;
 
         #region Init
-        public static void ParseCommandLineArguments(string[] args)
+        public static void ParseCommandLineArguments(string[] args) //Todo: use CommandLineParser package
         {
             if (args.FirstOrDefault(p => p.Contains("xmlpath=")) != null)
                 xmlPath = args.FirstOrDefault(p => p.Contains("xmlpath=")).Split('=')[1];
@@ -110,11 +110,11 @@ namespace MountainProjectBot
 
             BotFunctions.RedditHelper = new RedditHelper();
             BotFunctions.RedditHelper.Auth(credentialsPath).Wait();
-            requestForApprovalURL = GetCredentialValue(credentialsPath, "requestForApprovalURL");
-            WebServerURL = GetCredentialValue(credentialsPath, "webServerURL");
-            WebServerUsername = GetCredentialValue(credentialsPath, "webServerUsername");
-            WebServerPassword = GetCredentialValue(credentialsPath, "webServerPassword");
-            spreadsheetHistoryURL = GetCredentialValue(credentialsPath, "spreadsheetURL");
+            requestForApprovalURL = Settings.ReadSettingValue(credentialsPath, "requestForApprovalURL");
+            WebServerURL = Settings.ReadSettingValue(credentialsPath, "webServerURL");
+            WebServerUsername = Settings.ReadSettingValue(credentialsPath, "webServerUsername");
+            WebServerPassword = Settings.ReadSettingValue(credentialsPath, "webServerPassword");
+            spreadsheetHistoryURL = Settings.ReadSettingValue(credentialsPath, "spreadsheetURL");
 
             //Start approval server
             ApprovalServer = new Server(9999)
@@ -122,12 +122,6 @@ namespace MountainProjectBot
                 HandleRequest = ApprovalServerRequestHandler.HandleRequest
             };
             ApprovalServer.Start();
-        }
-
-        public static string GetCredentialValue(string filePath, string credential)
-        {
-            List<string> fileLines = File.ReadAllLines(filePath).ToList();
-            return fileLines.FirstOrDefault(p => p.StartsWith(credential)).Split(new[] { ':' }, 2)[1]; //Split on first occurence only because requestForApprovalURL also contains ':'
         }
         #endregion Init
 

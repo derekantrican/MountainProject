@@ -1,4 +1,5 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Base;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MountainProjectAPI;
 using MountainProjectBot;
 using System;
@@ -235,7 +236,7 @@ namespace UnitTests
             string[] testCriteria;
             if (isGoogleSheetsTest)
             {
-                string requestUrl = BotUtilities.GetCredentialValue(@"..\..\MountainProjectBot\Credentials.txt", "spreadsheetURL") + "PostHistory";
+                string requestUrl = Settings.ReadSettingValue(@"..\..\MountainProjectBot\Credentials.txt", "spreadsheetURL") + "PostHistory";
                 testCriteria = Utilities.GetHtml(requestUrl).Split('\n');
             }
             else

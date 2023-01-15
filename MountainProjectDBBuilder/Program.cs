@@ -353,7 +353,7 @@ namespace MountainProjectDBBuilder
                 Console.WriteLine();
                 Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
 
-                SendReport($"MountainProjectDBBuilder benchmark completed SUCCESSFULLY in {totalTimer.Elapsed}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
+                SendReport($"[NET{Environment.Version.Major}] MountainProjectDBBuilder benchmark completed SUCCESSFULLY in {totalTimer.Elapsed}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
             });
         }
 
@@ -437,25 +437,28 @@ namespace MountainProjectDBBuilder
 
         private static void SendReport(string subject, string message)
         {
-            try
+            if (File.Exists("settings.txt"))
             {
-                Console.WriteLine("[SendReport] Sending report");
-                string url = @"https://script.google.com/macros/s/AKfycbzSbnYebCUPam1CkMgkD65LzTF_EQIbxFAGBeSZpqS4Shg36m8/exec?";
-                url += $"subjectonly={Uri.EscapeDataString(subject)}&messageonly={Uri.EscapeDataString(message)}";
-
-                HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(url);
-                httpRequest.AutomaticDecompression = DecompressionMethods.GZip;
-
-                using (HttpWebResponse webResponse = (HttpWebResponse)httpRequest.GetResponse())
-                using (Stream stream = webResponse.GetResponseStream())
-                using (StreamReader reader = new StreamReader(stream))
+                try
                 {
-                    string response = reader.ReadToEnd();
+                    Console.WriteLine("[SendReport] Sending report");
+                    string url = Settings.ReadSettingValue("settings.txt", "reportUrl");
+                    url += $"subjectonly={Uri.EscapeDataString(subject)}&messageonly={Uri.EscapeDataString(message)}";
+
+                    HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(url);
+                    httpRequest.AutomaticDecompression = DecompressionMethods.GZip;
+
+                    using (HttpWebResponse webResponse = (HttpWebResponse)httpRequest.GetResponse())
+                    using (Stream stream = webResponse.GetResponseStream())
+                    using (StreamReader reader = new StreamReader(stream))
+                    {
+                        string response = reader.ReadToEnd();
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine("[SendReport] Could not send email: " + ex.Message);
+                catch (Exception ex)
+                {
+                    Console.WriteLine("[SendReport] Could not send email: " + ex.Message);
+                }
             }
         }
     }
