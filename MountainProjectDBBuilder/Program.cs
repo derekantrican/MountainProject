@@ -6,7 +6,6 @@ using System.Net;
 using System.Diagnostics;
 using System.Xml.Serialization;
 using System.Threading.Tasks;
-using Mono.Options;
 using MountainProjectAPI;
 using System.Xml;
 using System.ServiceModel.Syndication;
@@ -16,6 +15,7 @@ using Newtonsoft.Json;
 using AngleSharp.Dom;
 using AngleSharp.Html.Dom;
 using System.Text.RegularExpressions;
+using CommandLine;
 
 namespace MountainProjectDBBuilder
 {
@@ -52,7 +52,33 @@ namespace MountainProjectDBBuilder
             logPath = $"{DateTime.Now:yyyy.MM.dd.HH.mm.ss} Log.txt";
             serializationPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MountainProjectAreas.xml");
 
-            ParseStartupArguments(args);
+            new Parser(p => p.CaseInsensitiveEnumValues = true).ParseArguments<Options>(args).WithParsed(o =>
+            {
+                fileType = o.FileType;
+
+                if (o.OnlyNew)
+                {
+                    buildAll = false;
+                }
+
+                if (o.Build)
+                {
+                    programMode = Mode.BuildDB;
+                }
+                else if (o.Parse)
+                {
+                    programMode = Mode.Parse;
+                }
+                else if (o.Benchmark)
+                {
+                    programMode = Mode.Benchmark;
+                }
+                else if (!string.IsNullOrEmpty(o.DownloadUrl))
+                {
+                    DownloadGoogleDriveFileFromUrl(o.DownloadUrl);
+                    Environment.Exit(0);
+                }
+            });
 
             switch (programMode)
             {
@@ -63,76 +89,19 @@ namespace MountainProjectDBBuilder
                 case Mode.Parse:
                     ParseInputString();
                     break;
-                case Mode.DownloadFile:
-                    //Todo: download XML
-                    break;
                 case Mode.Benchmark:
                     RunBenchmark();
                     break;
             }
         }
 
-        private static void ParseStartupArguments(string[] args)
-        {
-            if (args.Length > 0)
-            {
-                bool help = false;
-
-                var p = new OptionSet() //Todo: should implement better cmd arg parsing like https://github.com/commandlineparser/commandline
-                {
-                    {
-                        "h|help|?",
-                        "Show help",
-                        v => help = v != null
-                    },
-                    {
-                        "build",
-                        "Build xml from MountainProject",
-                        (arg) => { programMode = Mode.BuildDB; }
-                    },
-                    {
-                        "parse",
-                        "Parse an input string",
-                        (arg) => { programMode = Mode.Parse; }
-                    },
-                    {
-                        "filetype=",
-                        "File type to serialize as (xml or json - xml is default)",
-                        (arg) => { fileType = (FileType)Enum.Parse(typeof(FileType), arg); }
-                    },
-                    {
-                        "onlyNew",
-                        "Only add new items since the last time the database was built",
-                        (arg) => { buildAll = false; }
-                    },
-                    {
-                        "download=",
-                        "Download xml file from Google Drive",
-                        (arg) =>
-                        {
-                            DownloadGoogleDriveFileFromUrl(arg);
-                            Environment.Exit(0);
-                        }
-                    },
-                    {
-                        "benchmark",
-                        "Run benchmark test (only parse Alabama and write out a stats file)",
-                        (arg) => { programMode = Mode.Benchmark; }
-                    }
-                };
-
-                p.Parse(args);
-                if (help)
-                {
-                    p.WriteOptionDescriptions(Console.Out);
-                    Environment.Exit(0);
-                }
-            }
-        }
-
         private static void ParseInputString()
         {
-            MountainProjectDataSearch.InitMountainProjectData(serializationPath);
+            if (File.Exists(serializationPath))
+            {
+                MountainProjectDataSearch.InitMountainProjectData(serializationPath);
+            }
+
             if (MountainProjectDataSearch.DestAreas.Count() == 0)
             {
                 Console.WriteLine("The xml either doesn't exist or is empty");
