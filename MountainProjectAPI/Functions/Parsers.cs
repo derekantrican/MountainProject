@@ -72,13 +72,13 @@ namespace MountainProjectAPI
         #region Parse Area
         public static async Task ParseAreaAsync(Area inputArea, bool recursive = true, bool consoleMessages = true)
         {
-            try
-            {
-                Stopwatch areaStopwatch = Stopwatch.StartNew();
+            Stopwatch areaStopwatch = Stopwatch.StartNew();
 
-                List<IElement> htmlRoutes = new List<IElement>();
-                List<IElement> htmlSubAreas = new List<IElement>();
-                using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL))
+            List<IElement> htmlRoutes = new List<IElement>();
+            List<IElement> htmlSubAreas = new List<IElement>();
+            using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL))
+            {
+                try
                 {
                     string redactedName = await TryGetRedactedName(doc, inputArea.ID, "Area");
                     if (!string.IsNullOrEmpty(redactedName))
@@ -113,48 +113,49 @@ namespace MountainProjectAPI
                     htmlSubAreas = doc.GetElementsByTagName("a").Where(p => p.ParentElement.ParentElement.ParentElement == leftColumnDiv).ToList();
                     htmlSubAreas.RemoveAll(p => p.ParentElement.ParentElement.Attributes["id"] != null && p.ParentElement.ParentElement.Attributes["id"].Value == "nearbyMTBRides");
                     htmlSubAreas.RemoveAll(p => !Url.Contains(p.Attributes["href"].Value, Utilities.MPBASEURL));
-                }
 
-                //Populate route details
-                foreach (IElement routeElement in htmlRoutes)
-                {
-                    string routeUrl = routeElement.Attributes["href"].Value;
-                    Route route = new Route(routeElement.TextContent, Utilities.GetID(routeUrl));
-                    route.URL = routeUrl;
-                    inputArea.Routes.Add(route);
-                    TotalRoutes++;
-
-                    await ParseRouteAsync(route, consoleMessages); //Parse route
-                }
-
-                //Populate sub area details
-                foreach (IElement areaElement in htmlSubAreas)
-                {
-                    string areaUrl = areaElement.Attributes["href"].Value;
-                    Area subArea = new Area()
+                    //Populate route details
+                    foreach (IElement routeElement in htmlRoutes)
                     {
-                        ID = Utilities.GetID(areaUrl),
-                        URL = areaUrl,
-                    };
+                        string routeUrl = routeElement.Attributes["href"].Value;
+                        Route route = new Route(routeElement.TextContent, Utilities.GetID(routeUrl));
+                        route.URL = routeUrl;
+                        inputArea.Routes.Add(route);
+                        TotalRoutes++;
 
-                    inputArea.SubAreas.Add(subArea);
-                    TotalAreas++;
-
-                    if (recursive)
-                    {
-                        await ParseAreaAsync(subArea, consoleMessages: consoleMessages); //Parse sub area
+                        await ParseRouteAsync(route, consoleMessages); //Parse route
                     }
-                }
 
-                if (consoleMessages)
-                    Console.WriteLine($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
-            }
-            catch (Exception ex)
-            {
-                throw new ParseException($"Failed to parse area with id {inputArea?.ID}", ex)
+                    //Populate sub area details
+                    foreach (IElement areaElement in htmlSubAreas)
+                    {
+                        string areaUrl = areaElement.Attributes["href"].Value;
+                        Area subArea = new Area()
+                        {
+                            ID = Utilities.GetID(areaUrl),
+                            URL = areaUrl,
+                        };
+
+                        inputArea.SubAreas.Add(subArea);
+                        TotalAreas++;
+
+                        if (recursive)
+                        {
+                            await ParseAreaAsync(subArea, consoleMessages: consoleMessages); //Parse sub area
+                        }
+                    }
+
+                    if (consoleMessages)
+                        Console.WriteLine($"Done with Area: {inputArea.Name} ({areaStopwatch.Elapsed}). {htmlRoutes.Count} routes, {htmlSubAreas.Count} subareas");
+                }
+                catch (Exception ex)
                 {
-                    RelatedObject = inputArea,
-                };
+                    throw new ParseException($"Failed to parse area with id {inputArea?.ID}", ex)
+                    {
+                        RelatedObject = inputArea,
+                        Html = doc.ToString(),
+                    };
+                }
             }
         }
 
@@ -213,14 +214,14 @@ namespace MountainProjectAPI
         #region Parse Route
         public static async Task ParseRouteAsync(Route inputRoute, bool consoleMessages = true)
         {
-            try
+            if (consoleMessages)
+                Console.WriteLine($"Current Route: {inputRoute.Name}");
+
+            Stopwatch routeStopwatch = Stopwatch.StartNew();
+
+            using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL))
             {
-                if (consoleMessages)
-                    Console.WriteLine($"Current Route: {inputRoute.Name}");
-
-                Stopwatch routeStopwatch = Stopwatch.StartNew();
-
-                using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL))
+                try
                 {
                     string redactedName = await TryGetRedactedName(doc, inputRoute.ID, "Route");
                     if (!string.IsNullOrEmpty(redactedName))
@@ -244,26 +245,27 @@ namespace MountainProjectAPI
                     inputRoute.Height = ParseRouteHeight(ref additionalInfo);
                     inputRoute.AdditionalInfo = additionalInfo;
                     inputRoute.ParentIDs = GetParentIDs(doc);
-                }
 
-                if (consoleMessages)
-                {
-                    Console.WriteLine($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
-
-                    if (TotalTimer != null && !double.IsNaN(Progress))
+                    if (consoleMessages)
                     {
-                        long elapsedMS = TotalTimer.ElapsedMilliseconds;
-                        TimeSpan estTimeRemaining = TimeSpan.FromMilliseconds((elapsedMS / Progress) - elapsedMS);
-                        ConsoleHelper.RecordProgress(Progress, estTimeRemaining);
+                        Console.WriteLine($"Done with Route: {inputRoute.Name} ({routeStopwatch.Elapsed})");
+
+                        if (TotalTimer != null && !double.IsNaN(Progress))
+                        {
+                            long elapsedMS = TotalTimer.ElapsedMilliseconds;
+                            TimeSpan estTimeRemaining = TimeSpan.FromMilliseconds((elapsedMS / Progress) - elapsedMS);
+                            ConsoleHelper.RecordProgress(Progress, estTimeRemaining);
+                        }
                     }
                 }
-            }
-            catch (Exception ex)
-            {
-                throw new ParseException($"Failed to parse area with id {inputRoute?.ID}", ex)
+                catch (Exception ex)
                 {
-                    RelatedObject = inputRoute,
-                };
+                    throw new ParseException($"Failed to parse area with id {inputRoute?.ID}", ex)
+                    {
+                        RelatedObject = inputRoute,
+                        Html = doc.ToString(),
+                    };
+                }
             }
         }
 

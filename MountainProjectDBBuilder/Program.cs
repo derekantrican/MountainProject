@@ -384,6 +384,8 @@ namespace MountainProjectDBBuilder
                             exceptionString += $"FAILING MPOBJECT: {innerMostParseException.RelatedObject.URL}\n";
                             exceptionString += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
                             exceptionString += $"STACK TRACE: {innerMostParseException.InnerException?.StackTrace}\n\n";
+
+                            File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"Failing Object ({innerMostParseException.RelatedObject.ID}).html"), innerMostParseException.Html);
                         }
                         else
                         {
@@ -400,6 +402,8 @@ namespace MountainProjectDBBuilder
                         exceptionString += $"FAILING MPOBJECT: {innerMostParseException.RelatedObject.URL}\n";
                         exceptionString += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
                         exceptionString += $"STACK TRACE: {innerMostParseException.InnerException?.StackTrace}\n";
+
+                        File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"Failing Object ({innerMostParseException.RelatedObject.ID}).html"), innerMostParseException.Html);
                     }
                     else
                     {
