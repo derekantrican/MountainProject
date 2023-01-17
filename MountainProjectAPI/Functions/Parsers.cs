@@ -153,7 +153,7 @@ namespace MountainProjectAPI
                     throw new ParseException($"Failed to parse area with id {inputArea?.ID}", ex)
                     {
                         RelatedObject = inputArea,
-                        Html = doc.ToString(),
+                        Html = doc.Source.Text,
                     };
                 }
             }
@@ -263,7 +263,7 @@ namespace MountainProjectAPI
                     throw new ParseException($"Failed to parse area with id {inputRoute?.ID}", ex)
                     {
                         RelatedObject = inputRoute,
-                        Html = doc.ToString(),
+                        Html = doc.Source.Text,
                     };
                 }
             }
