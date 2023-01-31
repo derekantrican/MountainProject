@@ -1,5 +1,7 @@
-﻿using AngleSharp.Html.Dom;
+﻿using AngleSharp.Dom;
+using AngleSharp.Html.Dom;
 using AngleSharp.Html.Parser;
+using Base;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -191,7 +193,7 @@ namespace MountainProjectAPI
             return parser.ParseDocument(GetHtml(url));
         }
 
-        public static async Task<IHtmlDocument> GetHtmlDocAsync(string url)
+        public static async Task<IHtmlDocument> GetHtmlDocAsync(string url, bool ensurePageHeaderExists = false)
         {
             if (parser == null)
             {
@@ -199,7 +201,35 @@ namespace MountainProjectAPI
             }
 
             string html = await GetHtmlAsync(url);
-            return await parser.ParseDocumentAsync(html);
+            IHtmlDocument doc = await parser.ParseDocumentAsync(html);
+
+            //On occassion, I have seen a route HTML "header" (the part of the page that contains the name, "Improve this page", grade, etc) not be populated when grabbing
+            //with the parsers. Usually this is fine on a retry so I'm building in some retries here.
+
+            if (ensurePageHeaderExists)
+            {
+                int retries = 0;
+                while (retries < 3)
+                {
+                    IElement routeHeaderSection = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "row pt-main-content").Children[0];
+                    if (routeHeaderSection == null || routeHeaderSection.ChildElementCount == 0)
+                    {
+                        ConsoleHelper.Write($"NO HEADER FOUND FOR {url}. RETRYING ({retries + 1})...", ConsoleColor.Yellow);
+                        doc.Dispose();
+
+                        html = await GetHtmlAsync(url);
+                        doc = await parser.ParseDocumentAsync(html);
+
+                        retries++;
+                    }
+                    else
+                    {
+                        break;
+                    }
+                }
+            }
+
+            return doc;
         }
 
         public static string CleanExtraPartsFromName(string input)

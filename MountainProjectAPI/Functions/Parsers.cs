@@ -76,7 +76,7 @@ namespace MountainProjectAPI
 
             List<IElement> htmlRoutes = new List<IElement>();
             List<IElement> htmlSubAreas = new List<IElement>();
-            using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL))
+            using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputArea.URL, true))
             {
                 try
                 {
@@ -219,7 +219,7 @@ namespace MountainProjectAPI
 
             Stopwatch routeStopwatch = Stopwatch.StartNew();
 
-            using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL))
+            using (IHtmlDocument doc = await Utilities.GetHtmlDocAsync(inputRoute.URL, true))
             {
                 try
                 {
