@@ -483,8 +483,8 @@ namespace MountainProjectDBBuilder
                         {
                             values = new[]
                             {
-                                DateTime.Now.ToString("yyyy.MM.dd.HH.mm.ss"),
-                                timeSpan.TotalHours < 1 ? timeSpan.ToString("mm:ss") : timeSpan.ToString(),
+                                DateTime.Now.ToString("M/d/yyyy"),
+                                timeSpan.ToString(@"hh\:mm\:ss"),
                             },
                         });
 
