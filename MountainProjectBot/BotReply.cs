@@ -60,22 +60,12 @@ namespace MountainProjectBot
         private static List<string> ExtractMPLinks(string commentBody)
         {
             List<string> result = new List<string>();
-            Regex regex = new Regex(@"(https:\/\/)?(www.)?mountainproject\.com.*?(?=\)|\s|]|$)");
+            Regex regex = new Regex(@"mountainproject\.com\/(area|route)\/\d+");
             foreach (Match match in regex.Matches(commentBody))
             {
-                string mpUrl = match.Value;
-                if (!mpUrl.Contains("https://"))
-                {
-                    if (!mpUrl.Contains("www."))
-                        mpUrl = "www." + mpUrl;
-
-                    mpUrl = "https://" + mpUrl;
-                }
-                else if (!mpUrl.Contains("www."))
-                    mpUrl = mpUrl.Replace("https://", "https://www.");
-
                 try
                 {
+                    string mpUrl = $"https://www.{match.Value}";
                     mpUrl = Utilities.GetRedirectURL(mpUrl);
                     if (!result.Contains(mpUrl))
                         result.Add(mpUrl);
