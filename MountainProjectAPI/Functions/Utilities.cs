@@ -108,43 +108,42 @@ namespace MountainProjectAPI
             { "105903004", @"\bHCR\b" }, //Horseshoe Canyon Ranch
         };
 
+        private static readonly HttpClient httpClient = new HttpClient();
+
         public static string GetHtml(string url)
         {
             string html = "";
-            using (HttpClient client = new HttpClient())
+            int retries = 0;
+            while (true)
             {
-                int retries = 0;
-                while (true)
+                try
                 {
-                    try
+                    using (Stream stream = httpClient.Send(new HttpRequestMessage(HttpMethod.Get, Url.BuildFullUrl(url))).Content.ReadAsStream())
                     {
-                        using (Stream stream = client.Send(new HttpRequestMessage(HttpMethod.Get, Url.BuildFullUrl(url))).Content.ReadAsStream())
+                        using (StreamReader streamReader = new StreamReader(stream))
                         {
-                            using (StreamReader streamReader = new StreamReader(stream))
-                            {
-                                html = streamReader.ReadToEnd();
-                                break;
-                            }
+                            html = streamReader.ReadToEnd();
+                            break;
                         }
                     }
-                    catch (Exception ex)
+                }
+                catch (Exception ex)
+                {
+                    //Follow redirects
+                    if (ex is WebException webEx)
                     {
-                        //Follow redirects
-                        if (ex is WebException webEx)
-                        {
-                            url = GetRedirectUrlFromResponse(url, webEx.Response as HttpWebResponse);
-                        }
+                        url = GetRedirectUrlFromResponse(url, webEx.Response as HttpWebResponse);
+                    }
 
-                        if (retries <= 5)
-                        {
-                            Console.WriteLine($"Download string failed. Trying again ({retries})");
-                            retries++;
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Retries failed when trying to get HTML from {url}");
-                            throw;
-                        }
+                    if (retries <= 5)
+                    {
+                        Console.WriteLine($"Download string failed. Trying again ({retries})");
+                        retries++;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Retries failed when trying to get HTML from {url}");
+                        throw;
                     }
                 }
             }
@@ -155,34 +154,31 @@ namespace MountainProjectAPI
         public static async Task<string> GetHtmlAsync(string url)
         {
             string html = "";
-            using (HttpClient client = new HttpClient())
+            int retries = 0;
+            while (true)
             {
-                int retries = 0;
-                while (true)
+                try
                 {
-                    try
+                    html = await httpClient.GetStringAsync(Url.BuildFullUrl(url));
+                    break;
+                }
+                catch (Exception ex)
+                {
+                    //Follow redirects
+                    if (ex is WebException webEx && webEx.Response != null)
                     {
-                        html = await client.GetStringAsync(Url.BuildFullUrl(url));
-                        break;
+                        url = GetRedirectUrlFromResponse(url, webEx.Response as HttpWebResponse);
                     }
-                    catch (Exception ex)
-                    {
-                        //Follow redirects
-                        if (ex is WebException webEx && webEx.Response != null)
-                        {
-                            url = GetRedirectUrlFromResponse(url, webEx.Response as HttpWebResponse);
-                        }
 
-                        if (retries <= 5)
-                        {
-                            Console.WriteLine($"Download string failed. Trying again ({retries})");
-                            retries++;
-                        }
-                        else
-                        {
-                            Console.WriteLine($"Retries failed when trying to get HTML from {url}");
-                            throw;
-                        }
+                    if (retries <= 5)
+                    {
+                        Console.WriteLine($"Download string failed. Trying again ({retries})");
+                        retries++;
+                    }
+                    else
+                    {
+                        Console.WriteLine($"Retries failed when trying to get HTML from {url}");
+                        throw;
                     }
                 }
             }
