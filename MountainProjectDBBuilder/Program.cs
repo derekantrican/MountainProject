@@ -41,7 +41,7 @@ namespace MountainProjectDBBuilder
     {
         private static string serializationPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "MountainProjectAreas.xml");
         private static string settingsPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "settings.txt");
-        private static string logPath = $"{DateTime.Now:yyyy.MM.dd.HH.mm.ss} Log.txt";
+        private static string logPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{DateTime.Now:yyyy.MM.dd.HH.mm.ss} Log.txt");
         private static readonly StringWriter outputCapture = new StringWriter();
         private static readonly Stopwatch totalTimer = new Stopwatch();
         private static Mode programMode = Mode.None;
