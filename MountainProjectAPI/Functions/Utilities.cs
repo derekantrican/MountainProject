@@ -5,8 +5,10 @@ using Base;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
+using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -109,15 +111,21 @@ namespace MountainProjectAPI
         public static string GetHtml(string url)
         {
             string html = "";
-            using (WebClient client = new WebClient() { Encoding = Encoding.UTF8 })
+            using (HttpClient client = new HttpClient())
             {
                 int retries = 0;
                 while (true)
                 {
                     try
                     {
-                        html = client.DownloadString(Url.BuildFullUrl(url));
-                        break;
+                        using (Stream stream = client.Send(new HttpRequestMessage(HttpMethod.Get, Url.BuildFullUrl(url))).Content.ReadAsStream())
+                        {
+                            using (StreamReader streamReader = new StreamReader(stream))
+                            {
+                                html = streamReader.ReadToEnd();
+                                break;
+                            }
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -147,14 +155,14 @@ namespace MountainProjectAPI
         public static async Task<string> GetHtmlAsync(string url)
         {
             string html = "";
-            using (WebClient client = new WebClient() { Encoding = Encoding.UTF8 })
+            using (HttpClient client = new HttpClient())
             {
                 int retries = 0;
                 while (true)
                 {
                     try
                     {
-                        html = await client.DownloadStringTaskAsync(Url.BuildFullUrl(url));
+                        html = await client.GetStringAsync(Url.BuildFullUrl(url));
                         break;
                     }
                     catch (Exception ex)
