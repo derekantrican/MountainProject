@@ -355,8 +355,8 @@ namespace MountainProjectDBBuilder
                 Console.WriteLine();
                 Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
 
-                SendReport($"[NET{Environment.Version.Major}] MountainProjectDBBuilder benchmark completed SUCCESSFULLY in {totalTimer.Elapsed}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
-                LogParseTime($"NET{Environment.Version.Major} benchmark", totalTimer.Elapsed);
+                SendReport($"[NET{Environment.Version.Major} - HttpClient] MountainProjectDBBuilder benchmark completed SUCCESSFULLY in {totalTimer.Elapsed}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
+                LogParseTime($"NET{Environment.Version.Major} (HttpClient) benchmark", totalTimer.Elapsed);
             });
         }
 
