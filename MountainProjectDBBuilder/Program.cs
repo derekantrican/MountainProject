@@ -52,6 +52,7 @@ namespace MountainProjectDBBuilder
         {
             Console.OutputEncoding = System.Text.Encoding.UTF8;
             ConsoleHelper.WriteToAdditionalTarget(outputCapture);
+            WebRequest.DefaultWebProxy = null; //https://stackoverflow.com/a/4420429/2246411
 
             new Parser(p => p.CaseInsensitiveEnumValues = true).ParseArguments<Options>(args).WithParsed(o =>
             {
