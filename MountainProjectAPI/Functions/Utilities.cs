@@ -354,32 +354,57 @@ namespace MountainProjectAPI
 
             int maxRedirCount = 8;  // prevent infinite loops
             string newUrl = url;
-            do
+
+            using (HttpClient client = new HttpClient())
             {
-                HttpWebResponse resp = null;
-                try
+                do
                 {
-                    HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
-                    req.Method = "HEAD";
-                    req.AllowAutoRedirect = false;
-                    resp = (HttpWebResponse)req.GetResponse();
-                    url = GetRedirectUrlFromResponse(url, resp);
-                }
-                catch (WebException)
-                {
-                    // Return the last known good URL
+                    try
+                    {
+                        HttpRequestMessage req = new HttpRequestMessage(HttpMethod.Head, url);
+                        HttpResponseMessage resp = client.Send(req);
+                        url = GetRedirectUrlFromResponse(url, resp);
+                    }
+                    catch (WebException)
+                    {
+                        // Return the last known good URL
+                        return newUrl;
+                    }
+                    catch (Exception)
+                    {
+                        return null;
+                    }
+                } while (maxRedirCount-- > 0);
+            }
+            return newUrl;
+        }
+
+        private static string GetRedirectUrlFromResponse(string originalUrl, HttpResponseMessage response)
+        {
+            string newUrl = originalUrl;
+            switch (response.StatusCode)
+            {
+                case HttpStatusCode.OK:
                     return newUrl;
-                }
-                catch (Exception)
-                {
-                    return null;
-                }
-                finally
-                {
-                    if (resp != null)
-                        resp.Close();
-                }
-            } while (maxRedirCount-- > 0);
+                case HttpStatusCode.Redirect:
+                case HttpStatusCode.MovedPermanently:
+                case HttpStatusCode.RedirectKeepVerb:
+                case HttpStatusCode.RedirectMethod:
+                    newUrl = response.Headers.Location.AbsoluteUri;
+
+                    if (newUrl == null)
+                        return originalUrl;
+
+                    if (!newUrl.Contains("://"))
+                    {
+                        // Doesn't have a URL Schema, meaning it's a relative or absolute URL
+                        Uri u = new Uri(new Uri(originalUrl), newUrl);
+                        newUrl = u.ToString();
+                    }
+                    break;
+                default:
+                    return newUrl;
+            }
 
             return newUrl;
         }
@@ -396,10 +421,11 @@ namespace MountainProjectAPI
                 case HttpStatusCode.RedirectKeepVerb:
                 case HttpStatusCode.RedirectMethod:
                     newUrl = response.Headers["Location"];
+
                     if (newUrl == null)
                         return originalUrl;
 
-                    if (newUrl.IndexOf("://", StringComparison.Ordinal) == -1)
+                    if (!newUrl.Contains("://"))
                     {
                         // Doesn't have a URL Schema, meaning it's a relative or absolute URL
                         Uri u = new Uri(new Uri(originalUrl), newUrl);
