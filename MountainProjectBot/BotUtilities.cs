@@ -232,12 +232,15 @@ namespace MountainProjectBot
         #endregion Blacklist
 
         #region Replied To
-        public static void LogCommentBeenRepliedTo(Comment comment)
+        public static void LogCommentBeenRepliedTo(Comment comment, string reason = "")
         {
             if (!File.Exists(repliedToPath))
                 File.Create(repliedToPath).Close();
 
-            File.AppendAllLines(repliedToPath, new string[] { comment.Id });
+            if (!string.IsNullOrEmpty(reason))
+                File.AppendAllLines(repliedToPath, new string[] { $"{comment.Id}\t{reason}" });
+            else
+                File.AppendAllLines(repliedToPath, new string[] { comment.Id });
         }
 
         public static void LogPostBeenSeen(Post post, string reason = "")
@@ -257,7 +260,7 @@ namespace MountainProjectBot
                 File.Create(repliedToPath).Close();
 
             string text = File.ReadAllText(repliedToPath);
-            comments.RemoveAll(c => text.Contains(c.Id));
+            comments.RemoveAll(c => text.StartsWith(c.Id));
 
             return comments;
         }

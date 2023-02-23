@@ -358,7 +358,7 @@ namespace MountainProjectBot
                         monitoredComments.Add(new CommentMonitor() { Parent = comment, BotResponseComment = botReplyComment });
                     }
 
-                    BotUtilities.LogCommentBeenRepliedTo(comment);
+                    BotUtilities.LogCommentBeenRepliedTo(comment, "replied");
                 }
                 catch (RateLimitException)
                 {
@@ -394,7 +394,7 @@ namespace MountainProjectBot
 
                     if (string.IsNullOrEmpty(reply))
                     {
-                        BotUtilities.LogCommentBeenRepliedTo(comment); //Don't check this comment again
+                        BotUtilities.LogCommentBeenRepliedTo(comment, "nothing found"); //Don't check this comment again
                         continue;
                     }
 
@@ -405,7 +405,7 @@ namespace MountainProjectBot
                         monitoredComments.Add(new CommentMonitor() { Parent = comment, BotResponseComment = botReplyComment });
                     }
 
-                    BotUtilities.LogCommentBeenRepliedTo(comment);
+                    BotUtilities.LogCommentBeenRepliedTo(comment, "replied");
                 }
                 catch (RateLimitException)
                 {
