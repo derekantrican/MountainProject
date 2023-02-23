@@ -99,7 +99,7 @@ namespace MountainProjectAPI
             { "106094862", @"\bHP ?40\b" }, //Horse Pens 40
             { "105739277", @"\bLCC\b" }, //Little Cottonwood Canyon
             { "106008886", @"\bFont\b" }, //Fontainebleau
-            { "105720495", @"\bJTree\b" }, //Joshua Tree
+            { "105720495", @"\bJoshua Tree\b|\bJ ?Tree\b" }, //Joshua Tree
             { "105946429", @"\bBC\b" }, //British Columbia
             { "106007071", @"\bUK\b" }, //United Kingdom
             { "105843226", @"\bORG\b" }, //Owens River Gorge
