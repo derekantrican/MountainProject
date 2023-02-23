@@ -60,7 +60,7 @@ namespace MountainProjectBot
         private static List<string> ExtractMPLinks(string commentBody)
         {
             List<string> result = new List<string>();
-            Regex regex = new Regex(@"mountainproject\.com\/(area|route)\/\d+");
+            Regex regex = new Regex(@"mountainproject\.com\/(area|route|v)\/\d+");
             foreach (Match match in regex.Matches(commentBody))
             {
                 try
