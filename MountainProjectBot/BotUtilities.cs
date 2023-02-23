@@ -259,8 +259,8 @@ namespace MountainProjectBot
             if (!File.Exists(repliedToPath))
                 File.Create(repliedToPath).Close();
 
-            string text = File.ReadAllText(repliedToPath);
-            comments.RemoveAll(c => text.StartsWith(c.Id));
+            string[] lines = File.ReadAllLines(repliedToPath);
+            comments.RemoveAll(c => lines.Any(l => l.StartsWith(c.Id)));
 
             return comments;
         }
