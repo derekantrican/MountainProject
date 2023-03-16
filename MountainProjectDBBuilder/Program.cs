@@ -456,7 +456,8 @@ namespace MountainProjectDBBuilder
                     using (HttpClient client = new HttpClient())
                     {
                         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
-                        client.Send(request);
+                        var response = client.Send(request);
+                        Console.WriteLine(response.Content.ReadAsStringAsync().Result);
                     }
                 }
                 catch (Exception ex)
