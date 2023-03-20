@@ -220,9 +220,9 @@ namespace MountainProjectDBBuilder
             Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
             Console.WriteLine();
             Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
-            SerializeResults(destAreas);
+            FileInfo file = SerializeResults(destAreas);
 
-            SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
+            SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed} ({Math.Round(file.Length / 1024f / 1024f, 2)} MB). Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
             LogParseTime($"Full Build", totalTimer.Elapsed);
         }
 
@@ -313,7 +313,7 @@ namespace MountainProjectDBBuilder
             Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
             Console.WriteLine();
             Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
-            SerializeResults(destAreas);
+            FileInfo file = SerializeResults(destAreas);
 
             if (errors.Count == 1)
             {
@@ -324,7 +324,7 @@ namespace MountainProjectDBBuilder
                 throw new AggregateException("Some areas failed to return new items", errors);
             }
 
-            SendReport($"MountainProjectDBBuilder database updated SUCCESSFULLY in {totalTimer.Elapsed}", $"{newlyAddedItemUrls.Count()} new items:\n\n{string.Join("\n", newlyAddedItemUrls)}");
+            SendReport($"MountainProjectDBBuilder database updated SUCCESSFULLY in {totalTimer.Elapsed} ({Math.Round(file.Length / 1024f / 1024f, 2)} MB)", $"{newlyAddedItemUrls.Count()} new items:\n\n{string.Join("\n", newlyAddedItemUrls)}");
         }
 
         private static void DownloadGoogleDriveFileFromUrl(string fileUrl)
@@ -426,7 +426,7 @@ namespace MountainProjectDBBuilder
             }
         }
 
-        private static void SerializeResults(List<Area> inputAreas)
+        private static FileInfo SerializeResults(List<Area> inputAreas)
         {
             Console.WriteLine("[SerializeResults] Serializing areas to file");
             if (fileType == FileType.XML)
@@ -441,6 +441,8 @@ namespace MountainProjectDBBuilder
             {
                 File.WriteAllText(serializationPath, JsonConvert.SerializeObject(inputAreas));
             }
+
+            return new FileInfo(serializationPath);
         }
 
         private static void SendReport(string subject, string message)
