@@ -267,7 +267,9 @@ namespace MountainProjectDBBuilder
                 string newId = Utilities.GetID(newItemUrl);
 
                 if (MountainProjectDataSearch.GetItemWithMatchingID(newId) != null) //Item has already been added (probably via a recursive area add)
+                {
                     continue;
+                }
 
                 MPObject newItem;
                 if (Url.Contains(newItemUrl, Utilities.MPAREAURL))
@@ -281,30 +283,33 @@ namespace MountainProjectDBBuilder
                     Parsers.ParseRouteAsync(newItem as Route).Wait();
                 }
 
-                Area currentParent = null;
-                bool itemAddedViaRecursiveParse = false;
-                foreach (string parentId in newItem.ParentIDs) //Make sure all parents are populated
+                // NOTE: the previous approach just parsed the new area/route and added it to the parent.
+                // But that caused issues in one case when a new area was created and existing
+                // routes/subareas were moved to the newly-created subarea. Instead, we will get the
+                // most-immediate, already-existing parent of the newly-created item and re-parse the
+                // whole parent (and, recursively, children) again. THIS WILL DEFINITELY TAKE LONGER since
+                // there will be a number of children that didn't change and don't need to be re-parsed,
+                // but it will be more accurate as any one of that children could have lost an area/route
+                // (see above scenario) and the RSS feeds only provide data about "adds" (and not any other
+                // change). See https://github.com/derekantrican/MountainProject/issues/77
+
+                Area parentArea = null;
+                //Go up the parent list (from most immediate to highest) and get the most immediate parent
+                //that already existed (wasn't just added)
+                foreach (string parentId in newItem.ParentIDs.AsEnumerable().Reverse())
                 {
-                    MPObject matchingItem = MountainProjectDataSearch.GetItemWithMatchingID(parentId);
-                    if (matchingItem == null)
+                    MPObject matchingParent = MountainProjectDataSearch.GetItemWithMatchingID(parentId);
+                    if (matchingParent != null)
                     {
-                        Area newArea = new Area { ID = parentId };
-                        Parsers.ParseAreaAsync(newArea).Wait();
-                        currentParent.SubAreas.Add(newArea);
-                        itemAddedViaRecursiveParse = true;
+                        parentArea = matchingParent as Area;
                         break;
                     }
-                    else
-                        currentParent = matchingItem as Area;
                 }
 
-                if (!itemAddedViaRecursiveParse)
-                {
-                    if (newItem is Area)
-                        (MountainProjectDataSearch.GetItemWithMatchingID(newItem.ParentIDs.Last()) as Area).SubAreas.Add(newItem as Area);
-                    else
-                        (MountainProjectDataSearch.GetItemWithMatchingID(newItem.ParentIDs.Last()) as Area).Routes.Add(newItem as Route);
-                }
+                //Empty out subareas & routes and recursively re-parse that parent area to get the proper list of children
+                parentArea.SubAreas.Clear();
+                parentArea.Routes.Clear();
+                Parsers.ParseAreaAsync(parentArea).Wait();
             }
 
             destAreas = MountainProjectDataSearch.DestAreas;
