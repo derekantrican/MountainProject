@@ -34,10 +34,10 @@ namespace MountainProjectAPI
         {
             foreach (string id in ParentIDs)
             {
-                MPObject matchingObject = MountainProjectDataSearch.GetItemWithMatchingID(id);
-                if (!Parents.Contains(matchingObject))
+                MPObject matchingParent = MountainProjectDataSearch.GetItemWithMatchingID(id);
+                if (!Parents.Contains(matchingParent))
                 {
-                    Parents.Add(matchingObject);
+                    Parents.Add(matchingParent);
                 }
             }
         }
@@ -53,9 +53,13 @@ namespace MountainProjectAPI
                 }
 
                 if (this is Route)
+                {
                     return Url.BuildFullUrl($"{Utilities.MPROUTEURL}/{ID}");
+                }
                 else if (this is Area)
+                {
                     return Url.BuildFullUrl($"{Utilities.MPAREAURL}/{ID}");
+                }
 
                 return null;
             }
