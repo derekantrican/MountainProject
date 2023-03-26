@@ -112,7 +112,7 @@ namespace MountainProjectAPI
 
         public static string GetHtml(string url)
         {
-            string html = "";
+            string html;
             int retries = 0;
             while (true)
             {
@@ -153,7 +153,7 @@ namespace MountainProjectAPI
 
         public static async Task<string> GetHtmlAsync(string url)
         {
-            string html = "";
+            string html;
             int retries = 0;
             while (true)
             {
