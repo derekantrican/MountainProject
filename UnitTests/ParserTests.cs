@@ -1,9 +1,17 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
+using AngleSharp.Html.Parser;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MountainProjectAPI;
 using static MountainProjectAPI.Grade;
 using static MountainProjectAPI.Route;
+using AngleSharp.Html.Dom;
+using AngleSharp;
+using System.Text.RegularExpressions;
+using System.Diagnostics;
+using Url = MountainProjectAPI.Url;
+using System.IO;
+using System;
 
 namespace UnitTests
 {
@@ -283,5 +291,34 @@ namespace UnitTests
             string convertedString = Utilities.EnforceWordConsistency(inputString);
             Assert.AreEqual(expectedConversion, convertedString);
         }
+
+        //[DataTestMethod] //Uncomment for manual testing
+        //[DataRow(@"C:\Users\deantric\Downloads\Failing MP objects\Failing Object (116683164).html", "area")]
+        //[DataRow(@"C:\Users\deantric\Downloads\Failing MP objects\Failing Object (105877457).html", "area")]
+        //[DataRow(@"C:\Users\deantric\Downloads\Failing MP objects\Failing Object (114000292).html", "area")]
+        //[DataRow(@"C:\Users\deantric\Downloads\Failing MP objects\Failing Object (112892737).html", "area")]
+        //public void TestParseLocalHtmlFile(string filePath, string type)
+        //{
+        //    HtmlParser parser = new HtmlParser();
+        //    using (IHtmlDocument doc = parser.ParseDocument(File.ReadAllText(filePath)))
+        //    {
+        //        //string htmlString = Utilities.GetHtmlDoc("https://www.mountainproject.com/area/116683164/the-library").Source.Text;
+
+        //        if (type == "route")
+        //        {
+        //            Route route = new Route { ID = Regex.Match(filePath, @"\d{9}").Value };
+        //            Parsers.ParseRouteAsync(doc, route, false, new Stopwatch()).Wait();
+        //        }
+        //        else if (type == "area")
+        //        {
+        //            Area area = new Area { ID = Regex.Match(filePath, @"\d{9}").Value };
+        //            Parsers.ParseAreaAsync(doc, area, true, false, new Stopwatch()).Wait();
+        //        }
+        //        else
+        //        {
+        //            throw new ArgumentException($"\"{type}\" is not a valid type", nameof(type));
+        //        }
+        //    }
+        //}
     }
 }
