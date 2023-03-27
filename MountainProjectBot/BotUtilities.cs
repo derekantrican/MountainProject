@@ -7,6 +7,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Net;
+using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading;
@@ -101,7 +102,7 @@ namespace MountainProjectBot
                     MountainProjectDataSearch.InitMountainProjectData(xmlPath);
                     break;
                 }
-                catch
+                catch //Note: if the xml file cannot be found, this will just infinitely loop. We should scope down this "catch" a bit
                 {
                     ConsoleHelper.Write("MountainProjectAreas.xml is in use. Waiting 5s before trying again...");
                     Thread.Sleep(TimeSpan.FromSeconds(5));
@@ -151,20 +152,21 @@ namespace MountainProjectBot
             ex = null;
             try
             {
-                HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-                request.Timeout = 3000;
-                request.AllowAutoRedirect = false;
-                request.Method = "HEAD";
-
-                if (!string.IsNullOrEmpty(WebServerUsername))
+                using (HttpClient client = new HttpClient())
                 {
-                    byte[] authBytes = Encoding.GetEncoding("UTF-8").GetBytes($"{WebServerUsername}:{WebServerPassword}");
-                    request.Headers.Add("Authorization", $"Basic {Convert.ToBase64String(authBytes)}");
-                }
+                    client.Timeout = TimeSpan.FromSeconds(3);
+                    HttpRequestMessage request = new HttpRequestMessage(System.Net.Http.HttpMethod.Head, url);
 
-                using (var response = request.GetResponse())
-                {
-                    return true;
+                    if (!string.IsNullOrEmpty(WebServerUsername))
+                    {
+                        byte[] authBytes = Encoding.GetEncoding("UTF-8").GetBytes($"{WebServerUsername}:{WebServerPassword}");
+                        request.Headers.Add("Authorization", $"Basic {Convert.ToBase64String(authBytes)}");
+                    }
+
+                    using (var response = client.Send(request))
+                    {
+                        return true;
+                    }
                 }
             }
             catch (Exception exception)
@@ -323,16 +325,14 @@ namespace MountainProjectBot
 
         public static void SendDiscordMessage(string message)
         {
-            List<string> parameters = new List<string>
-            {
-                $"username=MountainProjectBot",
-                $"avatar_url={Uri.EscapeDataString("https://i.imgur.com/iMhyiUP.png")}",
-                $"content={Uri.EscapeDataString(message)}",
-            };
-
             try
             {
-                DoPOST(requestForApprovalURL, parameters);
+                DoPOST(requestForApprovalURL, new Dictionary<string, string>
+                {
+                    { "username", "MountainProjectBot" },
+                    { "avatar_url", "https://i.imgur.com/iMhyiUP.png" },
+                    { "content", message },
+                });
             }
             catch (Exception e)
             {
@@ -345,27 +345,32 @@ namespace MountainProjectBot
         public static void LogOrUpdateSpreadsheet(ApprovalRequest approvalRequest)
         {
             if (string.IsNullOrEmpty(spreadsheetHistoryURL))
+            {
                 return;
+            }
 
             string locationString = Regex.Replace(BotReply.GetLocationString(approvalRequest.SearchResult.FilteredResult, approvalRequest.SearchResult.RelatedLocation), @"\[|\]\(.*?\)", "").Replace("Located in ", "").Replace("\n", "");
-            List<string> parameters = new List<string>
+
+            Dictionary<string, string> parameters = new Dictionary<string, string>
             {
-                $"reason={(string.IsNullOrEmpty(approvalRequest.SearchResult.UnconfidentReason) ? "" : Uri.EscapeDataString(approvalRequest.SearchResult.UnconfidentReason))}",
-                $"postTitle={Uri.EscapeDataString(WebUtility.HtmlDecode(approvalRequest.RedditPost.Title))}",
-                $"postURL={Uri.EscapeDataString(approvalRequest.RedditPost.Shortlink)}",
-                $"mpResultTitle={Uri.EscapeDataString(approvalRequest.SearchResult.FilteredResult.Name)}",
-                $"mpResultLocation={Uri.EscapeDataString(locationString)}",
-                $"mpResultURL={Uri.EscapeDataString(approvalRequest.SearchResult.FilteredResult.URL)}",
-                $"mpResultID={Uri.EscapeDataString(approvalRequest.SearchResult.FilteredResult.ID)}",
+                { "reason", string.IsNullOrEmpty(approvalRequest.SearchResult.UnconfidentReason) ? "" : Uri.EscapeDataString(approvalRequest.SearchResult.UnconfidentReason) },
+                { "postTitle", WebUtility.HtmlDecode(approvalRequest.RedditPost.Title) },
+                { "postUrl", approvalRequest.RedditPost.Shortlink },
+                { "mpResultTitle", approvalRequest.SearchResult.FilteredResult.Name },
+                { "mpResultLocation", locationString },
+                { "mpResultURL", approvalRequest.SearchResult.FilteredResult.URL },
+                { "mpResultID", approvalRequest.SearchResult.FilteredResult.ID },
             };
 
             if (approvalRequest.SearchResult.FilteredResult is Route route)
             {
-                parameters.Add($"mpResultGrade={Uri.EscapeDataString(route.GetRouteGrade(Grade.GradeSystem.YDS).ToString(false))}");
+                parameters.Add("mpResultGrade", route.GetRouteGrade(Grade.GradeSystem.YDS).ToString(false));
             }
 
             if (approvalRequest.SearchResult.Confidence == 1 || approvalRequest.IsApproved)
-                parameters.Add("alreadyApproved=true");
+            {
+                parameters.Add("alreadyApproved", "true");
+            }
 
             DoPOST(spreadsheetHistoryURL, parameters);
         }
@@ -373,50 +378,42 @@ namespace MountainProjectBot
         public static void LogBadReply(Post redditPost)
         {
             if (string.IsNullOrEmpty(spreadsheetHistoryURL))
-                return;
-
-            List<string> parameters = new List<string>
             {
-                "badReply=" + redditPost.Shortlink
-            };
+                return;
+            }
 
-            DoPOST(spreadsheetHistoryURL, parameters);
+            DoPOST(spreadsheetHistoryURL, new Dictionary<string, string>
+            {
+                { "badReply", redditPost.Shortlink },
+            });
         }
 
         private static string DoGET(string url)
         {
-            string response;
-            HttpWebRequest httpRequest = (HttpWebRequest)WebRequest.Create(url);
-            httpRequest.AutomaticDecompression = DecompressionMethods.GZip;
-
-            using (HttpWebResponse serverResponse = (HttpWebResponse)httpRequest.GetResponse())
-            using (StreamReader reader = new StreamReader(serverResponse.GetResponseStream()))
+            using (HttpClient client = new HttpClient())
             {
-                response = reader.ReadToEnd();
+                using (Stream stream = client.Send(new HttpRequestMessage(System.Net.Http.HttpMethod.Get, url)).Content.ReadAsStream())
+                {
+                    using (StreamReader streamReader = new StreamReader(stream))
+                    {
+                        return streamReader.ReadToEnd();
+                    }
+                }
             }
-
-            return response;
         }
 
-        private static void DoPOST(string url, List<string> parameters = null)
+        private static void DoPOST(string url, Dictionary<string, string> parameters = null)
         {
-            string postData = parameters != null ? string.Join("&", parameters) : "";
-            byte[] data = Encoding.ASCII.GetBytes(postData);
-
-            HttpWebRequest request = (HttpWebRequest)WebRequest.Create(url);
-            request.Method = "POST";
-            request.ContentType = "application/x-www-form-urlencoded";
-            request.ContentLength = data.Length;
-
-            using (Stream stream = request.GetRequestStream())
+            using (HttpClient client = new HttpClient())
             {
-                stream.Write(data, 0, data.Length);
-            }
+                HttpRequestMessage request = new HttpRequestMessage(System.Net.Http.HttpMethod.Post, url);
 
-            using (HttpWebResponse serverResponse = (HttpWebResponse)request.GetResponse())
-            using (StreamReader reader = new StreamReader(serverResponse.GetResponseStream()))
-            {
-                _ = reader.ReadToEnd(); //For POST requests, we don't care about what we get back
+                if (parameters != null)
+                {
+                    request.Content = new FormUrlEncodedContent(parameters);
+                }
+
+                using (client.Send(request)) { }
             }
         }
         #endregion Server Calls
