@@ -123,14 +123,18 @@ namespace MountainProjectDBBuilder
 
                 bool allResults = input.Contains("-all");
                 if (allResults)
+                {
                     input = input.Replace("-all", "").Trim();
+                }
 
                 Stopwatch stopwatch = Stopwatch.StartNew();
                 SearchResult searchResult = MountainProjectDataSearch.Search(input, searchParameters);
                 stopwatch.Stop();
 
                 if (searchResult.IsEmpty())
+                {
                     Console.WriteLine("Nothing found matching \"" + input + "\"");
+                }
                 else if (allResults)
                 {
                     List<MPObject> matchedObjectsByPopularity = searchResult.AllResults.OrderByDescending(p => p.Popularity).ToList();
@@ -139,9 +143,13 @@ namespace MountainProjectDBBuilder
                     {
                         string url = Url.Replace(result.URL, Utilities.MPBASEURL, "");
                         if (result is Route)
+                        {
                             Console.WriteLine($"    Route: {result.Name} (Pop: {result.Popularity}) | Location: {GetLocationString(result)} | {url}");
+                        }
                         else if (result is Area)
+                        {
                             Console.WriteLine($"    Area: {result.Name} (Pop: {result.Popularity}) | Location: {GetLocationString(result)} | {url}");
+                        }
                     }
                 }
                 else
@@ -149,16 +157,22 @@ namespace MountainProjectDBBuilder
                     string resultStr = "";
                     MPObject result = searchResult.FilteredResult;
                     if (result is Area)
+                    {
                         resultStr = (result as Area).ToString();
+                    }
                     else if (result is Route)
+                    {
                         resultStr = (result as Route).ToString(resultParameters);
+                    }
 
                     Console.WriteLine($"The following was found (found in {stopwatch.ElapsedMilliseconds} ms):");
                     Console.WriteLine("    " + resultStr);
                     Console.WriteLine($"    Location: {GetLocationString(result, searchResult.RelatedLocation)}");
                     Console.WriteLine("\nOpen result? (y/n) ");
                     if (Console.ReadLine().ToLower() == "y")
+                    {
                         Process.Start(result.URL);
+                    }
                 }
 
                 Console.WriteLine("\nSearch something else? (y/n) ");
@@ -182,11 +196,15 @@ namespace MountainProjectDBBuilder
             }
 
             if (innerParent == null)
+            {
                 return "";
+            }
 
             string locationString = $"Located in {innerParent.Name}";
             if (outerParent != null && outerParent.URL != innerParent.URL)
+            {
                 locationString += $", {outerParent.Name}";
+            }
 
             return locationString;
         }
@@ -196,9 +214,13 @@ namespace MountainProjectDBBuilder
             RunAndCatchBuildIssues("DB Build", () =>
             {
                 if (!buildAll && File.Exists(serializationPath))
+                {
                     AddNewItems();
+                }
                 else
+                {
                     BuildFullDB();
+                }
             });
         }
 
