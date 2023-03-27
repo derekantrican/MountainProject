@@ -334,13 +334,11 @@ namespace MountainProjectDBBuilder
                 Parsers.ParseAreaAsync(parentArea).Wait();
             }
 
-            destAreas = MountainProjectDataSearch.DestAreas;
-
             totalTimer.Stop();
             Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
             Console.WriteLine();
             Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
-            FileInfo file = SerializeResults(destAreas);
+            FileInfo file = SerializeResults(MountainProjectDataSearch.DestAreas);
 
             if (errors.Count == 1)
             {
