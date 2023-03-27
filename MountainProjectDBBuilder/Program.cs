@@ -413,7 +413,10 @@ namespace MountainProjectDBBuilder
                             exceptionString += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
                             exceptionString += $"STACK TRACE: {innerMostParseException.InnerException?.StackTrace}\n\n";
 
-                            File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"Failing Object ({innerMostParseException.RelatedObject.ID}).html"), innerMostParseException.Html);
+                            if (!string.IsNullOrEmpty(innerMostParseException.Html))
+                            {
+                                File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"Failing Object ({innerMostParseException.RelatedObject.ID}).html"), innerMostParseException.Html);
+                            }
                         }
                         else
                         {
@@ -431,7 +434,10 @@ namespace MountainProjectDBBuilder
                         exceptionString += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
                         exceptionString += $"STACK TRACE: {innerMostParseException.InnerException?.StackTrace}\n";
 
-                        File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"Failing Object ({innerMostParseException.RelatedObject.ID}).html"), innerMostParseException.Html);
+                        if (!string.IsNullOrEmpty(innerMostParseException.Html))
+                        {
+                            File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"Failing Object ({innerMostParseException.RelatedObject.ID}).html"), innerMostParseException.Html);
+                        }
                     }
                     else
                     {
