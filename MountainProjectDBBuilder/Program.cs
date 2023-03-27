@@ -334,6 +334,37 @@ namespace MountainProjectDBBuilder
                 Parsers.ParseAreaAsync(parentArea).Wait();
             }
 
+            //Check for duplicates
+            HashSet<string> mpIds = new HashSet<string>();
+            List<string> duplicateIds = new List<string>();
+            Dictionary<string, List<string>> allPaths = new Dictionary<string, List<string>>();
+            foreach (Area area in MountainProjectDataSearch.DestAreas)
+            {
+                foreach ((string, string) id in GetIds(area, $"{area.ID}"))
+                {
+                    if (allPaths.ContainsKey(id.Item1))
+                    {
+                        allPaths[id.Item1].Add(id.Item2);
+                    }
+                    else
+                    {
+                        allPaths[id.Item1] = new List<string> { id.Item2 };
+                    }
+
+                    if (!mpIds.Add(id.Item1))
+                    {
+                        duplicateIds.Add(id.Item1);
+                    }
+                }
+            }
+
+            if (duplicateIds.Any())
+            {
+                //For now, we'll just send a report of duplicates. In the future, we can include these in the parents to reparse above
+                SendReport($"{duplicateIds.Count} duplicates found when updating MountainProjectAreas.xml",
+                    $"{string.Join("\n\n", duplicateIds.Select(id => $"{id}:\n{string.Join("\n", allPaths[id])}"))}");
+            }
+
             totalTimer.Stop();
             Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
             Console.WriteLine();
@@ -350,6 +381,24 @@ namespace MountainProjectDBBuilder
             }
 
             SendReport($"MountainProjectDBBuilder database updated SUCCESSFULLY in {totalTimer.Elapsed} ({Math.Round(file.Length / 1024f / 1024f, 2)} MB)", $"{newlyAddedItemUrls.Count()} new items:\n\n{string.Join("\n", newlyAddedItemUrls)}");
+        }
+
+        private static IEnumerable<(string, string)> GetIds(Area area, string prefix)
+        {
+            yield return (area.ID, prefix);
+
+            foreach (Area subArea in area.SubAreas)
+            {                
+                foreach ((string, string) id in GetIds(subArea, $"{prefix} > {subArea.ID}"))
+                {
+                    yield return id;
+                }
+            }
+
+            foreach (Route route in area.Routes)
+            {
+                yield return (route.ID, $"{prefix} > {route.ID}");
+            }
         }
 
         private static void DownloadGoogleDriveFileFromUrl(string fileUrl)
