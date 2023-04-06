@@ -27,7 +27,9 @@ namespace MountainProjectBot
             //Get everything AFTER the keyword, but on the same line
             string queryText = Regex.Match(commentBody, BOTKEYWORDREGEX).Groups[1].Value.Trim();
             if (string.IsNullOrWhiteSpace(queryText))
+            {
                 return "I didn't understand what you were looking for. Please use the Feedback button below if you think this is a bug";
+            }
 
             ResultParameters resultParameters = ResultParameters.ParseParameters(ref queryText);
             SearchParameters searchParameters = SearchParameters.ParseParameters(ref queryText);
@@ -44,12 +46,16 @@ namespace MountainProjectBot
             {
                 MPObject mpObjectWithID = MountainProjectDataSearch.GetItemWithMatchingID(Utilities.GetID(url));
                 if (mpObjectWithID != null)
+                {
                     foundMPObjects.Add(mpObjectWithID);
+                }
             }
 
             string response = "";
             if (foundMPObjects.Count == 0)
+            {
                 return null;
+            }
 
             foundMPObjects.ForEach(p => response += GetFormattedString(p, includeUrl: false) + Markdown.HRule);
             response += GetBotLinks(comment);
@@ -68,7 +74,9 @@ namespace MountainProjectBot
                     string mpUrl = $"https://www.{match.Value}";
                     mpUrl = Utilities.GetRedirectURL(mpUrl);
                     if (!result.Contains(mpUrl))
+                    {
                         result.Add(mpUrl);
+                    }
                 }
                 catch //Something went wrong. We'll assume that it was because the url didn't match anything
                 {
@@ -83,15 +91,16 @@ namespace MountainProjectBot
         {
             if (searchResult.IsEmpty())
             {
-                if (!string.IsNullOrEmpty(queryLocation))
-                    return $"I could not find anything for \"{queryText}\" in \"{queryLocation}\". Please use the Feedback button below if you think this is a bug";
-                else
-                    return $"I could not find anything for \"{queryText}\". Please use the Feedback button below if you think this is a bug";
+                return $"I could not find anything for \"{queryText}\"{(!string.IsNullOrEmpty(queryLocation) ? $" in {queryLocation}" : "")}. Please use the Feedback button below if you think this is a bug";
             }
             else if (searchResult.AllResults.Count > 1)
+            {
                 return $"I found the following info (out of {searchResult.AllResults.Count} total results):{Markdown.HRule}{GetFormattedString(searchResult, resultParameters)}";
+            }
             else
+            {
                 return $"I found the following info:{Markdown.HRule}{GetFormattedString(searchResult, resultParameters)}";
+            }
         }
 
         public static string GetFormattedString(MPObject finalResult, ResultParameters parameters = null, bool includeUrl = true)
@@ -102,7 +111,9 @@ namespace MountainProjectBot
         public static string GetFormattedString(SearchResult searchResult, ResultParameters parameters = null, bool includeUrl = true)
         {
             if (searchResult.IsEmpty())
+            {
                 return null;
+            }
 
             string result = "";
             if (searchResult.FilteredResult is Area inputArea)
@@ -112,15 +123,21 @@ namespace MountainProjectBot
                 latestAreaData.PopulateParents();
 
                 if (!string.IsNullOrEmpty(latestAreaData.Statistics.ToString()))
+                {
                     result += $"{Markdown.Bold(latestAreaData.Name)} [{latestAreaData.Statistics}]" + Markdown.NewLine;
+                }
                 else
+                {
                     result += $"{Markdown.Bold(latestAreaData.Name)}" + Markdown.NewLine;
+                }
 
                 result += GetLocationString(latestAreaData, searchResult.RelatedLocation);
                 result += GetPopularRoutes(latestAreaData, parameters);
 
                 if (includeUrl)
+                {
                     result += latestAreaData.URL;
+                }
             }
             else if (searchResult.FilteredResult is Route inputRoute)
             {
@@ -155,7 +172,9 @@ namespace MountainProjectBot
                 result += GetLocationString(latestRouteData, searchResult.RelatedLocation);
 
                 if (includeUrl)
+                {
                     result += latestRouteData.URL;
+                }
             }
 
             return result;
@@ -164,7 +183,9 @@ namespace MountainProjectBot
         public static string GetRouteGrade(Route route, ResultParameters parameters)
         {
             if (parameters != null)
+            {
                 return route.GetRouteGrade(parameters.GradeSystem).ToString();
+            }
             else
             {
                 List<Grade> grades = new List<Grade>();
@@ -176,7 +197,9 @@ namespace MountainProjectBot
                 Grade iceGrade = route.Grades.Find(g => g.System == GradeSystem.Ice);
                 if ((route.Types.Contains(Route.RouteType.Ice) || route.Types.Contains(Route.RouteType.Snow) || route.Types.Contains(Route.RouteType.Alpine)) &&
                     iceGrade != null)
+                {
                     grades.Add(iceGrade);
+                }
 
                 //Add international grades
                 grades.AddRange(route.Grades.Where(g => g.System == GradeSystem.French || g.System == GradeSystem.UIAA || g.System == GradeSystem.Fontainebleau));
@@ -188,17 +211,25 @@ namespace MountainProjectBot
                     List<string> gradeStrings = grades.Select(g =>
                     {
                         if (g.System == GradeSystem.YDS && aidGrade != null)
+                        {
                             return $"{g.ToString(false)} ({aidGrade.ToString(false)})";
+                        }
                         else
+                        {
                             return g.ToString(false);
+                        }
                     }).ToList();
 
                     return string.Join(" | ", gradeStrings);
                 }
                 else if (route.Grades.Count == 1)
+                {
                     return route.Grades.First().ToString(false);
+                }
                 else
+                {
                     return "";
+                }
             }
         }
 
@@ -218,11 +249,15 @@ namespace MountainProjectBot
             }
 
             if (innerParent == null)
+            {
                 return "";
+            }
 
             string locationString = $"Located in {Markdown.Link(innerParent.Name, innerParent.URL)}";
             if (outerParent != null && outerParent.URL != innerParent.URL)
+            {
                 locationString += $", {Markdown.Link(outerParent.Name, outerParent.URL)}";
+            }
 
             locationString += Markdown.NewLine;
 
@@ -235,7 +270,9 @@ namespace MountainProjectBot
 
             List<Route> popularRoutes = new List<Route>();
             if (area.PopularRouteIDs.Count == 0) //MountainProject doesn't list any popular routes. Figure out some ourselves
+            {
                 popularRoutes = area.GetPopularRoutes(3);
+            }
             else
             {
                 area.PopularRouteIDs.ForEach(id => popularRoutes.Add(MountainProjectDataSearch.GetItemWithMatchingID(id, MountainProjectDataSearch.DestAreas) as Route));
@@ -244,10 +281,14 @@ namespace MountainProjectBot
             popularRoutes.RemoveAll(r => r == null);
 
             foreach (Route popularRoute in popularRoutes)
+            {
                 result += $"\n- {Markdown.Link(popularRoute.Name, popularRoute.URL)} {GetRouteAdditionalInfo(popularRoute, parameters)}";
+            }
 
             if (string.IsNullOrEmpty(result))
+            {
                 return "";
+            }
 
             return "Popular routes:" + Markdown.NewLine + result + Markdown.NewLine;
         }
@@ -257,7 +298,9 @@ namespace MountainProjectBot
             List<string> parts = new List<string>();
 
             if (showGrade)
+            {
                 parts.Add(GetRouteGrade(route, parameters).ToString());
+            }
 
             if (showHeight && route.Height != null && route.Height.Value != 0)
             {
@@ -266,12 +309,18 @@ namespace MountainProjectBot
             }
 
             if (!string.IsNullOrEmpty(route.AdditionalInfo))
+            {
                 parts.Add(route.AdditionalInfo);
+            }
 
             if (parts.Count > 0)
+            {
                 return $"[{string.Join(", ", parts)}]";
+            }
             else
+            {
                 return "";
+            }
         }
 
         public static string GetBotLinks(VotableThing relatedThing = null)
@@ -284,7 +333,9 @@ namespace MountainProjectBot
                 botLinks.Add(Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url&entry.266808192=" + encodedLink));
             }
             else
+            {
                 botLinks.Add(Markdown.Link("Feedback", "https://docs.google.com/forms/d/e/1FAIpQLSchgbXwXMylhtbA8kXFycZenSKpCMZjmYWMZcqREl_OlCm4Ew/viewform?usp=pp_url"));
+            }
 
             botLinks.Add(Markdown.Link("FAQ", "https://github.com/derekantrican/MountainProject/wiki/Bot-FAQ"));
             botLinks.Add(Markdown.Link("Syntax", "https://github.com/derekantrican/MountainProject/wiki/Bot-Syntax"));
