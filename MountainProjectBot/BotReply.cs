@@ -159,7 +159,7 @@ namespace MountainProjectBot
                 result += Markdown.NewLine;
 
                 result += $"Type: {string.Join(", ", latestRouteData.Types)}" + Markdown.NewLine;
-                result += $"Grade: {GetRouteGrade(latestRouteData, parameters)}" + Markdown.NewLine;
+                result += $"Grade: {GetRouteGrades(latestRouteData, parameters, true)}" + Markdown.NewLine;
 
                 if (latestRouteData.Height != null && latestRouteData.Height.Value != 0)
                 {
@@ -175,12 +175,15 @@ namespace MountainProjectBot
                 {
                     result += latestRouteData.URL;
                 }
+
+                //TEMP
+                result += Markdown.NewLine + Markdown.Italic("[Trying out a new grade display - let me know your thoughts]");
             }
 
             return result;
         }
 
-        public static string GetRouteGrade(Route route, ResultParameters parameters)
+        public static string GetRouteGrades(Route route, ResultParameters parameters, bool withAbbreviations = false)
         {
             if (parameters != null)
             {
@@ -191,7 +194,8 @@ namespace MountainProjectBot
                 List<Grade> grades = new List<Grade>();
 
                 //Add "American" grades
-                grades.AddRange(route.Grades.Where(g => g.System == GradeSystem.YDS || g.System == GradeSystem.Hueco));
+                grades.AddRange(route.Grades.Where(g => g.System == GradeSystem.YDS || 
+                                                        g.System == GradeSystem.Hueco));
 
                 //Add ice grade (if necessary)
                 Grade iceGrade = route.Grades.Find(g => g.System == GradeSystem.Ice);
@@ -202,7 +206,10 @@ namespace MountainProjectBot
                 }
 
                 //Add international grades
-                grades.AddRange(route.Grades.Where(g => g.System == GradeSystem.French || g.System == GradeSystem.UIAA || g.System == GradeSystem.Fontainebleau));
+                grades.AddRange(route.Grades.Where(g => g.System == GradeSystem.French || 
+                                                        g.System == GradeSystem.UIAA ||
+                                                        g.System == GradeSystem.Fontainebleau ||
+                                                        g.System == GradeSystem.Ewbanks));
 
                 if (grades.Count > 0)
                 {
@@ -210,13 +217,15 @@ namespace MountainProjectBot
                     Grade aidGrade = route.Grades.Find(g => g.System == GradeSystem.Aid);
                     List<string> gradeStrings = grades.Select(g =>
                     {
+                        string abbreviationText = g.Abbreviation != null && withAbbreviations ? Markdown.DoubleSuperscript(g.Abbreviation) : "";
+
                         if (g.System == GradeSystem.YDS && aidGrade != null)
                         {
-                            return $"{g.ToString(false)} ({aidGrade.ToString(false)})";
+                            return $"{g.ToString(false)}{abbreviationText} ({aidGrade.ToString(false)})";
                         }
                         else
                         {
-                            return g.ToString(false);
+                            return g.ToString(false) + abbreviationText;
                         }
                     }).ToList();
 
@@ -224,7 +233,10 @@ namespace MountainProjectBot
                 }
                 else if (route.Grades.Count == 1)
                 {
-                    return route.Grades.First().ToString(false);
+                    Grade grade = route.Grades.First();
+                    string abbreviationText = grade.Abbreviation != null && withAbbreviations ? Markdown.DoubleSuperscript(grade.Abbreviation) : "";
+
+                    return grade.ToString(false) + abbreviationText;
                 }
                 else
                 {
@@ -299,7 +311,7 @@ namespace MountainProjectBot
 
             if (showGrade)
             {
-                parts.Add(GetRouteGrade(route, parameters).ToString());
+                parts.Add(GetRouteGrades(route, parameters).ToString());
             }
 
             if (showHeight && route.Height != null && route.Height.Value != 0)

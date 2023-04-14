@@ -55,6 +55,26 @@ namespace MountainProjectAPI
         [XmlIgnore]
         public bool IsRange { get { return !string.IsNullOrEmpty(RangeStart) || !string.IsNullOrEmpty(RangeEnd); } }
 
+        public string Abbreviation
+        {
+            get
+            {
+                switch (System)
+                {
+                    case GradeSystem.Fontainebleau:
+                        return "Font";
+                    case GradeSystem.Britsh:
+                        return "UK";
+                    case GradeSystem.SouthAfrica:
+                        return "SA";
+                    case GradeSystem.Unlabled:
+                        return null;
+                    default:
+                        return System.ToString();
+                }
+            }
+        }
+
         /// <summary>
         /// Extracts climbing grades from a string. Only supports YDS and Hueco grades
         /// </summary>

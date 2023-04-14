@@ -2,9 +2,14 @@
 {
     public static class Markdown
     {
-        public static string Bold(string textToBold)
+        public static string Bold(string text)
         {
-            return $"**{textToBold.Trim('*')}**";
+            return $"**{text.Trim('*')}**";
+        }
+
+        public static string Italic(string text)
+        {
+            return $"*{text.Trim('*')}*";
         }
 
         public static string Link(string linkText, string linkUrl)
@@ -20,6 +25,11 @@
         public static string Spoiler(string text)
         {
             return $">!{text}!<";
+        }
+
+        public static string DoubleSuperscript(string text)
+        {
+            return $"^^{text}";
         }
 
         public static string HRule { get { return "\n\n-----\n\n"; } }
