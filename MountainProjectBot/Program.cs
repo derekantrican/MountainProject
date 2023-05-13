@@ -179,8 +179,8 @@ namespace MountainProjectBot
                 }
 
                 Console.WriteLine($"Loop elapsed time: {stopwatch.ElapsedMilliseconds} ms");
-                //Console.WriteLine("Sleeping for 10 seconds...");
-                //Thread.Sleep(10000); //Sleep for 10 seconds so as not to overload reddit
+                Console.WriteLine("Sleeping for 15 seconds...");
+                Thread.Sleep(15000); //Sleep for 15 seconds so as not to overload reddit (and to save on internet data)
 
                 //Only run through once for a dry run
                 if (BotFunctions.DryRun && !Debugger.IsAttached)
