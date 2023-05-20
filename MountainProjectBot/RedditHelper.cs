@@ -90,7 +90,11 @@ namespace MountainProjectBot
             foreach (Subreddit subreddit in Subreddits)
             {
                 int amountOfCommentsToGet = subredditNamesAndCommentAmounts[subreddit.Name.ToLower()];
-                subredditsAndRecentComments.Add(subreddit, await subreddit.GetComments(amountOfCommentsToGet, amountOfCommentsToGet).ToListAsync());
+                List<Comment> comments = await subreddit.GetComments(amountOfCommentsToGet, amountOfCommentsToGet).ToListAsync();
+                subredditsAndRecentComments.Add(subreddit, comments);
+
+                int minAgo = 15;
+                Console.WriteLine($"Got {comments.Count} comments from {subreddit.Name}. {comments.Count(c => c.CreatedUTC > DateTime.UtcNow.AddMinutes(-1 * minAgo))} are from the last {minAgo} min.");
             }
 
             return subredditsAndRecentComments;
