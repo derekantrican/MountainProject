@@ -14,13 +14,13 @@ namespace MountainProjectBot
         Reddit redditService;
         Dictionary<string, int> subredditNamesAndCommentAmounts = new Dictionary<string, int>()
         {
-            { "climbing", 1000 },
+            { "climbing", 100 /*1000*/ },
             { "climbingporn", 30 },
-            { "bouldering", 600 },
+            { "bouldering", 100 /*600*/ },
             { "socalclimbing", 50 },
             { "climbingvids", 30 },
-            { "mountainprojectbot", 500 },
-            { "climbergirls", 200 },
+            { "mountainprojectbot", 100 /*500*/ },
+            { "climbergirls", 100 /*200*/ },
             { "iceclimbing", 30 },
             //{ "rockclimbing", 50 },
             { "tradclimbing", 100 },
