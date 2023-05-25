@@ -67,6 +67,8 @@ namespace MountainProjectAPI
                         return "UK";
                     case GradeSystem.SouthAfrica:
                         return "SA";
+                    case GradeSystem.Ewbanks:
+                        return "Ewbank"; //Not really an abbreviation, but a temporary fix until the DB can be rebuilt with "Ewbank" instead of "Ewbanks"
                     case GradeSystem.Unlabled:
                         return null;
                     default:
