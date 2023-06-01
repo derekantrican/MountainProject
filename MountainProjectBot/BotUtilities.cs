@@ -299,7 +299,7 @@ namespace MountainProjectBot
                 messageText += $"**All results found:**\n";
                 foreach (MPObject result in searchResult.AllResults /*Todo: Make sure this is ordered by the likely response*/)
                 {
-                    messageText += $"\t- [{result.Name} ({(result as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})](<{result.URL}>)\n";
+                    messageText += $"- [{result.Name} ({(result as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})](<{result.URL}>)\n";
                 }
 
                 messageText += "\n" +
