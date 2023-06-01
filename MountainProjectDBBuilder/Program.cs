@@ -535,6 +535,8 @@ namespace MountainProjectDBBuilder
                     string url = Settings.ReadSettingValue(settingsPath, "reportUrl");
                     url += $"subjectonly={Uri.EscapeDataString(subject)}&messageonly={Uri.EscapeDataString(message)}";
 
+                    Console.WriteLine(url); //TEMP for investigation
+
                     using (HttpClient client = new HttpClient())
                     {
                         HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
