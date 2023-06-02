@@ -16,7 +16,7 @@ namespace MountainProjectBot
         //TEMP - will be removed later, but added now to make a statement
         public static string PrivatizeReply(string response)
         {
-            string[] responseLines = response.Split(new[] { Markdown.NewLine }, StringSplitOptions.None);
+            string[] responseLines = response.Split(new[] { Markdown.NewLine }, StringSplitOptions.RemoveEmptyEntries);
             IEnumerable<string> hiddenLines = responseLines.Select(l => Markdown.Spoiler(l));
             response = string.Join(Markdown.NewLine, hiddenLines);
 
