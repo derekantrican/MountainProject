@@ -127,6 +127,8 @@ namespace MountainProjectBot
                             {
                                 string reply = BotReply.GetReplyForRequest(updatedParent);
 
+                                reply = BotReply.PrivatizeReply(reply); //TEMP
+
                                 if (reply != oldResponseBody)
                                 {
                                     if (!string.IsNullOrEmpty(reply))
@@ -147,6 +149,8 @@ namespace MountainProjectBot
                             else if (updatedParent.Body.Contains("mountainproject.com")) //If the parent comment's MP url has changed, edit the bot's response
                             {
                                 string reply = BotReply.GetReplyForMPLinks(updatedParent);
+
+                                reply = BotReply.PrivatizeReply(reply); //TEMP
 
                                 if (reply != oldResponseBody)
                                 {
@@ -228,6 +232,8 @@ namespace MountainProjectBot
 
                 reply += BotReply.GetBotLinks(approvalRequest.RedditPost);
 
+                reply = BotReply.PrivatizeReply(reply); //TEMP
+
                 if (!DryRun)
                 {
                     Comment botReplyComment = await RedditHelper.CommentOnPost(approvalRequest.RedditPost, reply);
@@ -304,6 +310,8 @@ namespace MountainProjectBot
                                 reply += Markdown.HRule;
                                 reply += BotReply.GetBotLinks(post);
 
+                                reply = BotReply.PrivatizeReply(reply); //TEMP
+
                                 Comment botReplyComment = await RedditHelper.CommentOnPost(post, reply);
                                 monitoredComments.Add(new CommentMonitor() { Parent = post, BotResponseComment = botReplyComment });
                                 ConsoleHelper.Write($"\n\tAuto-replied to post {post.Id}", ConsoleColor.Green);
@@ -351,6 +359,8 @@ namespace MountainProjectBot
 
                     string reply = BotReply.GetReplyForRequest(comment);
 
+                    reply = BotReply.PrivatizeReply(reply); //TEMP
+
                     if (!DryRun)
                     {
                         Comment botReplyComment = await RedditHelper.ReplyToComment(comment, reply);
@@ -397,6 +407,8 @@ namespace MountainProjectBot
                         BotUtilities.LogCommentBeenRepliedTo(comment, "nothing found"); //Don't check this comment again
                         continue;
                     }
+
+                    reply = BotReply.PrivatizeReply(reply); //TEMP
 
                     if (!DryRun)
                     {
