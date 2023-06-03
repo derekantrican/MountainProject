@@ -21,7 +21,7 @@ namespace MountainProjectBot
             response = string.Join(Markdown.NewLine, hiddenLines);
 
             return Markdown.Bold("The bot's comment has been made private in protest of the upcoming Reddit API changes") + "  " +
-                   Markdown.Link("Learn more", "https://reddit.com/r/apolloapp/comments/13ws4w3/had_a_call_with_reddit_to_discuss_pricing_bad") +  Markdown.NewLine + 
+                   Markdown.Link("Learn more", "https://www.reddit.com/r/Save3rdPartyApps/comments/13yh0jf/dont_let_reddit_kill_3rd_party_apps") +  Markdown.NewLine + 
                    response + Markdown.NewLine + Markdown.Italic("(if the bot survives through the changes, comments will return to normal after June 19)");
         }
 
