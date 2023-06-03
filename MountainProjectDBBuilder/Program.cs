@@ -533,13 +533,16 @@ namespace MountainProjectDBBuilder
                 {
                     Console.WriteLine("[SendReport] Sending report");
                     string url = Settings.ReadSettingValue(settingsPath, "reportUrl");
-                    url += $"subjectonly={Uri.EscapeDataString(subject)}&messageonly={Uri.EscapeDataString(message)}";
-
-                    Console.WriteLine(url); //TEMP for investigation
 
                     using (HttpClient client = new HttpClient())
                     {
-                        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Get, url);
+                        HttpRequestMessage request = new HttpRequestMessage(HttpMethod.Post, url);
+                        request.Content = JsonContent.Create(new
+                        {
+                            subjectonly = subject,
+                            messageonly = message,
+                        });
+
                         var response = client.Send(request);
                         Console.WriteLine(response.Content.ReadAsStringAsync().Result);
                     }
