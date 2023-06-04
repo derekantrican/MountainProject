@@ -19,6 +19,7 @@ using CommandLine;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
+using System.Runtime.ExceptionServices;
 
 namespace MountainProjectDBBuilder
 {
@@ -467,8 +468,8 @@ namespace MountainProjectDBBuilder
                         }
                         else
                         {
-                            exceptionString += $"EXCEPTION MESSAGE: {innerException?.Message}\n";
-                            exceptionString += $"STACK TRACE: {innerException?.StackTrace}\n\n";
+                            exceptionString += $"EXCEPTION MESSAGE: {ExceptionDispatchInfo.Capture(innerException).SourceException.Message}\n";
+                            exceptionString += $"STACK TRACE: {ExceptionDispatchInfo.Capture(innerException).SourceException.StackTrace}\n\n";
                         }
                     }
                 }
