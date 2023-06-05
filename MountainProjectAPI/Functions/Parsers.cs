@@ -84,10 +84,19 @@ namespace MountainProjectAPI
             }
             catch (Exception ex)
             {
+                string html = null;
+                try
+                {
+                    //Todo: for some reason, the below throws an exception. Supposedly .Text has a MemberNotNull attribute
+                    //in AngleSharp, but I don't know if it works. More debugging (into AngleSharp) would be required.
+                    html = doc?.Source?.Text;
+                }
+                catch { }
+
                 throw new ParseException($"Failed to parse area with id {inputArea?.ID}", ex)
                 {
                     RelatedObject = inputArea,
-                    Html = doc?.Source?.Text,
+                    Html = html,
                 };
             }
         }
