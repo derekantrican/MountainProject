@@ -87,7 +87,7 @@ namespace MountainProjectAPI
                 throw new ParseException($"Failed to parse area with id {inputArea?.ID}", ex)
                 {
                     RelatedObject = inputArea,
-                    Html = doc?.Source.Text,
+                    Html = doc?.Source?.Text,
                 };
             }
         }
