@@ -16,8 +16,8 @@ namespace MountainProjectBot
         //TEMP - will be removed later, but added now to make a statement
         public static string PrivatizeReply(string response)
         {
-            string[] responseLines = response.Split(new[] { Markdown.NewLine }, StringSplitOptions.RemoveEmptyEntries);
-            IEnumerable<string> hiddenLines = responseLines.Select(l => Markdown.Spoiler(l));
+            string[] responseLines = response.Split('\n', StringSplitOptions.RemoveEmptyEntries);
+            IEnumerable<string> hiddenLines = responseLines.Select(l => Markdown.Spoiler(l.Trim()));
             response = string.Join(Markdown.NewLine, hiddenLines);
 
             return Markdown.Bold("The bot's comment has been made private in protest of the upcoming Reddit API changes") + "  " +
