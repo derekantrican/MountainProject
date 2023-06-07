@@ -292,14 +292,14 @@ namespace MountainProjectBot
                                  $"**Possible AutoReply found:**\n" +
                                  $"{searchResult.UnconfidentReason}\n\n" +
                                  $"**PostTitle:** {post.Title}\n" +
-                                 $"**PostURL:** <{post.Shortlink}>\n\n";
+                                 $"**PostURL:** <{post.Shortlink}> (r/{post.SubredditName})\n\n";
 
             if (searchResult.AllResults.Count > 1)
             {
                 messageText += $"**All results found:**\n";
                 foreach (MPObject result in searchResult.AllResults /*Todo: Make sure this is ordered by the likely response*/)
                 {
-                    messageText += $"- [{result.Name} ({(result as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})](<{result.URL}>)\n";
+                    messageText += $"- [{result.Name} ({(result as Route).GetRouteGrade(Grade.GradeSystem.YDS).ToString(false)})](<{result.URL}>) (pop: {result.Popularity})\n";
                 }
 
                 messageText += "\n" +
