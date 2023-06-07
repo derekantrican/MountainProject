@@ -16,6 +16,11 @@ namespace MountainProjectBot
         //TEMP - will be removed later, but added now to make a statement
         public static string PrivatizeReply(string response)
         {
+            if (DateTime.Now > new DateTime(2023, 6, 19)) //Automatically disable after June 19 (in case I forget)
+            {
+                return response;
+            }
+
             string[] responseLines = response.Split('\n', StringSplitOptions.RemoveEmptyEntries);
             IEnumerable<string> hiddenLines = responseLines.Select(l => Markdown.Spoiler(l.Trim()));
             response = string.Join(Markdown.NewLine, hiddenLines);
