@@ -11,6 +11,7 @@ using System.Net;
 using System.Net.Http;
 using System.Text;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace MountainProjectAPI
@@ -155,11 +156,16 @@ namespace MountainProjectAPI
         {
             string html;
             int retries = 0;
+            int backoffMs = 1000;
             while (true)
             {
                 try
                 {
                     html = await httpClient.GetStringAsync(Url.BuildFullUrl(url));
+
+                    // HttpResponseMessage response = await httpClient.GetAsync(Url.BuildFullUrl(url));
+                    // html = await response.Content.ReadAsStringAsync();
+
                     break;
                 }
                 catch (Exception ex)
@@ -168,6 +174,16 @@ namespace MountainProjectAPI
                     if (ex is WebException webEx && webEx.Response != null)
                     {
                         url = GetRedirectUrlFromResponse(url, webEx.Response as HttpWebResponse);
+                    }
+                    else if (ex is HttpRequestException requestException && requestException.StatusCode == HttpStatusCode.TooManyRequests)
+                    {
+                        //Backoff with TooManyRequest errors (rate limiting). 1 second delay intervals may seem like a high starting point,
+                        //but in testing I've seen the backoff get as high as 3.5s before requests start going through again. This
+                        //will limit how many requests we send before we start getting successful responses again.
+                        Console.WriteLine($"Too Many Requests (waiting {backoffMs}ms)");
+                        Thread.Sleep(backoffMs);
+                        backoffMs += 1000;
+                        continue;
                     }
 
                     if (retries <= 5)
