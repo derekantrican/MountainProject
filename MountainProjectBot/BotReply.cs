@@ -192,9 +192,6 @@ namespace MountainProjectBot
                 {
                     result += latestRouteData.URL;
                 }
-
-                //TEMP
-                result += Markdown.NewLine + Markdown.Italic("[Trying out a new grade display - let me know your thoughts]");
             }
 
             return result;
