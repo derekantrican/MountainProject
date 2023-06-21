@@ -13,23 +13,6 @@ namespace MountainProjectBot
     {
         const string BOTKEYWORDREGEX = @"(?i)!mountain\s*project(.*)";
 
-        //TEMP - will be removed later, but added now to make a statement
-        public static string PrivatizeReply(string response)
-        {
-            if (DateTime.Now > new DateTime(2023, 6, 19)) //Automatically disable after June 19 (in case I forget)
-            {
-                return response;
-            }
-
-            string[] responseLines = response.Split('\n', StringSplitOptions.RemoveEmptyEntries);
-            IEnumerable<string> hiddenLines = responseLines.Select(l => Markdown.Spoiler(l.Trim()));
-            response = string.Join(Markdown.NewLine, hiddenLines);
-
-            return Markdown.Bold("The bot's comment has been made private in protest of the upcoming Reddit API changes") + "  " +
-                   Markdown.Link("Learn more", "https://www.reddit.com/r/Save3rdPartyApps/comments/13yh0jf/dont_let_reddit_kill_3rd_party_apps") +  Markdown.NewLine + 
-                   response + Markdown.NewLine + Markdown.Italic("(if the bot survives through the changes, comments will return to normal after June 19)");
-        }
-
         public static string GetReplyForRequest(Comment comment)
         {
             string response = GetReplyForRequest(WebUtility.HtmlDecode(comment.Body));
