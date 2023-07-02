@@ -195,6 +195,13 @@ namespace MountainProjectBot
         private static bool alerted = false;
         private static void ApprovalServerStatusCheck()
         {
+            //Skip status check if DB Builder is running (either due to port saturation or high memory/cpu usage, this causes the
+            //approval server status check to fail a lot while the DB Builder is running, leading to a lot of Discord messages)
+            if (Process.GetProcessesByName("MountainProjectDBBuilder").Length > 0)
+            {
+                return;
+            }
+
             bool serverUp = BotUtilities.PingUrl($"{BotUtilities.ApprovalServerUrl}?status", out Exception ex);
             if (!serverUp && !alerted)
             {
