@@ -236,13 +236,17 @@ namespace MountainProjectAPI
                 //(Additionally, we could also prioritize how close - within the input string - the name is to the grade)
                 List<PossibleRouteResult> filteredResults = possibleResults.Where(p => Utilities.StringContainsWithFilters(inputString, p.Route.Name, true)).ToList();
 
-                if (filteredResults.Count > 1)
-                {
-                    //Try to filter down to "most parents matched"
-                    //Todo: possibly a more efficient way to do this
-                    int maxParentsMatched = filteredResults.Max(r => r.FoundParents.Select(p => p.Value.Count).Max());
-                    filteredResults = filteredResults.Where(r => r.FoundParents.Select(p => p.Value.Count).Max() == maxParentsMatched).ToList();
-                }
+                //I commented out the below ceuase this can falsely prioritize some bad results. For something like "Epinephrine, Red Rocks, NV" this is good because a very precise location
+                //was given, but in our test data "Morning Glory in City of Rocks" this prioritized a 0 popularity route (over a 8k pop one) because "City of Rocks"
+                //is broken into two locations and "Rocks" matches two parents ("Roadside rocks" and "Roadside rocks west").
+
+                //if (filteredResults.Count > 1)
+                //{
+                //    //Try to filter down to "most parents matched"
+                //    //Todo: possibly a more efficient way to do this
+                //    int maxParentsMatched = filteredResults.Max(r => r.FoundParents.Select(p => p.Value.Count).Max());
+                //    filteredResults = filteredResults.Where(r => r.FoundParents.Select(p => p.Value.Count).Max() == maxParentsMatched).ToList();
+                //}
 
                 int highConfidence = 1;
                 int medConfidence = 2;
