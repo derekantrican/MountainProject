@@ -227,6 +227,9 @@ namespace MountainProjectDBBuilder
 
         private static void BuildFullDB()
         {
+            string copyPath = serializationPath.Replace(".xml", "-last.xml");
+            File.Move(serializationPath, copyPath);
+
             Parsers.TotalTimer = totalTimer;
             Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
             List<Area> destAreas = Parsers.GetDestAreas();
@@ -247,6 +250,62 @@ namespace MountainProjectDBBuilder
 
             SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed} ({Math.Round(file.Length / 1024f / 1024f, 2)} MB). Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
             LogParseTime($"Full Build", totalTimer.Elapsed);
+
+            //------------ TEMP (will be removed later) ------------
+
+            //Compare previous db build (with nightly updates) to a brand new full build (to see how much a full build actually changes - maybe we can just get away with nightly updates)
+            GC.Collect(); //Don't know if this is necessarily helpful, but hopefully helps us cut down on memory usage
+
+            Dictionary<string, List<List<string>>> newPaths = new Dictionary<string, List<List<string>>>();
+            foreach (Area area in destAreas)
+            {
+                ListAllIdPaths(area, newPaths, new List<string> { area.ID });
+            }
+
+            Dictionary<string, List<string>> newPathsStrings = newPaths.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Select(l => string.Join(" > ", l)).ToList());
+
+            //Don't know if this is necessarily helpful, but hopefully helps us cut down on memory usage
+            newPaths = null;
+            GC.Collect();
+
+            MountainProjectDataSearch.InitMountainProjectData(copyPath);
+            Dictionary<string, List<List<string>>> previousPaths = new Dictionary<string, List<List<string>>>();
+            foreach (Area area in MountainProjectDataSearch.DestAreas)
+            {
+                ListAllIdPaths(area, previousPaths, new List<string> { area.ID });
+            }
+
+            Dictionary<string, List<string>> previousPathsStrings = previousPaths.ToDictionary(kvp => kvp.Key, kvp => kvp.Value.Select(l => string.Join(" > ", l)).ToList());
+
+            //Don't know if this is necessarily helpful, but hopefully helps us cut down on memory usage
+            previousPaths = null;
+            GC.Collect();
+
+            Dictionary<string, List<List<string>>> differences = new Dictionary<string, List<List<string>>>();
+            IEnumerable<string> idsToCheck = newPathsStrings.Keys.Intersect(previousPathsStrings.Keys); //Only do intersection because we know new areas/routes could have been created during the full build and they WILL be picked up in the next nightly update
+            foreach (string id in idsToCheck)
+            {
+                if (!newPathsStrings[id].SequenceEqual(previousPathsStrings[id]))
+                {
+                    differences[id] = new List<List<string>>
+                    {
+                        previousPathsStrings[id],
+                        newPathsStrings[id],
+                    };
+                }
+            }
+
+            //Don't know if this is necessarily helpful, but hopefully helps us cut down on memory usage
+            previousPathsStrings = null;
+            newPathsStrings = null;
+            GC.Collect();
+
+            string diffReportPath = $"{DateTime.Now:yyyy.MM.dd.HH.mm.ss} diff.txt";
+            File.WriteAllText(diffReportPath, string.Join("\n\n", differences.Select(kvp => $"{kvp.Key} (previous):\n{string.Join("\n", kvp.Value[0])}\n\n{kvp.Key} (new):\n{string.Join("\n", kvp.Value[1])}")));
+
+            SendReport("MountainProjectDBBuilder full build diff report", $"There were {differences.Keys.Count} differences (out of {idsToCheck.Count()}). Report saved at {diffReportPath}");
+
+            File.Delete(copyPath);
         }
 
         private static void AddNewItems()
