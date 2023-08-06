@@ -228,7 +228,7 @@ namespace MountainProjectDBBuilder
         private static void BuildFullDB()
         {
             string copyPath = serializationPath.Replace(".xml", "-last.xml");
-            File.Move(serializationPath, copyPath);
+            File.Copy(serializationPath, copyPath);
 
             Parsers.TotalTimer = totalTimer;
             Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
