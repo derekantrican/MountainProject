@@ -300,7 +300,7 @@ namespace MountainProjectDBBuilder
             newPathsStrings = null;
             GC.Collect();
 
-            string diffReportPath = $"{DateTime.Now:yyyy.MM.dd.HH.mm.ss} diff.txt";
+            string diffReportPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"{DateTime.Now:yyyy.MM.dd.HH.mm.ss} diff.txt");
             File.WriteAllText(diffReportPath, string.Join("\n\n", differences.Select(kvp => $"{kvp.Key} (previous):\n{string.Join("\n", kvp.Value[0])}\n\n{kvp.Key} (new):\n{string.Join("\n", kvp.Value[1])}")));
 
             SendReport("MountainProjectDBBuilder full build diff report", $"There were {differences.Keys.Count} differences (out of {idsToCheck.Count()}). Report saved at {diffReportPath}");
