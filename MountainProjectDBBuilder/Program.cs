@@ -410,6 +410,29 @@ namespace MountainProjectDBBuilder
                     $"{string.Join("\n\n", duplicateIds.Select(id => $"{id}:\n{string.Join("\n", allPathsLists[id].Select(p => string.Join(" > ", p)))}"))}");
             }
 
+            //Reparse duplicate ids
+            //Todo: we currently don't reparse duplicate ids (just sending reports as a test right now) but once we do, we can probably remove the above `if (duplicateIds.Any())` SendReport as well
+            //  and shorten this all (something like: parse new areas -> check for duplicates -> reparse parents of duplicates -> check for duplicates again)
+            HashSet<string> idsToReparse = new HashSet<string>();
+            foreach (string duplicateId in duplicateIds)
+            {
+                List<List<string>> reversedPaths = allPathsLists[duplicateId].Select(p => p.AsEnumerable().Reverse().ToList() /*this allows us to reverse the list as a new list*/).ToList();
+                for (int i = 1; i < reversedPaths.MaxBy(l => l.Count).Count; i++)
+                {
+                    List<string> uniqueParentsForEachPath = reversedPaths.Select(p => p[i]).Distinct().ToList();
+                    if (uniqueParentsForEachPath.Count > 1)
+                    {
+                        uniqueParentsForEachPath.ForEach(id => idsToReparse.Add(id));
+                        break;
+                    }
+                }
+            }
+
+            if (idsToReparse.Any())
+            {
+                SendReport($"Found {idsToReparse.Count} areas to be reparsed to resolve duplicates", string.Join("\n", idsToReparse));
+            }
+
             totalTimer.Stop();
             Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
             Console.WriteLine();
