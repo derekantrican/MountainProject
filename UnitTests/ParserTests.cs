@@ -1,17 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
-using AngleSharp.Html.Parser;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using MountainProjectAPI;
 using static MountainProjectAPI.Grade;
 using static MountainProjectAPI.Route;
-using AngleSharp.Html.Dom;
-using AngleSharp;
-using System.Text.RegularExpressions;
-using System.Diagnostics;
 using Url = MountainProjectAPI.Url;
-using System.IO;
-using System;
 
 namespace UnitTests
 {
