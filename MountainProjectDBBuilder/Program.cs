@@ -430,8 +430,28 @@ namespace MountainProjectDBBuilder
 
             if (idsToReparse.Any())
             {
-                SendReport($"Found {idsToReparse.Count} areas to be reparsed to resolve duplicates", string.Join("\n", idsToReparse));
+                foreach (string id in idsToReparse)
+                {
+                    Area areaToReparse = MountainProjectDataSearch.GetItemWithMatchingID(id) as Area;
+                    areaToReparse.SubAreas.Clear();
+                    areaToReparse.Routes.Clear();
+
+                    Parsers.ParseAreaAsync(areaToReparse).Wait();
+                }
             }
+
+            //Check for duplicates (after reparse)
+            allPathsLists = new Dictionary<string, List<List<string>>>();
+            foreach (Area area in MountainProjectDataSearch.DestAreas)
+            {
+                ListAllIdPaths(area, allPathsLists, new List<string> { area.ID });
+            }
+
+            duplicateIds = allPathsLists.Where(kvp => kvp.Value.Count > 1).Select(kvp => kvp.Key).ToList();
+
+            //Send report about # of duplicates AFTER reparsing duplicates
+            SendReport($"[AFTER REPARSE] {duplicateIds.Count} duplicates found when updating MountainProjectAreas.xml",
+                $"{string.Join("\n\n", duplicateIds.Select(id => $"{id}:\n{string.Join("\n", allPathsLists[id].Select(p => string.Join(" > ", p)))}"))}");
 
             totalTimer.Stop();
             Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
