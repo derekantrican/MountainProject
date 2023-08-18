@@ -40,7 +40,7 @@ namespace UnitTests
                 "Kansas",
                 "Kentucky",
                 "Louisiana",
-                //"Maine", //Maine has been moved to https://www.mountainproject.com/area/122843985/zzz-area-for-holding-prior-to-deletion ?
+                "Maine",
                 "Maryland",
                 "Massachusetts",
                 "Michigan",
