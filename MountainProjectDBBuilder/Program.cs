@@ -436,7 +436,37 @@ namespace MountainProjectDBBuilder
                     areaToReparse.SubAreas.Clear();
                     areaToReparse.Routes.Clear();
 
-                    Parsers.ParseAreaAsync(areaToReparse).Wait();
+                    try
+                    {
+                        Parsers.ParseAreaAsync(areaToReparse).Wait();
+                    }
+                    catch (Exception ex)
+                    {
+                        ParseException parseException;
+                        if (ex is AggregateException aggregate && ex.InnerException is ParseException)
+                        {
+                            parseException = ex.InnerException as ParseException;
+                        }
+                        else if (ex is ParseException)
+                        {
+                            parseException = ex as ParseException;
+                        }
+                        else
+                        {
+                            throw;
+                        }
+
+                        //This is for a case where the areaToReparse has been deleted
+                        //Todo: It could be that the parents have also been deleted so we will need to do this recursively
+                        if (parseException.GetInnermostParseException().InnerException is HttpRequestException httpException && httpException.StatusCode == HttpStatusCode.NotFound)
+                        {
+                            areaToReparse.PopulateParents();
+                            areaToReparse = areaToReparse.Parents.Last() as Area;
+                            areaToReparse.SubAreas.Clear();
+                            areaToReparse.Routes.Clear();
+                            Parsers.ParseAreaAsync(areaToReparse).Wait();
+                        }
+                    }
                 }
             }
 
