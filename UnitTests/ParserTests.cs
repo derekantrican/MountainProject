@@ -115,7 +115,7 @@ namespace UnitTests
         }
 
         [DataTestMethod]
-        [DataRow("/area/105841134/red-river-gorge", new object[] { new[] { "/route/105880926/eureka", "/route/105860741/roadside-attraction", "/route/106125099/27-years-of-climbing" } })] //Some popular routes
+        [DataRow("/area/105841134/red-river-gorge", new object[] { new[] { "/route/106125099/27-years-of-climbing", "/route/106085043/send-me-on-my-way", "/route/106065471/plate-tectonics" } })] //Some popular routes
         [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", new object[] { new string[0] })] //No popular routes listed
         public void TestAreaPopularClimbsParse(string url, object[] expectedPopClimbs)
         {
