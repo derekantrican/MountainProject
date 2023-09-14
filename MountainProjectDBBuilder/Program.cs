@@ -403,16 +403,7 @@ namespace MountainProjectDBBuilder
 
             List<string> duplicateIds = allPathsLists.Where(kvp => kvp.Value.Count > 1).Select(kvp => kvp.Key).ToList();
 
-            if (duplicateIds.Any())
-            {
-                //For now, we'll just send a report of duplicates. In the future, we can include these in the parents to reparse above
-                SendReport($"{duplicateIds.Count} duplicates found when updating MountainProjectAreas.xml",
-                    $"{string.Join("\n\n", duplicateIds.Select(id => $"{id}:\n{string.Join("\n", allPathsLists[id].Select(p => string.Join(" > ", p)))}"))}");
-            }
-
             //Reparse duplicate ids
-            //Todo: we currently don't reparse duplicate ids (just sending reports as a test right now) but once we do, we can probably remove the above `if (duplicateIds.Any())` SendReport as well
-            //  and shorten this all (something like: parse new areas -> check for duplicates -> reparse parents of duplicates -> check for duplicates again)
             HashSet<string> idsToReparse = new HashSet<string>();
             foreach (string duplicateId in duplicateIds)
             {
@@ -480,8 +471,11 @@ namespace MountainProjectDBBuilder
             duplicateIds = allPathsLists.Where(kvp => kvp.Value.Count > 1).Select(kvp => kvp.Key).ToList();
 
             //Send report about # of duplicates AFTER reparsing duplicates
-            SendReport($"[AFTER REPARSE] {duplicateIds.Count} duplicates found when updating MountainProjectAreas.xml",
-                $"{string.Join("\n\n", duplicateIds.Select(id => $"{id}:\n{string.Join("\n", allPathsLists[id].Select(p => string.Join(" > ", p)))}"))}");
+            if (duplicateIds.Any())
+            {
+                SendReport($"{duplicateIds.Count} duplicates COULD NOT BE RESOLVED after a reparse",
+                    $"{string.Join("\n\n", duplicateIds.Select(id => $"{id}:\n{string.Join("\n", allPathsLists[id].Select(p => string.Join(" > ", p)))}"))}");
+            }
 
             totalTimer.Stop();
             Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
