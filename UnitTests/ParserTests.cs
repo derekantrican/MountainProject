@@ -246,7 +246,7 @@ namespace UnitTests
 
         [DataTestMethod]
         [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", "TR (2), Trad (1)")]
-        [DataRow("/area/108184422/deception-wall", "TR (1), Sport (20)")]
+        [DataRow("/area/108184422/deception-wall", "TR (1), Sport (21)")]
         [DataRow("/route/111859673/side-dish", "")] //Statistics aren't generated for routes
         public void TestStatisticsParse(string url, string expectedStatistics)
         {
