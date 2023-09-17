@@ -100,7 +100,7 @@ namespace UnitTests
 
         [DataTestMethod]
         [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", 0)] //Subdest areas don't have routes
-        [DataRow("/area/108184422/deception-wall", 20)] //Walls have routes
+        [DataRow("/area/108184422/deception-wall", 21)] //Walls have routes
         public void TestAreaRouteParse(string url, int expectedRoutes)
         {
             if (!Url.Contains(url, Utilities.MPBASEURL))
