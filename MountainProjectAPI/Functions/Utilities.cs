@@ -231,7 +231,7 @@ namespace MountainProjectAPI
                 int retries = 0;
                 while (retries < 3)
                 {
-                    IElement routeHeaderSection = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "row pt-main-content").Children[0];
+                    IElement routeHeaderSection = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "row pt-main-content")?.Children[0];
                     if (routeHeaderSection == null || routeHeaderSection.ChildElementCount == 0)
                     {
                         ConsoleHelper.Write($"NO HEADER FOUND FOR {url}. RETRYING ({retries + 1})...", ConsoleColor.Yellow);

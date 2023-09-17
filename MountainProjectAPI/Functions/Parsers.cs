@@ -253,6 +253,7 @@ namespace MountainProjectAPI
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex);
                 throw new ParseException($"Failed to parse route with id {inputRoute?.ID}", ex)
                 {
                     RelatedObject = inputRoute,
