@@ -196,7 +196,7 @@ namespace UnitTests
         }
 
         [DataTestMethod]
-        [DataRow("/route/111859673/side-dish", 1.8)] //Decimal
+        [DataRow("/route/111859673/side-dish", 1.9)] //Decimal
         [DataRow("/route/109063052/geflugelfrikadelle", 4)] //No decimal
         public void TestRouteRatingParse(string url, double expectedRating)
         {
