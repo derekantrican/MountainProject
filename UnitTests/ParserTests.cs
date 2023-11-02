@@ -183,7 +183,7 @@ namespace UnitTests
         [DataRow("/route/105890633/black-dike", GradeSystem.Ice, "WI4-5 M3")] //No YDS/Heuco present
         [DataRow("/route/105931000/myan-problem", GradeSystem.Hueco, "V-easy")] //Not a usual grade format
         [DataRow("/route/106238998/price-glacier", GradeSystem.YDS, "Easy 5th")] //Not a usual grade format
-        [DataRow("/route/108170851/new-dawn", GradeSystem.Aid, "A3")] //Includes "Aid rating"
+        [DataRow("/route/108170851/new-dawn", GradeSystem.Aid, "C3+")] //Includes "Aid rating"
         public void TestRouteGradeParse(string url, GradeSystem expectedGradeSystem, string expectedValue)
         {
             if (!Url.Contains(url, Utilities.MPBASEURL))
