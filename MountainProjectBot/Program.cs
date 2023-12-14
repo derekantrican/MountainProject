@@ -193,6 +193,7 @@ namespace MountainProjectBot
         }
 
         private static bool alerted = false;
+        private static DateTime? downSince = null;
         private static void ApprovalServerStatusCheck()
         {
             //Skip status check if DB Builder is running (either due to port saturation or high memory/cpu usage, this causes the
@@ -203,16 +204,29 @@ namespace MountainProjectBot
             }
 
             bool serverUp = BotUtilities.PingUrl($"{BotUtilities.ApprovalServerUrl}?status", out Exception ex);
-            if (!serverUp && !alerted)
+            TimeSpan? downTime = downSince.HasValue ? DateTime.Now - downSince.Value : null;
+            if (!serverUp)
             {
-                BotUtilities.SendDiscordMessage($"Approval server is down ({ex.GetType()}: {ex.Message})\nAttempting to restart...");
-                alerted = true;
+                if (downSince.HasValue && downTime.Value.TotalMinutes > 5 && !alerted)
+                {
+                    BotUtilities.SendDiscordMessage($"Approval server is down (has been down for {downTime.Value.TotalMinutes} min).\n{ex.GetType()}: {ex.Message}");
+                    alerted = true; //Only alert once "per outage"
+                }
+                else
+                {
+                    downSince = DateTime.Now;
+                }
 
                 BotUtilities.ApprovalServer.Restart();
             }
-            else if (serverUp && alerted)
+            else
             {
-                BotUtilities.SendDiscordMessage("Approval server is back up");
+                if (downSince.HasValue && downTime.Value.TotalMinutes > 5)
+                {
+                    BotUtilities.SendDiscordMessage("Approval server is back up!");
+                }
+
+                downSince = null;
                 alerted = false;
             }
         }
