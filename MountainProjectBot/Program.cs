@@ -223,7 +223,7 @@ namespace MountainProjectBot
             {
                 if (downSince.HasValue && downTime.Value.TotalMinutes > 5)
                 {
-                    BotUtilities.SendDiscordMessage("Approval server is back up!");
+                    BotUtilities.SendDiscordMessage($"Approval server is back up! (Down for {downTime.Value.TotalMinutes} min)");
                 }
 
                 downSince = null;
