@@ -207,10 +207,13 @@ namespace MountainProjectBot
             TimeSpan? downTime = downSince.HasValue ? DateTime.Now - downSince.Value : null;
             if (!serverUp)
             {
-                if (downSince.HasValue && downTime.Value.TotalMinutes > 5 && !alerted)
+                if (downSince.HasValue)
                 {
-                    BotUtilities.SendDiscordMessage($"Approval server is down (has been down for {downTime.Value.TotalMinutes} min).\n{ex.GetType()}: {ex.Message}");
-                    alerted = true; //Only alert once "per outage"
+                    if (downTime.Value.TotalMinutes > 5 && !alerted)
+                    {
+                        BotUtilities.SendDiscordMessage($"Approval server is down (has been down for {downTime.Value.TotalMinutes} min).\n{ex.GetType()}: {ex.Message}");
+                        alerted = true; //Only alert once "per outage"
+                    }
                 }
                 else
                 {
