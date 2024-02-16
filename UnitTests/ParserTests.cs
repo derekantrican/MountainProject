@@ -237,7 +237,7 @@ namespace UnitTests
             if (!Url.Contains(url, Utilities.MPBASEURL))
                 url = Url.BuildFullUrl(Utilities.MPBASEURL + url);
 
-            List<string> parents = Parsers.GetParentIDs(Utilities.GetHtmlDoc(url));
+            List<string> parents = Parsers.GetParentIDs(Utilities.GetHtmlDoc(url), null);
             for (int i = 0; i < expectedParentUrls.Length; i++)
                 expectedParentUrls[i] = Utilities.GetID((string)expectedParentUrls[i]);
 

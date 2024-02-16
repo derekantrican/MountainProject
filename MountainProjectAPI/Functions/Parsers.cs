@@ -127,7 +127,7 @@ namespace MountainProjectAPI
             inputArea.NameForMatch = FilterNameForMatch(inputArea.Name, inputArea.ID);
             inputArea.Statistics = PopulateStatistics(doc);
             inputArea.Popularity = ParsePopularity(doc);
-            inputArea.ParentIDs = GetParentIDs(doc);
+            inputArea.ParentIDs = GetParentIDs(doc, inputArea);
             inputArea.PopularRouteIDs = GetPopularRouteIDs(doc, 3);
 
             //Get Area's routes
@@ -285,7 +285,7 @@ namespace MountainProjectAPI
             string additionalInfo = ParseAdditionalRouteInfo(doc);
             inputRoute.Height = ParseRouteHeight(ref additionalInfo);
             inputRoute.AdditionalInfo = additionalInfo;
-            inputRoute.ParentIDs = GetParentIDs(doc);
+            inputRoute.ParentIDs = GetParentIDs(doc, inputRoute);
 
             if (consoleMessages)
             {
@@ -510,7 +510,7 @@ namespace MountainProjectAPI
             return nameForMatch;
         }
 
-        public static List<string> GetParentIDs(IHtmlDocument doc)
+        public static List<string> GetParentIDs(IHtmlDocument doc, MPObject mpObject)
         {
             List<string> result = new List<string>();
             IElement outerDiv = doc.GetElementsByTagName("div").FirstOrDefault(x => x.Children.FirstOrDefault(p => p.TagName == "A" && p.TextContent == "All Locations") != null);
@@ -519,7 +519,19 @@ namespace MountainProjectAPI
             {
                 string url = parentElement.Attributes["href"].Value;
                 if (!Url.Equals(url, Utilities.ALLLOCATIONSURL))
+                {
+                    string id = Utilities.GetID(url);
+                    if (string.IsNullOrEmpty(id))
+                    {
+                        throw new ParseException($"Failed to parse id from url {url} when getting parents for child")
+                        {
+                            RelatedObject = mpObject,
+                            Html = doc?.Source.Text,
+                        };
+                    }
+
                     result.Add(Utilities.GetID(url));
+                }
             }
 
             return result;
