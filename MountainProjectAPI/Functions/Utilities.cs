@@ -107,6 +107,7 @@ namespace MountainProjectAPI
             { "106007071", @"\bUK\b" }, //United Kingdom
             { "105843226", @"\bORG\b" }, //Owens River Gorge
             { "105903004", @"\bHCR\b" }, //Horseshoe Canyon Ranch
+            { "105907756", @"\bAUS\b" }, //Australia
         };
 
         private static readonly HttpClient httpClient = new HttpClient();
