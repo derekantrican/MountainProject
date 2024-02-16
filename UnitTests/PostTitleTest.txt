@@ -154,7 +154,7 @@ Hero Shot, Scorpions at RRC	null
 Probably the scariest climb I’ve done to date.	null	
 Thank God Ledge on Half Dome, where honnolding was born. This pic is from before the huge rockfall that luckily only destroyed the shittiest pitch on the route. Vitaliy M took this pic and played with his stupid Cheburashka doll instead of belaying me :-)	null	
 Atman in RRC, so short but so splitter	null	
-Cambrian Explosion: V4 in the Sex Cave Sector of the Daliwood Boulders, in Dali, Yunnan Province, China.	null	
+Cambrian Explosion: V4 in the Sex Cave Sector of the Daliwood Boulders, in Dali, Yunnan Province, China.	https://www.mountainproject.com/route/125554470/cambrian-explosion	
 Round Annapurna trek in a 360 panoramic photo.	null	
 Punter's Pinnacle, Halls Gap, Australia	null	
 Warmup climb on the Beast Boulder in Dali, Yunnan Province, China	null	
@@ -491,7 +491,7 @@ Kaito Watanabe Sends The Gunt (V10) and The Punt (V12) in his first day at the N
 Ethan Pringle - If 6 was 9 (5.14a FA)	https://www.mountainproject.com/route/111808495/if-6-was-9	
 Sean Bailey - Coup de Grâce (9A/5.14d)	null	
 ‪Lincoln Lake - Bloody Lineage V9 / Rebellion V9	https://www.mountainproject.com/route/121156116	
-Boone, NC Bouldering in March '19. Problems: Chainsaw, Iceberg, The Gift, Ebonics, Big Bubba Ho-Tep	null	
+Boone, NC Bouldering in March '19. Problems: Chainsaw, Iceberg, The Gift, Ebonics, Big Bubba Ho-Tep	https://www.mountainproject.com/route/125506924	//Technically, this should match multiple routes, but we don't support that yet
 Rock Climbing in Slovenia - Triglav National Park - Overview	null	
 Jim Pope: Through And Through	null	
 The First Female Ascent of Zozobra (V10) in the Niagara Glen, ON.	null	
@@ -808,7 +808,7 @@ First time climbing outdoor, can't wait to get back out! Pic: 5.7 Y-Crack, Dixon
 Alex Honnold, probably (x-post from r/socalclimbing)	null	
 One of the Best Boulders in the World - Checkerboard (v8)	https://www.mountainproject.com/route/106129151/checkerboard	
 Topping out in New Jack City - Near Barstow, CA (x-post from r/socalclimbing)	null	
-Pump Wall in San Diego, CA (x-post from r/socalclimbing)	null	
+Pump Wall in San Diego, CA (x-post from r/socalclimbing)	https://www.mountainproject.com/route/125365674/pump-wall	
 Cathedral face NH	null	
 First 'alpine' trad climb. Chimney Route, 5.6, on Roche a Perdix in the Canadian Rockies. Took an alternate route on pitch 3 that included a few 5.10- moves, first time pulling that grade with trad.	https://www.mountainproject.com/route/124273248/chimney-route	
 A Glen classic shot on a camera full of chalk - Threesome (V6) established by Sonnie Trotter	https://www.mountainproject.com/route/114776175/threesome	
