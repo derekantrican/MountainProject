@@ -21,7 +21,8 @@ namespace MountainProjectAPI
         public const string MPBASEURL = "mountainproject.com";
         public const string MPROUTEURL = "mountainproject.com/route";
         public const string MPAREAURL = "mountainproject.com/area";
-        public const string ALLLOCATIONSURL = "mountainproject.com/route-guide";
+        public const string ALLLOCATIONSSUFFIX = "route-guide";
+        public const string ALLLOCATIONSURL = $"mountainproject.com/{ALLLOCATIONSSUFFIX}";
         public const string INTERNATIONALURL = "mountainproject.com/area/105907743/international";
 
         private const string RegexAgnosticBaseUrl = @"(https?:\/\/)?(www\.)?mountainproject\.com\/";

@@ -518,7 +518,7 @@ namespace MountainProjectAPI
             foreach (IElement parentElement in parentList)
             {
                 string url = parentElement.Attributes["href"].Value;
-                if (!Url.Equals(url, Utilities.ALLLOCATIONSURL))
+                if (!Url.Contains(url, Utilities.ALLLOCATIONSSUFFIX))
                 {
                     string id = Utilities.GetID(url);
                     if (string.IsNullOrEmpty(id))
