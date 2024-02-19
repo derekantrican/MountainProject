@@ -126,6 +126,14 @@ namespace MountainProjectAPI
                         using (StreamReader streamReader = new StreamReader(stream))
                         {
                             html = streamReader.ReadToEnd();
+
+                            //For some reason, sometimes MountainProject returns a page with all the urls containing an extra "index.php".
+                            //We can simply replace all instances of this in the html to fix our parsers
+                            if (html.Contains("/index.php"))
+                            {
+                                html = html.Replace("/index.php", "");
+                            }
+
                             break;
                         }
                     }
@@ -164,6 +172,13 @@ namespace MountainProjectAPI
                 try
                 {
                     html = await httpClient.GetStringAsync(Url.BuildFullUrl(url));
+
+                    //For some reason, sometimes MountainProject returns a page with all the urls containing an extra "index.php".
+                    //We can simply replace all instances of this in the html to fix our parsers
+                    if (html.Contains("/index.php"))
+                    {
+                        html = html.Replace("/index.php", "");
+                    }
 
                     // HttpResponseMessage response = await httpClient.GetAsync(Url.BuildFullUrl(url));
                     // html = await response.Content.ReadAsStringAsync();
