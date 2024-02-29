@@ -270,6 +270,14 @@ namespace MountainProjectAPI
                     if (routeHeaderSection == null || routeHeaderSection.ChildElementCount == 0)
                     {
                         ConsoleHelper.Write($"NO HEADER FOUND FOR {url}. RETRYING ({retries + 1})...", ConsoleColor.Yellow);
+
+                        //-------------------- TEMP FOR DEBUGGING -------------------
+                        if (retries == 2)
+                        {
+                            Console.WriteLine(doc?.Source?.Text);
+                        }
+                        //-------------------- TEMP FOR DEBUGGING -------------------
+
                         doc.Dispose();
 
                         html = await GetHtmlAsync(url);
