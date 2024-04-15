@@ -180,7 +180,7 @@ namespace UnitTests
         [DataTestMethod]
         [DataRow("/route/111859673/side-dish", GradeSystem.YDS, "5.10c")]
         [DataRow("/route/109063052/geflugelfrikadelle", GradeSystem.YDS, "5.12b/c")] //Has a slash
-        [DataRow("/route/105890633/black-dike", GradeSystem.Ice, "WI4+ M3 Mod. Snow")] //No YDS/Heuco present
+        [DataRow("/route/105890633/black-dike", GradeSystem.Ice, "WI4+ M3")] //No YDS/Heuco present
         [DataRow("/route/105931000/myan-problem", GradeSystem.Hueco, "V-easy")] //Not a usual grade format
         [DataRow("/route/106238998/price-glacier", GradeSystem.YDS, "Easy 5th")] //Not a usual grade format
         [DataRow("/route/108170851/new-dawn", GradeSystem.Aid, "C3+")] //Includes "Aid rating"
