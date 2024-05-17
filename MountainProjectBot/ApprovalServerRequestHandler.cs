@@ -16,44 +16,51 @@ namespace MountainProjectBot
         {
             if (request.RequestMethod == HttpMethod.Get && !request.IsFaviconRequest && !request.IsDefaultPageRequest)
             {
-                Dictionary<string, string> parameters = request.GetParameters();
-                if (parameters.ContainsKey("status")) //UpTimeRobot will ping this
+                try
                 {
-                    return "UP";
-                }
-                else if (parameters.ContainsKey("posthistory"))
-                {
-                    string query = parameters.ContainsKey("query") ? parameters["query"] : "";
-                    int page = parameters.ContainsKey("page") ? Convert.ToInt32(parameters["page"]) : 1;
-                    return ShowPostHistory(query, page);
-                }
-                else if (parameters.ContainsKey("postid") && (parameters.ContainsKey("approve") || parameters.ContainsKey("approveall") || parameters.ContainsKey("approveother")))
-                {
-                    if (BotFunctions.PostsPendingApproval.ContainsKey(parameters["postid"]))
+                    Dictionary<string, string> parameters = request.GetParameters();
+                    if (parameters.ContainsKey("status")) //UpTimeRobot will ping this
                     {
-                        ApprovalRequest approvalRequest = BotFunctions.PostsPendingApproval[parameters["postid"]];
+                        return "UP";
+                    }
+                    else if (parameters.ContainsKey("posthistory"))
+                    {
+                        string query = parameters.ContainsKey("query") ? parameters["query"] : "";
+                        int page = parameters.ContainsKey("page") ? Convert.ToInt32(parameters["page"]) : 1;
+                        return ShowPostHistory(query, page);
+                    }
+                    else if (parameters.ContainsKey("postid") && (parameters.ContainsKey("approve") || parameters.ContainsKey("approveall") || parameters.ContainsKey("approveother")))
+                    {
+                        if (BotFunctions.PostsPendingApproval.ContainsKey(parameters["postid"]))
+                        {
+                            ApprovalRequest approvalRequest = BotFunctions.PostsPendingApproval[parameters["postid"]];
 
-                        return GetApproval(parameters, approvalRequest);
+                            return GetApproval(parameters, approvalRequest);
+                        }
+                        else if (parameters.ContainsKey("force"))
+                        {
+                            //Because the ApprovalRequest & SearchResult have been disposed by now, we need to recreate them. Maybe we can do this in a better way in the future
+                            Post post = BotFunctions.RedditHelper.GetPost(parameters["postid"]).Result;
+                            SearchResult searchResult = MountainProjectDataSearch.ParseRouteFromString(post.Title);
+                            return GetApproval(parameters, new ApprovalRequest { Force = true, RedditPost = post, SearchResult = searchResult });
+                        }
+                        else
+                        {
+                            return WrapHtml($"<h1>Post '{parameters["postid"]}' expired</h1>" +
+                                            $"<br>" +
+                                            $"<br>" +
+                                            $"<input type=\"button\" onclick=\"force()\" value=\"Force\">" +
+                                            $"<script>" +
+                                            $"  function force(){{" +
+                                            $"    window.location.replace(\"{BotUtilities.ApprovalServerUrl}?{string.Join("&", parameters.Select(p => $"{p.Key}={p.Value}").Concat(new[] { "force" }))}\");" +
+                                            $"}}" +
+                                            $"</script>");
+                        }
                     }
-                    else if (parameters.ContainsKey("force"))
-                    {
-                        //Because the ApprovalRequest & SearchResult have been disposed by now, we need to recreate them. Maybe we can do this in a better way in the future
-                        Post post = BotFunctions.RedditHelper.GetPost(parameters["postid"]).Result;
-                        SearchResult searchResult = MountainProjectDataSearch.ParseRouteFromString(post.Title);
-                        return GetApproval(parameters, new ApprovalRequest { Force = true, RedditPost = post, SearchResult = searchResult });
-                    }
-                    else
-                    {
-                        return WrapHtml($"<h1>Post '{parameters["postid"]}' expired</h1>" +
-                                        $"<br>" +
-                                        $"<br>" +
-                                        $"<input type=\"button\" onclick=\"force()\" value=\"Force\">" +
-                                        $"<script>" +
-                                        $"  function force(){{" +
-                                        $"    window.location.replace(\"{BotUtilities.ApprovalServerUrl}?{string.Join("&", parameters.Select(p => $"{p.Key}={p.Value}").Concat(new[] { "force" }))}\");" +
-                                        $"}}" +
-                                        $"</script>");
-                    }
+                }
+                catch (Exception ex)
+                {
+                    return $"Exception encountered when handling request:\n\n{ex.Message}\n\n{ex.StackTrace}";
                 }
             }
 
