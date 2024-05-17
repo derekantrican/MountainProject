@@ -60,7 +60,7 @@ namespace MountainProjectBot
                 }
                 catch (Exception ex)
                 {
-                    return $"Exception encountered when handling request:\n\n{ex.Message}\n\n{ex.StackTrace}";
+                    return $"Exception encountered when handling request:\n\n{ex.Message}\n\n{ex.StackTrace}".Replace("\n", "<br>");
                 }
             }
 
