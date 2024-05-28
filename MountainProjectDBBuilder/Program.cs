@@ -565,15 +565,7 @@ namespace MountainProjectDBBuilder
                     {
                         if (innerException is ParseException parseException)
                         {
-                            ParseException innerMostParseException = parseException.GetInnermostParseException();
-                            exceptionString += $"FAILING MPOBJECT: {innerMostParseException.RelatedObject.URL}\n";
-                            exceptionString += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
-                            exceptionString += $"STACK TRACE: {innerMostParseException.InnerException?.StackTrace}\n\n";
-
-                            if (!string.IsNullOrEmpty(innerMostParseException.Html))
-                            {
-                                File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"Failing Object ({innerMostParseException.RelatedObject.ID}).html"), innerMostParseException.Html);
-                            }
+                            exceptionString = parseException.DumpToString();
                         }
                         else
                         {
@@ -586,15 +578,7 @@ namespace MountainProjectDBBuilder
                 {
                     if (ex is ParseException parseException)
                     {
-                        ParseException innerMostParseException = parseException.GetInnermostParseException();
-                        exceptionString += $"FAILING MPOBJECT: {innerMostParseException.RelatedObject.URL}\n";
-                        exceptionString += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
-                        exceptionString += $"STACK TRACE: {innerMostParseException.InnerException?.StackTrace}\n";
-
-                        if (!string.IsNullOrEmpty(innerMostParseException.Html))
-                        {
-                            File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"Failing Object ({innerMostParseException.RelatedObject.ID}).html"), innerMostParseException.Html);
-                        }
+                        exceptionString = parseException.DumpToString();
                     }
                     else
                     {
