@@ -1,9 +1,11 @@
-﻿using RedditSharp;
+﻿using Newtonsoft.Json.Linq;
+using RedditSharp;
 using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Net.Http;
 using System.Threading.Tasks;
 
 namespace MountainProjectBot
@@ -11,6 +13,7 @@ namespace MountainProjectBot
     public class RedditHelper
     {
         public const string REDDITBASEURL = "https://reddit.com";
+        WebAgent webAgent;
         Reddit redditService;
         Dictionary<string, int> subredditNamesAndCommentAmounts = new Dictionary<string, int>()
         {
@@ -48,7 +51,7 @@ namespace MountainProjectBot
         {
             Console.WriteLine("Authorizing Reddit...");
 
-            WebAgent webAgent = GetWebAgentCredentialsFromFile(filePath);
+            webAgent = GetWebAgentCredentialsFromFile(filePath);
             redditService = new Reddit(webAgent, true);
 
             foreach (string subRedditName in subredditNamesAndCommentAmounts.Keys)
@@ -118,8 +121,46 @@ namespace MountainProjectBot
 
         public async Task<Post> GetPost(string postId)
         {
-            return await redditService.GetPostAsync(new Uri($"{REDDITBASEURL}/comments/{postId}"));
+            // This has a few different fallbacks because the method on line 127 *used* to work, but
+            // in the last few months has been throwing 443 errors (and I have no idea why). So I have
+            // added some fallbacks.
+
+            try
+            {
+                return await redditService.GetPostAsync(new Uri($"{REDDITBASEURL}/comments/{postId}"));
+            }
+            catch
+            {
+                try
+                {
+                    Post post = await redditService.GetPostAsync(new Uri($"{REDDITBASEURL}/{postId}"));
+                    BotUtilities.SendDiscordMessage($"GetPostAsync (without '/comments/') worked as a fallback"); //TEMP
+                    return post;
+                }
+                catch
+                {
+                    string postJson = await GetPostAlternate(postId);
+                    Post post = Post.Parse(webAgent, JToken.Parse(postJson)) as Post;
+					BotUtilities.SendDiscordMessage($"GetPostAlternate worked as a fallback"); //TEMP
+					return post;
+                }
+			}
         }
+
+        public async Task<string> GetPostAlternate(string postId)
+        {
+            string url = $"https://reddit.com/{postId}.json";
+			using (HttpClient client = new HttpClient())
+			{
+				client.Timeout = TimeSpan.FromSeconds(3);
+				HttpRequestMessage request = new HttpRequestMessage(System.Net.Http.HttpMethod.Head, url);
+
+				using (HttpResponseMessage response = await client.SendAsync(request))
+				{
+					return await response.Content.ReadAsStringAsync();
+				}
+			}
+		}
 
         public async Task<Comment> ReplyToComment(Comment comment, string replyText)
         {
