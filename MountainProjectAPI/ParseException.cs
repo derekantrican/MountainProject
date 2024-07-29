@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace MountainProjectAPI
 {
@@ -21,6 +22,24 @@ namespace MountainProjectAPI
             }
 
             return ex;
+        }
+
+        public string DumpToString()
+        {
+            string result = "";
+
+            ParseException innerMostParseException = this.GetInnermostParseException();
+            result += $"FAILING MPOBJECT: {innerMostParseException.RelatedObject.URL}\n";
+            result += $"PATH: {string.Join(" -> ", innerMostParseException.RelatedObject.ParentIDs)}\n";
+            result += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
+            result += $"STACK TRACE: {innerMostParseException.InnerException?.StackTrace}\n\n";
+
+            if (!string.IsNullOrEmpty(innerMostParseException.Html))
+            {
+                File.WriteAllText(Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"Failing Object ({innerMostParseException.RelatedObject.ID}).html"), innerMostParseException.Html);
+            }
+
+            return result;
         }
     }
 }
