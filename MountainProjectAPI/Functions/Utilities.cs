@@ -166,7 +166,7 @@ namespace MountainProjectAPI
         {
             string html;
             int retries = 0;
-            int backoffMs = 1000;
+            int backoffMs = 5000;
             while (true)
             {
                 try
@@ -199,7 +199,7 @@ namespace MountainProjectAPI
                         //will limit how many requests we send before we start getting successful responses again.
                         Console.WriteLine($"Too Many Requests (waiting {backoffMs}ms)");
                         Thread.Sleep(backoffMs);
-                        backoffMs += 1000;
+                        backoffMs += 5000;
                         continue;
                     }
 
