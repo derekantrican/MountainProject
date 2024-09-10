@@ -146,6 +146,11 @@ namespace MountainProjectAPI
                 string routeUrl = routeElement.Attributes["href"].Value;
                 Route route = new Route(routeElement.TextContent, Utilities.GetID(routeUrl));
                 route.URL = routeUrl;
+
+                //This will be overwritten later, but assigning upon construction here so we know some info about parents
+                //  in case we fail to get the HTML for the route
+                route.ParentIDs = inputArea.ParentIDs.Concat(new[] { inputArea.ID }).ToList();
+
                 inputArea.Routes.Add(route);
                 TotalRoutes++;
 
@@ -160,6 +165,10 @@ namespace MountainProjectAPI
                 {
                     ID = Utilities.GetID(areaUrl),
                     URL = areaUrl,
+
+					//This will be overwritten later, but assigning upon construction here so we know some info about parents
+                    //  in case we fail to get the HTML for the area
+					ParentIDs = inputArea.ParentIDs.Concat(new[] {inputArea.ID}).ToList(),
                 };
 
                 inputArea.SubAreas.Add(subArea);
