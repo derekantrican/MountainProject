@@ -1,4 +1,5 @@
-﻿using MountainProjectAPI;
+﻿using AngleSharp;
+using MountainProjectAPI;
 using RedditSharp.Things;
 using System;
 using System.Collections.Generic;
@@ -96,8 +97,8 @@ namespace MountainProjectBot
                 {
                     foreach (string approvedId in parameters["option"].Split(','))
                     {
-                        MPObject matchingOption = approvalRequest.SearchResult.AllResults.Find(p => p.ID == approvedId) ?? MountainProjectDataSearch.GetItemWithMatchingID(approvedId);
-                        if (matchingOption == null)
+                        MPObject matchingOption = TryFindRequestedOption(approvalRequest, approvedId);
+						if (matchingOption == null)
                         {
                             result += $"Option '{approvedId}' not found<br>";
                         }
@@ -131,6 +132,48 @@ namespace MountainProjectBot
 
             return WrapHtml($"<h1>{result}</h1>");
         }
+
+        private static MPObject TryFindRequestedOption(ApprovalRequest approvalRequest, string id)
+        {
+            //Try to get the requested id as one of the other results in the search
+            MPObject result = approvalRequest.SearchResult.AllResults.Find(p => p.ID == id);
+
+            //Try to get the requested id as an item in the DB
+            if (result == null)
+            {
+                result = MountainProjectDataSearch.GetItemWithMatchingID(id);
+			}
+
+            //If the item isn't in the DB, it might be too new - so we'll try to parse it "fresh" from MP
+
+            //MP doesn't have a "generic link" for both route & area (you have to distinguish in the url).
+            //So first we'll assume the id represents a route, then (if that doesn't work) try as an area.
+            if (result == null)
+            {
+                try
+                {
+                    //Try to assume the id is a route first
+					Route route = new Route { ID = id };
+					Parsers.ParseRouteAsync(route).Wait();
+                    result = route;
+				}
+                catch { }
+            }
+
+			if (result == null)
+			{
+				try
+				{
+					//Try to assume the id is a route first
+					Area area = new Area { ID = id };
+					Parsers.ParseAreaAsync(area).Wait();
+					result = area;
+				}
+				catch { }
+			}
+
+			return result;
+		}
 
         private static string ShowApproveOtherPicker(Dictionary<string, string> parameters, ApprovalRequest approvalRequest)
         {
