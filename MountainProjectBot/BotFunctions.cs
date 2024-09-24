@@ -70,7 +70,8 @@ namespace MountainProjectBot
                         if (monitor.FailedTimes == 3)
                         {
                             ConsoleHelper.Write($"Exception thrown when getting comment: {ex.Message}\n{ex.StackTrace}", ConsoleColor.Red);
-                            ConsoleHelper.Write("Removing monitor...", ConsoleColor.Red); //maybe we shouldn't remove the monitor unless trying to retrieve the comment fails too many times?
+							BotUtilities.SendDiscordMessage($"Exception thrown when getting botResponseComment: {ex.Message}\n{ex.StackTrace}"); //TEMP: Add debugging
+							ConsoleHelper.Write("Removing monitor...", ConsoleColor.Red); //maybe we shouldn't remove the monitor unless trying to retrieve the comment fails too many times?
                             monitoredComments.Remove(monitor);
                         }
 
@@ -178,7 +179,8 @@ namespace MountainProjectBot
                 {
                     ConsoleHelper.Write($"\tException occured when checking monitor for comment {RedditHelper.GetFullLink(monitor.Parent.Permalink)}", ConsoleColor.Red);
                     ConsoleHelper.Write($"\t{e.Message}\n{e.StackTrace}", ConsoleColor.Red);
-                    ConsoleHelper.Write("Removing monitor...", ConsoleColor.Red);
+					BotUtilities.SendDiscordMessage($"Exception occured when checking monitor for comment: {e.Message}\n{e.StackTrace}"); //TEMP: Add debugging
+					ConsoleHelper.Write("Removing monitor...", ConsoleColor.Red);
                     monitoredComments.Remove(monitor);
                 }
             }

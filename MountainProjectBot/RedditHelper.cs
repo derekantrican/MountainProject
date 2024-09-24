@@ -140,7 +140,7 @@ namespace MountainProjectBot
                 catch
                 {
                     string postJson = await GetPostAlternate(postId);
-					BotUtilities.SendDiscordMessage($"postJson:\n\n{postJson}"); //TEMP
+					BotUtilities.SendDiscordMessage($"https://reddit.com/{postId}.json :\n\n{postJson}"); //TEMP
                     Post post = Post.Parse(webAgent, JToken.Parse(postJson)) as Post;
 					BotUtilities.SendDiscordMessage($"GetPostAlternate worked as a fallback"); //TEMP
 					return post;
