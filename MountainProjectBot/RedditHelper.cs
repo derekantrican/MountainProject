@@ -116,8 +116,33 @@ namespace MountainProjectBot
 
         public async Task<Comment> GetComment(Uri commentPermalink)
         {
-            return await redditService.GetCommentAsync(new Uri(REDDITBASEURL + commentPermalink));
+            try
+            {
+                return await redditService.GetCommentAsync(new Uri(REDDITBASEURL + commentPermalink));
+            }
+            catch
+            {
+                Uri jsonUrl = new Uri(REDDITBASEURL + commentPermalink + ".json");
+				string commentJson = await GetCommentAlternate(jsonUrl);
+				BotUtilities.SendDiscordMessage($"{jsonUrl} :\n\n{commentJson}"); //TEMP
+				Comment comment = Comment.Parse(webAgent, JToken.Parse(commentJson)) as Comment;
+				BotUtilities.SendDiscordMessage($"GetCommentAlternate worked as a fallback"); //TEMP
+                return comment;
+			}
         }
+
+        public async Task<string> GetCommentAlternate(Uri commentPermalink)
+        {
+			using (HttpClient client = new HttpClient())
+			{
+				HttpRequestMessage request = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, commentPermalink);
+
+				using (HttpResponseMessage response = await client.SendAsync(request))
+				{
+					return await response.Content.ReadAsStringAsync();
+				}
+			}
+		}
 
         public async Task<Post> GetPost(string postId)
         {
@@ -153,8 +178,7 @@ namespace MountainProjectBot
             string url = $"https://reddit.com/{postId}.json";
 			using (HttpClient client = new HttpClient())
 			{
-				client.Timeout = TimeSpan.FromSeconds(3);
-				HttpRequestMessage request = new HttpRequestMessage(System.Net.Http.HttpMethod.Head, url);
+				HttpRequestMessage request = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
 
 				using (HttpResponseMessage response = await client.SendAsync(request))
 				{
