@@ -124,7 +124,7 @@ namespace MountainProjectBot
             {
                 Uri jsonUrl = new Uri(REDDITBASEURL + commentPermalink + ".json");
 				string commentJson = await GetCommentAlternate(jsonUrl);
-				BotUtilities.SendDiscordMessage($"{jsonUrl} :\n\n{commentJson}"); //TEMP
+				//BotUtilities.SendDiscordMessage($"{jsonUrl} :\n\n{commentJson}"); //TEMP
 				Comment comment = Comment.Parse(webAgent, JToken.Parse(commentJson)) as Comment;
 				BotUtilities.SendDiscordMessage($"GetCommentAlternate worked as a fallback"); //TEMP
                 return comment;
