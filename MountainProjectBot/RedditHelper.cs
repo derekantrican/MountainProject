@@ -17,16 +17,16 @@ namespace MountainProjectBot
         Reddit redditService;
         Dictionary<string, int> subredditNamesAndCommentAmounts = new Dictionary<string, int>()
         {
-            { "climbing", 100 /*1000*/ },
-            { "climbingporn", 30 },
-            { "bouldering", 100 /*600*/ },
-            { "socalclimbing", 50 },
-            { "climbingvids", 30 },
-            { "mountainprojectbot", 100 /*500*/ },
-            { "climbergirls", 100 /*200*/ },
-            { "iceclimbing", 30 },
-            { "rockclimbing", 50 },
-            { "tradclimbing", 100 },
+            { "climbing", 10 /*100*/ /*1000*/ },
+            { "climbingporn", 10 /*30*/ },
+            { "bouldering", 10 /*100*/ /*600*/ },
+            { "socalclimbing", 10 /*50*/ },
+            { "climbingvids", 10 /*30*/ },
+            { "mountainprojectbot", 10 /*100*/ /*500*/ },
+            { "climbergirls", 10 /*100*/ /*200*/ },
+            { "iceclimbing", 10 /*30*/ },
+            { "rockclimbing", 10 /*50*/ },
+            { "tradclimbing", 10 /*100*/ },
         };
         public List<Subreddit> Subreddits = new List<Subreddit>();
 
