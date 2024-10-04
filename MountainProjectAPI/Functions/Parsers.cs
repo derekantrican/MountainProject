@@ -5,6 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Net;
+using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
@@ -154,7 +156,23 @@ namespace MountainProjectAPI
                 inputArea.Routes.Add(route);
                 TotalRoutes++;
 
-                await ParseRouteAsync(route, consoleMessages); //Parse route
+                try
+                {
+                    await ParseRouteAsync(route, consoleMessages); //Parse route
+                }
+                catch (ParseException ex)
+				{
+					//HOPEFULLY TEMPORARY - handle this https://www.mountainproject.com/forum/topic/126874784
+					if (ex.InnerException is HttpRequestException requestException && requestException.StatusCode == HttpStatusCode.NotFound)
+                    {
+                        inputArea.Routes.Remove(route);
+                        TotalRoutes--;
+                    }
+                    else
+                    {
+                        throw;
+                    }
+                }
             }
 
             //Populate sub area details
@@ -176,7 +194,23 @@ namespace MountainProjectAPI
 
                 if (recursive)
                 {
-                    await ParseAreaAsync(subArea, consoleMessages: consoleMessages); //Parse sub area
+                    try
+                    {
+                        await ParseAreaAsync(subArea, consoleMessages: consoleMessages); //Parse sub area
+                    }
+                    catch (ParseException ex)
+                    {
+						//HOPEFULLY TEMPORARY - handle this https://www.mountainproject.com/forum/topic/126874784
+						if (ex.InnerException is HttpRequestException requestException && requestException.StatusCode == HttpStatusCode.NotFound)
+						{
+							inputArea.SubAreas.Remove(subArea);
+							TotalAreas--;
+						}
+						else
+						{
+							throw;
+						}
+					}
                 }
             }
 
