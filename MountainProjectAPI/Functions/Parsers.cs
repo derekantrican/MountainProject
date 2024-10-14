@@ -297,10 +297,20 @@ namespace MountainProjectAPI
             catch (Exception ex)
             {
                 Console.WriteLine(ex);
+
+                string html = null;
+                try
+                {
+					//Sometimes this can fail at "AngleSharp.Text.TextSource.get_Text()" (still not sure why),
+                    //but wrapping it here to not muddy the ParseException we're constructing with a different exception
+					html = doc?.Source?.Text;
+                }
+                catch { }
+
                 throw new ParseException($"Failed to parse route with id {inputRoute?.ID}", ex)
                 {
                     RelatedObject = inputRoute,
-                    Html = doc?.Source.Text,
+                    Html = html,
                 };
             }
         }
@@ -566,10 +576,19 @@ namespace MountainProjectAPI
                     string id = Utilities.GetID(url);
                     if (string.IsNullOrEmpty(id))
                     {
-                        throw new ParseException($"Failed to parse id from url {url} when getting parents for child")
+						string html = null;
+						try
+						{
+							//Sometimes this can fail at "AngleSharp.Text.TextSource.get_Text()" (still not sure why),
+							//but wrapping it here to not muddy the ParseException we're constructing with a different exception
+							html = doc?.Source?.Text;
+						}
+						catch { }
+
+						throw new ParseException($"Failed to parse id from url {url} when getting parents for child")
                         {
                             RelatedObject = mpObject,
-                            Html = doc?.Source.Text,
+                            Html = html,
                         };
                     }
 
