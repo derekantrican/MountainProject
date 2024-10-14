@@ -366,7 +366,14 @@ namespace MountainProjectAPI
         {
             List<Grade> grades = new List<Grade>();
             IElement gradesSection = doc.GetElementsByTagName("h2").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "inline-block mr-2");
-            foreach (IElement spanElement in gradesSection.GetElementsByTagName("span"))
+            
+            if (gradesSection == null)
+            {
+				//This was added because of this issue: https://www.mountainproject.com/forum/topic/126874784/mountainproject-lists-more-subareas-if-you-are-not-logged-in#ForumMessage-127092247
+				return new List<Grade>();
+            }
+
+			foreach (IElement spanElement in gradesSection.GetElementsByTagName("span"))
             {
                 if (spanElement.Attributes["class"] == null || string.IsNullOrEmpty(spanElement.GetElementsByTagName("a").FirstOrDefault()?.TextContent))
                     continue;

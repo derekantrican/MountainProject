@@ -184,7 +184,8 @@ namespace UnitTests
         [DataRow("/route/105931000/myan-problem", GradeSystem.Hueco, "V-easy")] //Not a usual grade format
         [DataRow("/route/106238998/price-glacier", GradeSystem.YDS, "Easy 5th")] //Not a usual grade format
         [DataRow("/route/108170851/new-dawn", GradeSystem.Aid, "C3+")] //Includes "Aid rating"
-        public void TestRouteGradeParse(string url, GradeSystem expectedGradeSystem, string expectedValue)
+		//[DataRow("/route/108878033/wolfenstein", GradeSystem.YDS, "5.10")] //Todo: uncomment this one when this is resolved: https://www.mountainproject.com/forum/topic/126874784/mountainproject-lists-more-subareas-if-you-are-not-logged-in#ForumMessage-127092247
+		public void TestRouteGradeParse(string url, GradeSystem expectedGradeSystem, string expectedValue)
         {
             if (!Url.Contains(url, Utilities.MPBASEURL))
                 url = Url.BuildFullUrl(Utilities.MPBASEURL + url);
