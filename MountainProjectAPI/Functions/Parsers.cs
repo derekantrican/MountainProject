@@ -2,6 +2,7 @@
 using AngleSharp.Html.Dom;
 using Base;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
@@ -21,6 +22,7 @@ namespace MountainProjectAPI
         public static int TotalRoutes = 0;
         public static int TargetTotalRoutes = 0;
         public static Stopwatch TotalTimer;
+        public static ConcurrentBag<(DateTime, DateTime)> FinishEstimates = new ConcurrentBag<(DateTime, DateTime)>();
 
         public static double Progress
         {
@@ -349,6 +351,8 @@ namespace MountainProjectAPI
                     long elapsedMS = TotalTimer.ElapsedMilliseconds;
                     TimeSpan estTimeRemaining = TimeSpan.FromMilliseconds((elapsedMS / Progress) - elapsedMS);
                     ConsoleHelper.RecordProgress(Progress, estTimeRemaining);
+                    FinishEstimates.Add((DateTime.Now, DateTime.Now.Add(estTimeRemaining)));
+
                     ConsoleHelper.PrintCpuMemUsage();
                 }
             }

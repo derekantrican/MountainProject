@@ -244,6 +244,7 @@ namespace MountainProjectDBBuilder
             Console.WriteLine();
             Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
             FileInfo file = SerializeResults(destAreas);
+            File.WriteAllLines($"{DateTime.Now:yyyy.MM.dd.HH.mm.ss} estimates.csv", Parsers.FinishEstimates.OrderBy(d => d.Item1).Select(d => $"{d.Item1},{d.Item2}"));
 
             SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed} ({Math.Round(file.Length / 1024f / 1024f, 2)} MB). Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
             LogParseTime($"Full Build", totalTimer.Elapsed);
@@ -533,8 +534,9 @@ namespace MountainProjectDBBuilder
                 Console.WriteLine("!!!-------------EXCEPTION ENCOUNTERED-------------!!!");
                 Console.WriteLine(exceptionString);
                 SendReport($"MountainProjectDBBuilder {name} completed WITH ERRORS in {totalTimer.Elapsed}", exceptionString);
-            }
-            finally
+				File.WriteAllLines($"{DateTime.Now:yyyy.MM.dd.HH.mm.ss} estimates.csv", Parsers.FinishEstimates.OrderBy(d => d.Item1).Select(d => $"{d.Item1},{d.Item2}")); //TEMP (just here for testing)
+			}
+			finally
             {
                 File.AppendAllText(logPath, outputCapture.ToString());
                 outputCapture.Dispose();
