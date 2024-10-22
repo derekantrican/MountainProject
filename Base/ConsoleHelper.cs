@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace Base
 {
@@ -36,7 +37,17 @@ namespace Base
             Console.SetOut(new OutputCapture(additionalTarget));
         }
 
-        private class OutputCapture : TextWriter
+		public static void PrintCpuMemUsage()
+        {
+            Task.Run(() =>
+            {
+                double usedCpu = PerformanceStats.GetCpuUsagePercentage();
+                double usedMem = PerformanceStats.GetMemoryUsagePercentage();
+                Write($"Used CPU: {usedCpu}% - Used memory: {usedMem}%", ConsoleColor.Blue);
+            });
+		}
+
+		private class OutputCapture : TextWriter
         {
             private readonly TextWriter stdOutWriter;
             private readonly TextWriter captured;
