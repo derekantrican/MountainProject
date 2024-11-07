@@ -349,7 +349,6 @@ namespace MountainProjectAPI
                     long elapsedMS = TotalTimer.ElapsedMilliseconds;
                     TimeSpan estTimeRemaining = TimeSpan.FromMilliseconds((elapsedMS / Progress) - elapsedMS);
                     ConsoleHelper.RecordProgress(Progress, estTimeRemaining);
-                    ConsoleHelper.PrintCpuMemUsage();
                 }
             }
         }
