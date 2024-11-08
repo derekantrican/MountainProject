@@ -116,7 +116,7 @@ namespace UnitTests
 
         [DataTestMethod]
         [DataRow("/area/105841134/red-river-gorge", new object[] { new[] { "/route/105880926/eureka", "/105860741/roadside-attraction", "/route/105868000/rock-wars" } })] //Some popular routes
-        //[DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", new object[] { new string[0] })] //No popular routes listed
+        [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", new object[] { new string[0] })] //No popular routes listed
         public void TestAreaPopularClimbsParse(string url, object[] expectedPopClimbs)
         {
             if (!Url.Contains(url, Utilities.MPBASEURL))
