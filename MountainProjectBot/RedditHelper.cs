@@ -136,8 +136,9 @@ namespace MountainProjectBot
 			using (HttpClient client = new HttpClient())
 			{
 				HttpRequestMessage request = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, commentPermalink);
+                request.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0");
 
-				using (HttpResponseMessage response = await client.SendAsync(request))
+                using (HttpResponseMessage response = await client.SendAsync(request))
 				{
 					return await response.Content.ReadAsStringAsync();
 				}
@@ -179,6 +180,7 @@ namespace MountainProjectBot
 			using (HttpClient client = new HttpClient())
 			{
 				HttpRequestMessage request = new HttpRequestMessage(System.Net.Http.HttpMethod.Get, url);
+                request.Headers.Add("User-Agent", "Mozilla/5.0 (Windows NT 6.1; Win64; x64; rv:47.0) Gecko/20100101 Firefox/47.0");
 
 				using (HttpResponseMessage response = await client.SendAsync(request))
 				{
