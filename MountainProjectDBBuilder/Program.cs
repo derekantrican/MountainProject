@@ -277,7 +277,7 @@ namespace MountainProjectDBBuilder
             {
                 Task.WaitAll(tasks, cts.Token);
             }
-            catch (TaskCanceledException) { } //if cts.Cancel() is invoked, then that will be the ultimate exception (and mask the actual exception)
+            catch (OperationCanceledException) { } //if cts.Cancel() is invoked, then that will be the ultimate exception (and mask the actual exception)
 
             if (firstException != null)
             {
