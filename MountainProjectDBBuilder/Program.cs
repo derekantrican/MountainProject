@@ -256,12 +256,15 @@ namespace MountainProjectDBBuilder
         {
             var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
 
+            Exception firstException = null;
+
             foreach (var task in tasks)
             {
                 task.ContinueWith(t =>
                 {
                     if (t.IsFaulted)
                     {
+                        firstException = t.Exception;
                         cts.Cancel();
                     }
                 },
@@ -270,7 +273,16 @@ namespace MountainProjectDBBuilder
                 TaskScheduler.Current);
             }
 
-            Task.WaitAll(tasks, cts.Token);
+            try
+            {
+                Task.WaitAll(tasks, cts.Token);
+            }
+            catch (TaskCanceledException) { } //if cts.Cancel() is invoked, then that will be the ultimate exception (and mask the actual exception)
+
+            if (firstException != null)
+            {
+                throw firstException;
+            }
         }
 
         private static void AddNewItems()
