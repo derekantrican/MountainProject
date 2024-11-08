@@ -20,6 +20,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Runtime.ExceptionServices;
+using System.Threading;
 
 namespace MountainProjectDBBuilder
 {
@@ -237,7 +238,7 @@ namespace MountainProjectDBBuilder
                 areaTasks.Add(Parsers.ParseAreaAsync(destArea));
             });
 
-            Task.WaitAll(areaTasks.ToArray());
+            WaitAllWithImmediateThrow(areaTasks.ToArray(), new CancellationTokenSource().Token);
 
             totalTimer.Stop();
             Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
@@ -247,6 +248,29 @@ namespace MountainProjectDBBuilder
 
             SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed} ({Math.Round(file.Length / 1024f / 1024f, 2)} MB). Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
             LogParseTime($"Full Build", totalTimer.Elapsed);
+        }
+
+        //This is here to hopefully quit immediately if a ParseException is thrown (rather than waiting multiple hours on other tasks to finish)
+        //Source: https://stackoverflow.com/a/22851991/2246411 (from the linked gist)
+        private static void WaitAllWithImmediateThrow(Task[] tasks, CancellationToken token)
+        {
+            var cts = CancellationTokenSource.CreateLinkedTokenSource(token);
+
+            foreach (var task in tasks)
+            {
+                task.ContinueWith(t =>
+                {
+                    if (t.IsFaulted)
+                    {
+                        cts.Cancel();
+                    }
+                },
+                cts.Token,
+                TaskContinuationOptions.ExecuteSynchronously,
+                TaskScheduler.Current);
+            }
+
+            Task.WaitAll(tasks, cts.Token);
         }
 
         private static void AddNewItems()
