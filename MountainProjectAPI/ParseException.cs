@@ -7,10 +7,9 @@ namespace MountainProjectAPI
     {
         public ParseException(string message, Exception innerException = null) : base(message, innerException)
         {
-            Timestamp = DateTime.Now;
+
         }
 
-        public DateTime Timestamp { get; set; } //Added for debugging to see if throwing ParseExceptions isn't quitting the program immediately
         public MPObject RelatedObject { get; set; }
         public string Html { get; set; }
 
@@ -32,8 +31,7 @@ namespace MountainProjectAPI
             ParseException innerMostParseException = this.GetInnermostParseException();
             result += $"FAILING MPOBJECT: {innerMostParseException.RelatedObject.URL}\n";
             result += $"PATH: {string.Join(" -> ", innerMostParseException.RelatedObject.ParentIDs)}\n";
-            result += $"TIMESTAMP: {Timestamp}\n";
-			result += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
+            result += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
             result += $"STACK TRACE: {innerMostParseException.InnerException?.StackTrace}\n\n";
 
             if (!string.IsNullOrEmpty(innerMostParseException.Html))
