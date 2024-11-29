@@ -238,7 +238,7 @@ namespace MountainProjectDBBuilder
                 areaTasks.Add(Parsers.ParseAreaAsync(destArea));
             });
 
-            WaitAllWithImmediateThrow(areaTasks.ToArray(), new CancellationTokenSource().Token);
+            Task.WaitAll(areaTasks.ToArray());
 
             totalTimer.Stop();
             Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
