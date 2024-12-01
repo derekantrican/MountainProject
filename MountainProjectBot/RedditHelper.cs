@@ -118,8 +118,10 @@ namespace MountainProjectBot
         {
             try
             {
-                BotUtilities.SendDiscordMessage($"AccessToken is {webAgent.AccessToken} and is valid until {(webAgent as BotWebAgent).TokenValidTo}"); //TEMP
-                return await redditService.GetCommentAsync(new Uri(REDDITBASEURL + commentPermalink));
+                BotUtilities.SendDiscordMessage($"AccessToken is {webAgent.AccessToken} and is valid until {(webAgent as BotWebAgent).TokenValidTo.ToLocalTime()}"); //TEMP
+                Comment comment = await redditService.GetCommentAsync(new Uri(REDDITBASEURL + commentPermalink));
+                BotUtilities.SendDiscordMessage($"Got post {comment.Id} successfully (the normal way)");
+                return comment;
             }
             catch
             {
@@ -154,8 +156,10 @@ namespace MountainProjectBot
 
             try
             {
-                BotUtilities.SendDiscordMessage($"AccessToken is {webAgent.AccessToken} and is valid until {(webAgent as BotWebAgent).TokenValidTo}"); //TEMP
-                return await redditService.GetPostAsync(new Uri($"{REDDITBASEURL}/comments/{postId}"));
+                BotUtilities.SendDiscordMessage($"AccessToken is {webAgent.AccessToken} and is valid until {(webAgent as BotWebAgent).TokenValidTo.ToLocalTime()}"); //TEMP
+                Post post = await redditService.GetPostAsync(new Uri($"{REDDITBASEURL}/comments/{postId}"));
+                BotUtilities.SendDiscordMessage($"Got post {postId} successfully (the normal way)");
+                return post;
             }
             catch
             {
