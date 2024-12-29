@@ -124,14 +124,24 @@ namespace MountainProjectBot
                 //BotUtilities.SendDiscordMessage($"Got comment {comment.Id} successfully (the normal way)");
                 //return comment;
             }
-            catch
+            catch (Exception ex)
             {
-                Uri jsonUrl = new Uri(REDDITBASEURL + commentPermalink + ".json");
+				BotUtilities.SendDiscordMessage($"Exception encountered during GetComment: {ex}"); //TEMP
+
+				Uri jsonUrl = new Uri(REDDITBASEURL + commentPermalink + ".json");
 				string commentJson = await GetCommentAlternate(jsonUrl);
 				//BotUtilities.SendDiscordMessage($"{jsonUrl} :\n\n{commentJson}"); //TEMP
-				Comment comment = Comment.Parse(webAgent, JToken.Parse(commentJson)) as Comment;
-				BotUtilities.SendDiscordMessage($"GetCommentAlternate worked as a fallback"); //TEMP
-                return comment;
+                try
+                {
+				    Comment comment = Comment.Parse(webAgent, JToken.Parse(commentJson)) as Comment;
+				    BotUtilities.SendDiscordMessage($"GetCommentAlternate worked as a fallback"); //TEMP
+                    return comment;
+                }
+                catch
+                {
+					BotUtilities.SendDiscordMessage($"Unable to parse:\n{commentJson}"); //TEMP
+                    throw;
+				}
 			}
         }
 
