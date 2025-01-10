@@ -139,6 +139,7 @@ namespace UnitTests
         [DataRow("/area/106558306/drop-area-horseshoe-area", "Drop (Horseshoe)")] //Remove "Area" both inside and outside parenthesis
         [DataRow("/area/107373214/turtle-rock-area-corridors-area", "Turtle Rock/ Corridors")] //Remove "Area" both before and after slash
         [DataRow("/route/107889066/redacted", "Bro's Before Holes")] //Parse redacted route name
+        [DataRow("/route/113780190/redacted-history", "Trail of Tears")] //Parse redacted route name (but different redacted format)
         [DataRow("/area/107082717/redacted", "Nature Nazi Boulders")] //Parse redacted area name
         public void TestNameParse(string url, string expectedName)
         {

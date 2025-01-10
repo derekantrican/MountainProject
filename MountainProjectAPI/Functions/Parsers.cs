@@ -161,9 +161,9 @@ namespace MountainProjectAPI
                     await ParseRouteAsync(route, consoleMessages); //Parse route
                 }
                 catch (ParseException ex)
-				{
-					//HOPEFULLY TEMPORARY - handle this https://www.mountainproject.com/forum/topic/126874784
-					if (ex.InnerException is HttpRequestException requestException && requestException.StatusCode == HttpStatusCode.NotFound)
+                {
+                    //HOPEFULLY TEMPORARY - handle this https://www.mountainproject.com/forum/topic/126874784
+                    if (ex.InnerException is HttpRequestException requestException && requestException.StatusCode == HttpStatusCode.NotFound)
                     {
                         inputArea.Routes.Remove(route);
                         TotalRoutes--;
@@ -184,9 +184,9 @@ namespace MountainProjectAPI
                     ID = Utilities.GetID(areaUrl),
                     URL = areaUrl,
 
-					//This will be overwritten later, but assigning upon construction here so we know some info about parents
+                    //This will be overwritten later, but assigning upon construction here so we know some info about parents
                     //  in case we fail to get the HTML for the area
-					ParentIDs = inputArea.ParentIDs.Concat(new[] {inputArea.ID}).ToList(),
+                    ParentIDs = inputArea.ParentIDs.Concat(new[] {inputArea.ID}).ToList(),
                 };
 
                 inputArea.SubAreas.Add(subArea);
@@ -200,17 +200,17 @@ namespace MountainProjectAPI
                     }
                     catch (ParseException ex)
                     {
-						//HOPEFULLY TEMPORARY - handle this https://www.mountainproject.com/forum/topic/126874784
-						if (ex.InnerException is HttpRequestException requestException && requestException.StatusCode == HttpStatusCode.NotFound)
-						{
-							inputArea.SubAreas.Remove(subArea);
-							TotalAreas--;
-						}
-						else
-						{
-							throw;
-						}
-					}
+                        //HOPEFULLY TEMPORARY - handle this https://www.mountainproject.com/forum/topic/126874784
+                        if (ex.InnerException is HttpRequestException requestException && requestException.StatusCode == HttpStatusCode.NotFound)
+                        {
+                            inputArea.SubAreas.Remove(subArea);
+                            TotalAreas--;
+                        }
+                        else
+                        {
+                            throw;
+                        }
+                    }
                 }
             }
 
@@ -301,9 +301,9 @@ namespace MountainProjectAPI
                 string html = null;
                 try
                 {
-					//Sometimes this can fail at "AngleSharp.Text.TextSource.get_Text()" (still not sure why),
+                    //Sometimes this can fail at "AngleSharp.Text.TextSource.get_Text()" (still not sure why),
                     //but wrapping it here to not muddy the ParseException we're constructing with a different exception
-					html = doc?.Source?.Text;
+                    html = doc?.Source?.Text;
                 }
                 catch { }
 
@@ -369,11 +369,11 @@ namespace MountainProjectAPI
             
             if (gradesSection == null)
             {
-				//This was added because of this issue: https://www.mountainproject.com/forum/topic/126874784/mountainproject-lists-more-subareas-if-you-are-not-logged-in#ForumMessage-127092247
-				return new List<Grade>();
+                //This was added because of this issue: https://www.mountainproject.com/forum/topic/126874784/mountainproject-lists-more-subareas-if-you-are-not-logged-in#ForumMessage-127092247
+                return new List<Grade>();
             }
 
-			foreach (IElement spanElement in gradesSection.GetElementsByTagName("span"))
+            foreach (IElement spanElement in gradesSection.GetElementsByTagName("span"))
             {
                 if (spanElement.Attributes["class"] == null || string.IsNullOrEmpty(spanElement.GetElementsByTagName("a").FirstOrDefault()?.TextContent))
                     continue;
@@ -536,9 +536,21 @@ namespace MountainProjectAPI
             {
                 using (IHtmlDocument objectUpdatesDoc = await Utilities.GetHtmlDocAsync(Url.BuildFullUrl(redactedLink)))
                 {
-                    IElement update = objectUpdatesDoc.GetElementsByTagName("h1").FirstOrDefault(e => e.TextContent == "Original Name").ParentElement;
-                    Regex regex = new Regex("Mountain Project has chosen not to publish the original name of this route:\\s*\"(?<original_name>.*)\"");
-                    return regex.Match(update.GetElementsByTagName("p").First().TextContent).Groups["original_name"].Value;
+                    IElement update = objectUpdatesDoc.GetElementsByTagName("h1").FirstOrDefault(e => e.TextContent == "Original Name" || e.TextContent == "Name History").ParentElement;
+                    Regex regex = new Regex("Mountain Project has chosen not to publish the original name of this route:\\s*\\\"(?<original_name1>.*)\\\"|\\\"(?<original_name2>.*)\\\" was renamed \\\"(?<new_name>.*)\\\"");
+
+                    Match match = regex.Match(update.InnerHtml);
+                    if (match.Success)
+                    {
+                        if (!string.IsNullOrWhiteSpace(match.Groups["original_name1"].Value))
+                        {
+                            return match.Groups["original_name1"].Value;
+                        }
+                        else if (!string.IsNullOrWhiteSpace(match.Groups["original_name2"].Value))
+                        {
+                            return match.Groups["original_name2"].Value;
+                        }
+                    }
                 }
             }
 
@@ -583,16 +595,16 @@ namespace MountainProjectAPI
                     string id = Utilities.GetID(url);
                     if (string.IsNullOrEmpty(id))
                     {
-						string html = null;
-						try
-						{
-							//Sometimes this can fail at "AngleSharp.Text.TextSource.get_Text()" (still not sure why),
-							//but wrapping it here to not muddy the ParseException we're constructing with a different exception
-							html = doc?.Source?.Text;
-						}
-						catch { }
+                        string html = null;
+                        try
+                        {
+                            //Sometimes this can fail at "AngleSharp.Text.TextSource.get_Text()" (still not sure why),
+                            //but wrapping it here to not muddy the ParseException we're constructing with a different exception
+                            html = doc?.Source?.Text;
+                        }
+                        catch { }
 
-						throw new ParseException($"Failed to parse id from url {url} when getting parents for child")
+                        throw new ParseException($"Failed to parse id from url {url} when getting parents for child")
                         {
                             RelatedObject = mpObject,
                             Html = html,
