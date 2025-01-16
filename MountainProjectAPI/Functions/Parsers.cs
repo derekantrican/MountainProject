@@ -620,10 +620,17 @@ namespace MountainProjectAPI
 
         public static int ParsePopularity(IHtmlDocument doc)
         {
-            IElement pageViewsElement = doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Page Views:"))
-                                .GetElementsByTagName("td")[1];
-            string pageViewsStr = Regex.Match(pageViewsElement.TextContent.Replace(",", ""), @"(\d+)\s*total").Groups[1].Value;
-            return Convert.ToInt32(pageViewsStr);
+            try
+            {
+                IElement pageViewsElement = doc.GetElementsByTagName("tr").FirstOrDefault(p => p.GetElementsByTagName("td").FirstOrDefault().TextContent.Contains("Page Views:"))
+                                    .GetElementsByTagName("td")[1];
+                string pageViewsStr = Regex.Match(pageViewsElement.TextContent.Replace(",", ""), @"(\d+)\s*total").Groups[1].Value;
+                return Convert.ToInt32(pageViewsStr);
+            }
+            catch //There was a weird page (/route/119443775/arcane-shift) where a large section of the page's HTML was commented out. So we'll try to catch that issue
+            {
+                return -1;
+            }
         }
 
         public static string ParseAreaNameFromSidebar(IHtmlDocument doc)
