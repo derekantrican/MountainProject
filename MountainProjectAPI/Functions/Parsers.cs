@@ -163,8 +163,9 @@ namespace MountainProjectAPI
                 catch (ParseException ex)
                 {
                     //HOPEFULLY TEMPORARY - handle this https://www.mountainproject.com/forum/topic/126874784
-                    if (ex.InnerException is HttpRequestException requestException && requestException.StatusCode == HttpStatusCode.NotFound)
+                    if (ex.InnerException is SourceMissingException)
                     {
+                        //Todo: perhaps we want to "exit successfully" but still provide feedback that some routes couldn't be parsed?
                         inputArea.Routes.Remove(route);
                         TotalRoutes--;
                     }
@@ -201,8 +202,9 @@ namespace MountainProjectAPI
                     catch (ParseException ex)
                     {
                         //HOPEFULLY TEMPORARY - handle this https://www.mountainproject.com/forum/topic/126874784
-                        if (ex.InnerException is HttpRequestException requestException && requestException.StatusCode == HttpStatusCode.NotFound)
+                        if (ex.InnerException is SourceMissingException)
                         {
+                            //Todo: perhaps we want to "exit successfully" but still provide feedback that some areas couldn't be parsed?
                             inputArea.SubAreas.Remove(subArea);
                             TotalAreas--;
                         }

@@ -154,7 +154,7 @@ namespace MountainProjectAPI
                     else
                     {
                         Console.WriteLine($"Retries failed when trying to get HTML from {url}");
-                        throw;
+                        throw new SourceMissingException($"Retries failed when trying to get HTML from {url}", ex);
                     }
                 }
             }
@@ -211,7 +211,7 @@ namespace MountainProjectAPI
                     else
                     {
                         Console.WriteLine($"Retries failed when trying to get HTML from {url}");
-                        throw;
+                        throw new SourceMissingException($"Retries failed when trying to get HTML from {url}", ex);
                     }
                 }
             }
@@ -259,10 +259,13 @@ namespace MountainProjectAPI
                     {
                         routeHeaderSection = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "row pt-main-content")?.Children[0];
                     }
-                    catch
+                    catch (Exception ex)
                     {
                         Console.WriteLine(doc?.Source?.Text);
-                        throw;
+                        throw new SourceMissingException($"Failed to get HTML source for {url}", ex)
+                        {
+                            Html = doc?.Source?.Text,
+                        };
                     }
                     //-------------------- TEMP FOR DEBUGGING -------------------
 
@@ -275,6 +278,10 @@ namespace MountainProjectAPI
                         if (retries == 2)
                         {
                             Console.WriteLine(doc?.Source?.Text);
+                            throw new SourceMissingException($"Failed to get HTML source for {url}")
+                            {
+                                Html = doc?.Source?.Text,
+                            };
                         }
                         //-------------------- TEMP FOR DEBUGGING -------------------
 

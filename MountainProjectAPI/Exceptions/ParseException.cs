@@ -28,7 +28,7 @@ namespace MountainProjectAPI
         {
             string result = "";
 
-            ParseException innerMostParseException = this.GetInnermostParseException();
+            ParseException innerMostParseException = GetInnermostParseException();
             result += $"FAILING MPOBJECT: {innerMostParseException.RelatedObject.URL}\n";
             result += $"PATH: {string.Join(" -> ", innerMostParseException.RelatedObject.ParentIDs)}\n";
             result += $"EXCEPTION MESSAGE: {innerMostParseException.InnerException?.Message}\n";
