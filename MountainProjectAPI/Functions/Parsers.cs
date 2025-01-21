@@ -2,11 +2,10 @@
 using AngleSharp.Html.Dom;
 using Base;
 using System;
+using System.Collections.Concurrent;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
-using System.Net;
-using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Web;
@@ -21,6 +20,7 @@ namespace MountainProjectAPI
         public static int TotalRoutes = 0;
         public static int TargetTotalRoutes = 0;
         public static Stopwatch TotalTimer;
+        public static ConcurrentDictionary<DateTime, string> Info = new ConcurrentDictionary<DateTime, string>();
 
         public static double Progress
         {
@@ -162,10 +162,10 @@ namespace MountainProjectAPI
                 }
                 catch (ParseException ex)
                 {
-                    //HOPEFULLY TEMPORARY - handle this https://www.mountainproject.com/forum/topic/126874784
-                    if (ex.InnerException is SourceMissingException)
+                    //Handle things like this https://www.mountainproject.com/forum/topic/126874784
+                    if (ex.InnerException is SourceMissingException sourceMissingException)
                     {
-                        //Todo: perhaps we want to "exit successfully" but still provide feedback that some routes couldn't be parsed?
+                        Info.TryAdd(DateTime.Now, sourceMissingException.ToString());
                         inputArea.Routes.Remove(route);
                         TotalRoutes--;
                     }
@@ -201,10 +201,10 @@ namespace MountainProjectAPI
                     }
                     catch (ParseException ex)
                     {
-                        //HOPEFULLY TEMPORARY - handle this https://www.mountainproject.com/forum/topic/126874784
-                        if (ex.InnerException is SourceMissingException)
+                        //Handle things like this https://www.mountainproject.com/forum/topic/126874784
+                        if (ex.InnerException is SourceMissingException sourceMissingException)
                         {
-                            //Todo: perhaps we want to "exit successfully" but still provide feedback that some areas couldn't be parsed?
+                            Info.TryAdd(DateTime.Now, sourceMissingException.ToString());
                             inputArea.SubAreas.Remove(subArea);
                             TotalAreas--;
                         }

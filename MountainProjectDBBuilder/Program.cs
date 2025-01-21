@@ -246,7 +246,8 @@ namespace MountainProjectDBBuilder
             Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
             FileInfo file = SerializeResults(destAreas);
 
-            SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed} ({Math.Round(file.Length / 1024f / 1024f, 2)} MB). Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}", "");
+            SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed} ({Math.Round(file.Length / 1024f / 1024f, 2)} MB). Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}",
+                string.Join("\n", Parsers.Info.OrderBy(s => s.Key).Select(s => $"[{s.Key}] {s.Value}")));
             LogParseTime($"Full Build", totalTimer.Elapsed);
         }
 

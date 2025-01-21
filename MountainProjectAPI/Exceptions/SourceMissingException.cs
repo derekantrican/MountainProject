@@ -11,5 +11,21 @@ namespace MountainProjectAPI
 
         public MPObject RelatedObject { get; set; }
         public string Html { get; set; }
+
+        public Exception GetInnermostException()
+        {
+            Exception ex = this;
+            while (ex.InnerException != null)
+            {
+                ex = ex.InnerException;
+            }
+
+            return ex;
+        }
+
+        public override string ToString()
+        {
+            return $"SourceMissingException: {Message}\n{GetInnermostException()}";
+        }
     }
 }
