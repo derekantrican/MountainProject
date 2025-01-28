@@ -14,8 +14,8 @@ namespace MountainProjectAPI
 
         public Exception GetInnermostException()
         {
-            Exception ex = this;
-            while (ex.InnerException != null)
+            Exception ex = InnerException;
+            while (ex?.InnerException != null)
             {
                 ex = ex.InnerException;
             }
