@@ -115,8 +115,8 @@ namespace UnitTests
         }
 
         [DataTestMethod]
-        [DataRow("/area/105841134/red-river-gorge", new object[] { new[] { "/route/105880926/eureka", "/route/105868022/autumn", "/route/105868000/rock-wars" } })] //Some popular routes
-        [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", new object[] { new string[0] })] //No popular routes listed
+        [DataRow("/area/105841134/red-river-gorge", [new[] { "/route/105880926/eureka", "/route/106125099/27-years-of-climbing", "/route/105868000/rock-wars" }])] //Some popular routes
+        [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", [new string[0]])] //No popular routes listed
         public void TestAreaPopularClimbsParse(string url, object[] expectedPopClimbs)
         {
             if (!Url.Contains(url, Utilities.MPBASEURL))
@@ -232,8 +232,8 @@ namespace UnitTests
         }
 
         [DataTestMethod] //https://stackoverflow.com/a/54296734/2246411
-        [DataRow("/area/105791955/deception-crags", new object[] { new[] { "/area/105708966/washington", "/area/108471374/central-west-cascades-seattle", "/area/108471684/north-bend-vicinity", "/area/114278624/exit-38" } })] //Area
-        [DataRow("/route/112177605/no-rang-na-rang", new object[] { new[] { "/area/105907743/international", "/area/106661515/asia", "/area/106225629/south-korea", "/area/119456750/seoulgyeonggi-do-northwest-korea", "/area/120088159/gwanaksan-anyangsouth-seoul", "/area/112177596/jah-un-crag" } })] //Route
+        [DataRow("/area/105791955/deception-crags", [new[] { "/area/105708966/washington", "/area/108471374/central-west-cascades-seattle", "/area/108471684/north-bend-vicinity", "/area/114278624/exit-38" }])] //Area
+        [DataRow("/route/112177605/no-rang-na-rang", [new[] { "/area/105907743/international", "/area/106661515/asia", "/area/106225629/south-korea", "/area/119456750/seoulgyeonggi-do-northwest-korea", "/area/120088159/gwanaksan-anyangsouth-seoul", "/area/112177596/jah-un-crag" }])] //Route
         public void TestParentParse(string url, object[] expectedParentUrls)
         {
             if (!Url.Contains(url, Utilities.MPBASEURL))
