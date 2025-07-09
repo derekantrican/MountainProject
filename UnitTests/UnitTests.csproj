@@ -23,4 +23,10 @@
     <ProjectReference Include="..\MountainProjectBot\MountainProjectBot.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="RedditSharp">
+      <HintPath>..\..\RedditSharp-DEPRECATED\RedditSharp\bin\Debug\netcoreapp3.1\RedditSharp.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
