@@ -20,11 +20,11 @@ namespace MountainProjectBot
     {
         private const string XMLNAME = "MountainProjectAreas.xml";
         private const string CREDENTIALSNAME = "Credentials.txt";
-        private static string repliedToPath = "RepliedTo.txt";
-        public static string SeenPostsPath = @"RepliedToPosts.txt";
-        private static string blacklistedPath = "BlacklistedUsers.txt";
-        private static string xmlPath = Path.Combine(@"..\..\MountainProjectDBBuilder\bin\", XMLNAME);
-        private static string credentialsPath = Path.Combine(@"..\", CREDENTIALSNAME);
+        private static string xmlPath = Path.Combine(Directory.GetParent(AppContext.BaseDirectory).Parent.Parent.FullName, "MountainProjectDBBuilder", "bin", XMLNAME);
+        private static string credentialsPath = Path.Combine(Directory.GetParent(AppContext.BaseDirectory).Parent.FullName, CREDENTIALSNAME);
+        private static string repliedToPath = Path.Combine(Directory.GetParent(AppContext.BaseDirectory).FullName, "RepliedTo.txt");
+        public static string SeenPostsPath = Path.Combine(Directory.GetParent(AppContext.BaseDirectory).FullName, "RepliedToPosts.txt");
+        private static string blacklistedPath = Path.Combine(Directory.GetParent(AppContext.BaseDirectory).FullName, "BlacklistedUsers.txt");
 
         private static string requestForApprovalURL = "";
         private static string spreadsheetHistoryURL = "";

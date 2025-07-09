@@ -556,6 +556,26 @@ namespace MountainProjectAPI
                 }
             }
 
+            //Try a shorter "udpates" link
+            redactedLink = $"{Utilities.MPBASEURL}/updates/Climb-Lib-Models-{objectType}/{currentId}";
+            redactedLinkElement = doc.GetElementsByTagName("a").FirstOrDefault(p => p.Attributes["href"] != null && Url.Contains(p.Attributes["href"].Value, redactedLink) &&
+                p.GetElementsByTagName("img").FirstOrDefault(i => i.Attributes["data-original-title"] != null && i.Attributes["data-original-title"].Value == "The original name has been redacted. Click for more info.") != null);
+            if (redactedLinkElement != null)
+            {
+                using (IHtmlDocument objectUpdatesDoc = await Utilities.GetHtmlDocAsync(Url.BuildFullUrl(redactedLink)))
+                {
+                    //This version was added because there was a route (https://www.mountainproject.com/updates/Climb-Lib-Models-Route/109740212/sandy-hook-special) that was published with no "orignal name" or "name history" listings.
+                    // So we have to parse the header instead
+
+                    IElement header = objectUpdatesDoc.GetElementsByTagName("h1").FirstOrDefault(e => e.TextContent.Contains("Suggested Page Improvements to"));
+                    string originalName = header.GetElementsByTagName("a").FirstOrDefault().TextContent;
+                    if (!string.IsNullOrWhiteSpace(originalName))
+                    {
+                        return originalName;
+                    }
+                }
+            }
+
             return null;
         }
 
