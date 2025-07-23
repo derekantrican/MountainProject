@@ -12,7 +12,10 @@ namespace MountainProjectBot
 {
     public class RedditHelper
     {
-        public const string REDDITBASEURL = "https://reddit.com";
+        public const string REDDITBASEURL = "https://oauth.reddit.com";
+        // Using the oauth url allows us to do stuff like getting the bot's comments from the bot's perspective (so we can see the comment even if it hasn't been approved yet).
+        // Also, this doesn't seem to affect other things we do with the reddit API (RedditSharp's BotWebAgent uses oauth.reddit.com as the base url for everything anyway)
+
         WebAgent webAgent;
         Reddit redditService;
         Dictionary<string, int> subredditNamesAndCommentAmounts = new Dictionary<string, int>()
