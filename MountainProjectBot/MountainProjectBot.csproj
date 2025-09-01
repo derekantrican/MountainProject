@@ -13,12 +13,18 @@
   <ItemGroup>
     <PackageReference Include="Ben.Demystifier" Version="0.4.1" />
     <PackageReference Include="NetCoreServer" Version="5.0.15" />
-    <PackageReference Include="RedditSharp" Version="2.0.0" />
+    <PackageReference Include="System.Interactive.Async" Version="6.0.3" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\Base\Base.csproj" />
     <ProjectReference Include="..\MountainProjectAPI\MountainProjectAPI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Reference Include="RedditSharp">
+      <HintPath>..\RedditSharpdll\RedditSharp.dll</HintPath>
+    </Reference>
   </ItemGroup>
 
 </Project>
