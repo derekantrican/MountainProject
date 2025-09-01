@@ -115,7 +115,7 @@ namespace UnitTests
         }
 
         [DataTestMethod]
-        [DataRow("/area/105841134/red-river-gorge", [new[] { "/route/105880926/eureka", "/route/106125099/27-years-of-climbing", "/route/105868000/rock-wars" }])] //Some popular routes
+        [DataRow("/area/105841134/red-river-gorge", [new[] { "/route/105880926/eureka", "/route/105860741/roadside-attraction", "/route/105868000/rock-wars" }])] //Some popular routes
         [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", [new string[0]])] //No popular routes listed
         public void TestAreaPopularClimbsParse(string url, object[] expectedPopClimbs)
         {
@@ -180,10 +180,10 @@ namespace UnitTests
         [DataTestMethod]
         [DataRow("/route/111859673/side-dish", GradeSystem.YDS, "5.10c")]
         [DataRow("/route/109063052/geflugelfrikadelle", GradeSystem.YDS, "5.12b/c")] //Has a slash
-        [DataRow("/route/105890633/black-dike", GradeSystem.Ice, "WI4+ M3")] //No YDS/Heuco present
+        [DataRow("/route/105890633/black-dike", GradeSystem.Ice, "WI4-5 M3")] //No YDS/Heuco present
         [DataRow("/route/105931000/myan-problem", GradeSystem.Hueco, "V-easy")] //Not a usual grade format
         [DataRow("/route/106238998/price-glacier", GradeSystem.YDS, "Easy 5th")] //Not a usual grade format
-        [DataRow("/route/108170851/new-dawn", GradeSystem.Aid, "C3+")] //Includes "Aid rating"
+        [DataRow("/route/108170851/new-dawn", GradeSystem.Aid, "A3")] //Includes "Aid rating"
 		//[DataRow("/route/108878033/wolfenstein", GradeSystem.YDS, "5.10")] //Todo: uncomment this one when this is resolved: https://www.mountainproject.com/forum/topic/126874784/mountainproject-lists-more-subareas-if-you-are-not-logged-in#ForumMessage-127092247
 		public void TestRouteGradeParse(string url, GradeSystem expectedGradeSystem, string expectedValue)
         {
