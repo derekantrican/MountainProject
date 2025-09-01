@@ -138,10 +138,9 @@ namespace UnitTests
         [DataRow("/area/108276053/area-51-boulder-area", "Area 51 Boulder")] //Remove only end "Area" from title
         [DataRow("/area/106558306/drop-area-horseshoe-area", "Drop (Horseshoe)")] //Remove "Area" both inside and outside parenthesis
         [DataRow("/area/107373214/turtle-rock-area-corridors-area", "Turtle Rock/ Corridors")] //Remove "Area" both before and after slash
-        [DataRow("/route/107889066/redacted", "Bro's Before Holes")] //Parse redacted route name
-        [DataRow("/route/113780190/redacted-history", "Trail of Tears")] //Parse redacted route name (but different redacted format)
-        [DataRow("/area/107082717/redacted", "Nature Nazi Boulders")] //Parse redacted area name
-        public void TestNameParse(string url, string expectedName)
+        [DataRow("/route/107889066/redacted", "Bro's Before Holes")] //Parse redacted route name // Todo: would be nice to have another "redacted area name" example, since the one I chose has now been renamed
+        [DataRow("/route/109342285/lower-replica-2285", "Short Bus Orgy")] //Parse redacted route name (different redacted format)
+		public void TestNameParse(string url, string expectedName)
         {
             if (!Url.Contains(url, Utilities.MPBASEURL))
                 url = Url.BuildFullUrl(Utilities.MPBASEURL + url);

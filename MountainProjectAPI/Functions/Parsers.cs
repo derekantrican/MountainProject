@@ -559,7 +559,7 @@ namespace MountainProjectAPI
             //Try a shorter "udpates" link
             redactedLink = $"{Utilities.MPBASEURL}/updates/Climb-Lib-Models-{objectType}/{currentId}";
             redactedLinkElement = doc.GetElementsByTagName("a").FirstOrDefault(p => p.Attributes["href"] != null && Url.Contains(p.Attributes["href"].Value, redactedLink) &&
-                p.GetElementsByTagName("img").FirstOrDefault(i => i.Attributes["data-original-title"] != null && i.Attributes["data-original-title"].Value == "The original name has been redacted. Click for more info.") != null);
+                p.GetElementsByTagName("img").FirstOrDefault(i => i.Attributes["data-original-title"] != null && Regex.IsMatch(i.Attributes["data-original-title"].Value, @"The original name has been (redacted|removed)\. Click for more info\.")) != null);
             if (redactedLinkElement != null)
             {
                 using (IHtmlDocument objectUpdatesDoc = await Utilities.GetHtmlDocAsync(Url.BuildFullUrl(redactedLink)))
@@ -567,8 +567,24 @@ namespace MountainProjectAPI
                     //This version was added because there was a route (https://www.mountainproject.com/updates/Climb-Lib-Models-Route/109740212/sandy-hook-special) that was published with no "orignal name" or "name history" listings.
                     // So we have to parse the header instead
 
+                    string originalName = null;
                     IElement header = objectUpdatesDoc.GetElementsByTagName("h1").FirstOrDefault(e => e.TextContent.Contains("Suggested Page Improvements to"));
-                    string originalName = header.GetElementsByTagName("a").FirstOrDefault().TextContent;
+                    if (header != null)
+                    {
+                        originalName = header.GetElementsByTagName("a").FirstOrDefault().TextContent;
+                    }
+
+                    IElement nameHistoryBlock = objectUpdatesDoc.GetElementsByTagName("div").FirstOrDefault(p => p.GetElementsByTagName("h1").FirstOrDefault(h => h.TextContent == "Name History") != null);
+                    if (nameHistoryBlock != null)
+                    {
+                        string nameHistoryMessage = string.Join("\n", nameHistoryBlock.GetElementsByTagName("p").Select(p => p.TextContent));
+                        Match match = Regex.Match(nameHistoryMessage, @"MP has chosen not to display the original name of this area or route:\s+(?<original_name>.*)\.");
+                        if (match.Success)
+                        {
+                            originalName = match.Groups["original_name"].Value;
+                        }
+                    }
+
                     if (!string.IsNullOrWhiteSpace(originalName))
                     {
                         return originalName;
