@@ -14,6 +14,9 @@ namespace MountainProjectDBBuilder
         [Option("benchmark", HelpText = "Run benchmark test (only parse Alabama and write out a stats file)")]
         public bool Benchmark { get; set; }
 
+        [Option("singlearea", HelpText = "Scope the DB build to a single Dest Area (by id)")]
+        public string SingleAreaId { get; set; }
+
         [Option("onlyNew", HelpText = "Only add new items since the last time the database was built")]
         public bool OnlyNew { get; set; }
 

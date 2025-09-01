@@ -73,6 +73,11 @@ namespace MountainProjectDBBuilder
                 {
                     programMode = Mode.Parse;
                 }
+                else if (!string.IsNullOrEmpty(o.SingleAreaId))
+                {
+                    BuildDBSingleArea(o.SingleAreaId);
+                    Environment.Exit(0);
+                }
                 else if (o.Benchmark)
                 {
                     programMode = Mode.Benchmark;
@@ -211,7 +216,7 @@ namespace MountainProjectDBBuilder
             return locationString;
         }
 
-        private static void BuildDB()
+        private static void BuildDB(string specificAreaId = null)
         {
             RunAndCatchBuildIssues("DB Build", () =>
             {
@@ -219,11 +224,41 @@ namespace MountainProjectDBBuilder
                 {
                     AddNewItems();
                 }
+                else if (!string.IsNullOrEmpty(specificAreaId))
+                {
+                    BuildDBSingleArea(specificAreaId);
+                }
                 else
                 {
                     BuildFullDB();
                 }
             });
+        }
+
+        private static void BuildDBSingleArea(string specificAreaId)
+        {
+            Parsers.TotalTimer = totalTimer;
+            Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
+            List<Area> destAreas = Parsers.GetDestAreas();
+
+            Area singleArea = destAreas.FirstOrDefault(a => a.ID == specificAreaId);
+            if (singleArea == null)
+            {
+                SendReport($"BuildDBSingleArea failed (could not find an area with an id matching {specificAreaId}", "");
+                return;
+            }
+
+            Parsers.ParseAreaAsync(singleArea).Wait();
+
+            totalTimer.Stop();
+            Console.WriteLine($"------PROGRAM FINISHED------ ({totalTimer.Elapsed})");
+            Console.WriteLine();
+            Console.WriteLine($"Total # of areas: {Parsers.TotalAreas}, total # of routes: {Parsers.TotalRoutes}");
+            FileInfo file = SerializeResults(destAreas);
+
+            SendReport($"MountainProjectDBBuilder completed SUCCESSFULLY in {totalTimer.Elapsed} ({Math.Round(file.Length / 1024f / 1024f, 2)} MB) for {singleArea.Name}. Total areas: {Parsers.TotalAreas}, total routes: {Parsers.TotalRoutes}",
+                string.Join("\n", Parsers.Info.OrderBy(s => s.Key).Select(s => $"[{s.Key}] {s.Value}")));
+            LogParseTime($"Full Build", totalTimer.Elapsed);
         }
 
         private static void BuildFullDB()
