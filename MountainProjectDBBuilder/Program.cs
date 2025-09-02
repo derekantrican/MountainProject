@@ -75,7 +75,7 @@ namespace MountainProjectDBBuilder
                 }
                 else if (!string.IsNullOrEmpty(o.SingleAreaId))
                 {
-                    BuildDBSingleArea(o.SingleAreaId);
+					BuildDB(o.SingleAreaId);
                     Environment.Exit(0);
                 }
                 else if (o.Benchmark)
@@ -238,8 +238,8 @@ namespace MountainProjectDBBuilder
         private static void BuildDBSingleArea(string specificAreaId)
         {
             Parsers.TotalTimer = totalTimer;
-            List<Area> destAreas = Parsers.GetDestAreas();
             Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes(specificAreaId);
+            List<Area> destAreas = Parsers.GetDestAreas();
 
             Area singleArea = destAreas.FirstOrDefault(a => a.ID == specificAreaId);
             if (singleArea == null)
