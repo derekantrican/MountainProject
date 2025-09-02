@@ -238,8 +238,8 @@ namespace MountainProjectDBBuilder
         private static void BuildDBSingleArea(string specificAreaId)
         {
             Parsers.TotalTimer = totalTimer;
-            Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes();
             List<Area> destAreas = Parsers.GetDestAreas();
+            Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes(specificAreaId);
 
             Area singleArea = destAreas.FirstOrDefault(a => a.ID == specificAreaId);
             if (singleArea == null)

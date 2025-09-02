@@ -27,12 +27,26 @@ namespace MountainProjectAPI
             get { return (double)TotalRoutes / TargetTotalRoutes; }
         }
 
-        public static int GetTargetTotalRoutes()
+        public static int GetTargetTotalRoutes(string singleLocationId = null)
         {
             IHtmlDocument doc = Utilities.GetHtmlDoc(Utilities.ALLLOCATIONSURL);
-            IElement element = doc.GetElementsByTagName("h2").FirstOrDefault(x => x.TextContent.Contains("Climbing Directory"));
 
-            return int.Parse(Regex.Match(element.TextContent.Replace(",", ""), @"\d+").Value);
+            if (string.IsNullOrEmpty(singleLocationId))
+            {
+                IElement element = doc.GetElementsByTagName("h2").FirstOrDefault(x => x.TextContent.Contains("Climbing Directory"));
+                return int.Parse(Regex.Match(element.TextContent.Replace(",", ""), @"\d+").Value);
+            }
+            else
+            {
+                IElement element = doc.GetElementsByTagName("div").FirstOrDefault(d => d.GetElementsByTagName("a").FirstOrDefault(a => a.Attributes["href"] != null && a.Attributes["href"].Value.Contains(singleLocationId)) != null);
+                if (element != null)
+                {
+                    IElement routeCountElement = element.GetElementsByTagName("small").FirstOrDefault();
+                    return int.Parse(Regex.Match(routeCountElement.TextContent.Replace(",", ""), @"\d+").Value);
+                }
+            }
+
+            return -1;
         }
 
         public static List<Area> GetDestAreas(bool populateNames = false)
