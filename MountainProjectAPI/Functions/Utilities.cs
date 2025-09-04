@@ -111,7 +111,7 @@ namespace MountainProjectAPI
             { "105907756", @"\bAUS\b" }, //Australia
         };
 
-        private static readonly SemaphoreSlim requestLimiter = new SemaphoreSlim(10); // limit number of simultaneous requests to try to avoid 429's (and therefore: exponential backoff time)
+        private static readonly SemaphoreSlim requestLimiter = new SemaphoreSlim(25); // limit number of simultaneous requests to try to avoid 429's (and therefore: exponential backoff time)
         private static readonly HttpClient httpClient = new HttpClient();
 
         public static string GetHtml(string url)
