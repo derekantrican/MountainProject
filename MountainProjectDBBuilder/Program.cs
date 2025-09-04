@@ -75,7 +75,7 @@ namespace MountainProjectDBBuilder
                 }
                 else if (!string.IsNullOrEmpty(o.SingleAreaId))
                 {
-					BuildDB(o.SingleAreaId);
+                    BuildDB(o.SingleAreaId);
                     Environment.Exit(0);
                 }
                 else if (o.Benchmark)
@@ -536,15 +536,11 @@ namespace MountainProjectDBBuilder
         {
             RunAndCatchBuildIssues("benchmark", () =>
             {
-                //Get total number of routes in Alabama (copied from Parsers.GetTargetTotalRoutes() & tweaked)
-                IHtmlDocument doc = Utilities.GetHtmlDoc(Utilities.ALLLOCATIONSURL);
-                IElement element = doc.GetElementById("route-guide").GetElementsByTagName("a").FirstOrDefault(x => x.TextContent.Contains("Alabama"));
-                element = element.ParentElement.FirstElementChild;
-
-                Parsers.TargetTotalRoutes = int.Parse(Regex.Match(element.TextContent.Replace(",", ""), @"\d+").Value);
-
                 //No particular reason we're using Alabama. It's a good size - not a tiny area (like Delaware) and not huge (like California). Also happens to be first in the list.
                 Area alabama = Parsers.GetDestAreas().FirstOrDefault(area => area.ID == "105905173");
+
+                Parsers.TotalTimer = totalTimer;
+                Parsers.TargetTotalRoutes = Parsers.GetTargetTotalRoutes(alabama.ID);
 
                 Parsers.ParseAreaAsync(alabama).Wait();
 
