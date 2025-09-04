@@ -111,6 +111,7 @@ namespace MountainProjectAPI
             { "105907756", @"\bAUS\b" }, //Australia
         };
 
+        private static readonly SemaphoreSlim requestLimiter = new SemaphoreSlim(10); // limit number of simultaneous requests to try to avoid 429's (and therefore: exponential backoff time)
         private static readonly HttpClient httpClient = new HttpClient();
 
         public static string GetHtml(string url)
@@ -164,63 +165,72 @@ namespace MountainProjectAPI
 
         public static async Task<string> GetHtmlAsync(string url)
         {
-            string html;
-            int retries = 0;
-            int backoffMs = 5000;
-            while (true)
+            await requestLimiter.WaitAsync(); // wait for an available slot in the limited number of requests we send
+
+            try
             {
-                try
+                string html;
+                int retries = 0;
+                int backoffMs = 5000;
+                while (true)
                 {
-                    html = await httpClient.GetStringAsync(Url.BuildFullUrl(url));
-
-                    //For some reason, sometimes MountainProject returns a page with all the urls containing an extra "index.php".
-                    //We can simply replace all instances of this in the html to fix our parsers
-                    if (html.Contains("/index.php"))
+                    try
                     {
-                        html = html.Replace("/index.php", "");
+                        html = await httpClient.GetStringAsync(Url.BuildFullUrl(url));
+
+                        //For some reason, sometimes MountainProject returns a page with all the urls containing an extra "index.php".
+                        //We can simply replace all instances of this in the html to fix our parsers
+                        if (html.Contains("/index.php"))
+                        {
+                            html = html.Replace("/index.php", "");
+                        }
+
+                        // HttpResponseMessage response = await httpClient.GetAsync(Url.BuildFullUrl(url));
+                        // html = await response.Content.ReadAsStringAsync();
+
+                        break;
                     }
+                    catch (Exception ex)
+                    {
+                        //Follow redirects
+                        if (ex is WebException webEx && webEx.Response != null)
+                        {
+                            url = GetRedirectUrlFromResponse(url, webEx.Response as HttpWebResponse);
+                        }
+                        else if (ex is HttpRequestException requestException && requestException.StatusCode == HttpStatusCode.TooManyRequests)
+                        {
+                            //Backoff with TooManyRequest errors (rate limiting). 1 second delay intervals may seem like a high starting point,
+                            //but in testing I've seen the backoff get as high as 3.5s before requests start going through again. This
+                            //will limit how many requests we send before we start getting successful responses again.
+                            Console.WriteLine($"Too Many Requests (waiting {backoffMs}ms)");
+                            Thread.Sleep(backoffMs);
+                            backoffMs += 5000;
+                            continue;
+                        }
 
-                    // HttpResponseMessage response = await httpClient.GetAsync(Url.BuildFullUrl(url));
-                    // html = await response.Content.ReadAsStringAsync();
-
-                    break;
+                        if (retries <= 5)
+                        {
+                            Console.WriteLine($"Download string failed. Trying again ({retries})");
+                            retries++;
+                        }
+                        else
+                        {
+                            Console.WriteLine($"Retries failed when trying to get HTML from {url}");
+                            throw new SourceMissingException($"Retries failed when trying to get HTML from {url}", ex);
+                        }
+                    }
                 }
-                catch (Exception ex)
-                {
-                    //Follow redirects
-                    if (ex is WebException webEx && webEx.Response != null)
-                    {
-                        url = GetRedirectUrlFromResponse(url, webEx.Response as HttpWebResponse);
-                    }
-                    else if (ex is HttpRequestException requestException && requestException.StatusCode == HttpStatusCode.TooManyRequests)
-                    {
-                        //Backoff with TooManyRequest errors (rate limiting). 1 second delay intervals may seem like a high starting point,
-                        //but in testing I've seen the backoff get as high as 3.5s before requests start going through again. This
-                        //will limit how many requests we send before we start getting successful responses again.
-                        Console.WriteLine($"Too Many Requests (waiting {backoffMs}ms)");
-                        Thread.Sleep(backoffMs);
-                        backoffMs += 5000;
-                        continue;
-                    }
 
-                    if (retries <= 5)
-                    {
-                        Console.WriteLine($"Download string failed. Trying again ({retries})");
-                        retries++;
-                    }
-                    else
-                    {
-                        Console.WriteLine($"Retries failed when trying to get HTML from {url}");
-                        throw new SourceMissingException($"Retries failed when trying to get HTML from {url}", ex);
-                    }
-                }
+                return html;
             }
-
-            return html;
+            finally
+            {
+                requestLimiter.Release();
+            }
         }
 
         static HtmlParser parser;
-        public static IHtmlDocument GetHtmlDoc(string url)
+        public static IHtmlDocument GetHtmlDoc(string url) // This non-async version is used only for "all locations" (route-guide) and ParserTests
         {
             if (parser == null)
             {
@@ -248,11 +258,6 @@ namespace MountainProjectAPI
                 int retries = 0;
                 while (retries < 3)
                 {
-                    //-------------------- TEMP FOR DEBUGGING -------------------
-                    if (doc == null)
-                    {
-                        ConsoleHelper.Write("doc is null");
-                    }
 
                     IElement routeHeaderSection = null;
                     try
@@ -267,14 +272,11 @@ namespace MountainProjectAPI
                             Html = doc?.Source?.Text,
                         };
                     }
-                    //-------------------- TEMP FOR DEBUGGING -------------------
 
-                    //IElement routeHeaderSection = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "row pt-main-content")?.Children[0];
                     if (routeHeaderSection == null || routeHeaderSection.ChildElementCount == 0)
                     {
                         ConsoleHelper.Write($"NO HEADER FOUND FOR {url}. RETRYING ({retries + 1})...", ConsoleColor.Yellow);
 
-                        //-------------------- TEMP FOR DEBUGGING -------------------
                         if (retries == 2)
                         {
                             Console.WriteLine(doc?.Source?.Text);
@@ -283,7 +285,6 @@ namespace MountainProjectAPI
                                 Html = doc?.Source?.Text,
                             };
                         }
-                        //-------------------- TEMP FOR DEBUGGING -------------------
 
                         doc.Dispose();
 
