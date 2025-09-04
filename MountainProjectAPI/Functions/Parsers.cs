@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Web;
 using static MountainProjectAPI.Grade;
@@ -157,76 +158,96 @@ namespace MountainProjectAPI
             htmlSubAreas.RemoveAll(p => !Url.Contains(p.Attributes["href"].Value, Utilities.MPBASEURL));
 
             //Populate route details
-            foreach (IElement routeElement in htmlRoutes)
+            await Task.WhenAll(htmlRoutes.Select(async routeElement =>
             {
                 string routeUrl = routeElement.Attributes["href"].Value;
-                Route route = new Route(routeElement.TextContent, Utilities.GetID(routeUrl));
-                route.URL = routeUrl;
+                Route route = new Route(routeElement.TextContent, Utilities.GetID(routeUrl))
+                {
+                    URL = routeUrl,
 
-                //This will be overwritten later, but assigning upon construction here so we know some info about parents
-                //  in case we fail to get the HTML for the route
-                route.ParentIDs = inputArea.ParentIDs.Concat(new[] { inputArea.ID }).ToList();
+                    //This will be overwritten later, but assigning upon construction here so we know some info about parents
+                    //  in case we fail to get the HTML for the route
+                    ParentIDs = inputArea.ParentIDs.Concat([inputArea.ID]).ToList()
+                };
 
                 inputArea.Routes.Add(route);
-                TotalRoutes++;
+                Interlocked.Increment(ref TotalRoutes);
 
                 try
                 {
-                    await ParseRouteAsync(route, consoleMessages); //Parse route
+                    await ParseRouteAsync(route, consoleMessages);
                 }
                 catch (ParseException ex)
                 {
-                    //Handle things like this https://www.mountainproject.com/forum/topic/126874784
                     if (ex.InnerException is SourceMissingException sourceMissingException)
                     {
                         Info.TryAdd(DateTime.Now, sourceMissingException.ToString());
                         inputArea.Routes.Remove(route);
-                        TotalRoutes--;
+                        Interlocked.Decrement(ref TotalRoutes);
                     }
                     else
                     {
                         throw;
                     }
                 }
-            }
+            }));
 
             //Populate sub area details
-            foreach (IElement areaElement in htmlSubAreas)
+            if (recursive)
             {
-                string areaUrl = areaElement.Attributes["href"].Value;
-                Area subArea = new Area()
+                await Task.WhenAll(htmlSubAreas.Select(async areaElement =>
                 {
-                    ID = Utilities.GetID(areaUrl),
-                    URL = areaUrl,
+                    string areaUrl = areaElement.Attributes["href"].Value;
+                    Area subArea = new Area
+                    {
+                        ID = Utilities.GetID(areaUrl),
+                        URL = areaUrl,
 
-                    //This will be overwritten later, but assigning upon construction here so we know some info about parents
-                    //  in case we fail to get the HTML for the area
-                    ParentIDs = inputArea.ParentIDs.Concat(new[] {inputArea.ID}).ToList(),
-                };
+                        //This will be overwritten later, but assigning upon construction here so we know some info about parents
+                        //  in case we fail to get the HTML for the area
+                        ParentIDs = inputArea.ParentIDs.Concat([inputArea.ID]).ToList()
+                    };
 
-                inputArea.SubAreas.Add(subArea);
-                TotalAreas++;
+                    inputArea.SubAreas.Add(subArea);
+                    Interlocked.Increment(ref TotalAreas);
 
-                if (recursive)
-                {
                     try
                     {
-                        await ParseAreaAsync(subArea, consoleMessages: consoleMessages); //Parse sub area
+                        await ParseAreaAsync(subArea, consoleMessages: consoleMessages);
                     }
                     catch (ParseException ex)
                     {
-                        //Handle things like this https://www.mountainproject.com/forum/topic/126874784
                         if (ex.InnerException is SourceMissingException sourceMissingException)
                         {
                             Info.TryAdd(DateTime.Now, sourceMissingException.ToString());
                             inputArea.SubAreas.Remove(subArea);
-                            TotalAreas--;
+                            Interlocked.Decrement(ref TotalAreas);
                         }
                         else
                         {
                             throw;
                         }
                     }
+                }));
+            }
+            else
+            {
+                // if not recursive, just build the list without parsing
+                foreach (IElement areaElement in htmlSubAreas)
+                {
+                    string areaUrl = areaElement.Attributes["href"].Value;
+                    var subArea = new Area
+                    {
+                        ID = Utilities.GetID(areaUrl),
+                        URL = areaUrl,
+
+                        //This will be overwritten later, but assigning upon construction here so we know some info about parents
+                        //  in case we fail to get the HTML for the area
+                        ParentIDs = inputArea.ParentIDs.Concat(new[] { inputArea.ID }).ToList()
+                    };
+
+                    inputArea.SubAreas.Add(subArea);
+                    Interlocked.Increment(ref TotalAreas);
                 }
             }
 
