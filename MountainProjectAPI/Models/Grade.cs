@@ -34,7 +34,9 @@ namespace MountainProjectAPI
             Fontainebleau,
             Ice,
             Aid,
-            Unlabled
+            Mixed,
+            Snow,
+            Unlabled // Todo: this should be "Safety"
         }
 
         public GradeSystem System { get; set; }
