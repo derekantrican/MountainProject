@@ -446,7 +446,7 @@ namespace MountainProjectAPI
                         grades.Add(new Grade(GradeSystem.SouthAfrica, gradeValue, false));
                         break;
                     case "rateBritish":
-                        grades.Add(new Grade(GradeSystem.Britsh, gradeValue, false));
+                        grades.Add(new Grade(GradeSystem.British, gradeValue, false));
                         break;
                     case "rateFont":
                         grades.Add(new Grade(GradeSystem.Fontainebleau, gradeValue, false));

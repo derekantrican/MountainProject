@@ -37,7 +37,7 @@ namespace MountainProjectAPI
                         break;
                     case "british":
                     case "uk":
-                        (parameters ??= new ResultParameters()).GradeSystem = GradeSystem.Britsh;
+                        (parameters ??= new ResultParameters()).GradeSystem = GradeSystem.British;
                         break;
                     case "hueco":
                         (parameters ??= new ResultParameters()).GradeSystem = GradeSystem.Hueco;

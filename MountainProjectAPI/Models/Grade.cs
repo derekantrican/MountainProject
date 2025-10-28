@@ -29,7 +29,7 @@ namespace MountainProjectAPI
             Ewbanks,
             UIAA,
             SouthAfrica,
-            Britsh,
+            British,
             Hueco,
             Fontainebleau,
             Ice,
@@ -63,7 +63,7 @@ namespace MountainProjectAPI
                 {
                     case GradeSystem.Fontainebleau:
                         return "Font";
-                    case GradeSystem.Britsh:
+                    case GradeSystem.British:
                         return "UK";
                     case GradeSystem.SouthAfrica:
                         return "SA";
