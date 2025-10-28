@@ -91,6 +91,60 @@ namespace MountainProjectAPI
             {"Wyoming", "WY"}
         };
 
+        public static Dictionary<string, string> StatesWithIds = new Dictionary<string, string>
+        {
+            {"105905173", "Alabama"},
+            {"105909311", "Alaska"},
+            {"105708962", "Arizona"},
+            {"105901027", "Arkansas"},
+            {"105708959", "California"},
+            {"105708956", "Colorado"},
+            {"105806977", "Connecticut"},
+            {"106861605", "Delaware"},
+            {"111721391", "Florida"},
+            {"105897947", "Georgia"},
+            {"106316122", "Hawaii"},
+            {"105708958", "Idaho"},
+            {"105911816", "Illinois"},
+            {"112389571", "Indiana"},
+            {"106092653", "Iowa"},
+            {"107235316", "Kansas"},
+            {"105868674", "Kentucky"},
+            {"116720343", "Louisiana"},
+            {"105948977", "Maine"},
+            {"106029417", "Maryland"},
+            {"105908062", "Massachusetts"},
+            {"106113246", "Michigan"},
+            {"105812481", "Minnesota"},
+            {"108307056", "Mississippi"},
+            {"105899020", "Missouri"},
+            {"105907492", "Montana"},
+            {"116096758", "Nebraska"},
+            {"105708961", "Nevada"},
+            {"105872225", "New Hampshire"},
+            {"106374428", "New Jersey"},
+            {"105708964", "New Mexico"},
+            {"105800424", "New York"},
+            {"105873282", "North Carolina"},
+            {"106598130", "North Dakota"},
+            {"105994953", "Ohio"},
+            {"105854466", "Oklahoma"},
+            {"105708965", "Oregon"},
+            {"105913279", "Pennsylvania"},
+            {"106842810", "Rhode Island"},
+            {"107638915", "South Carolina"},
+            {"105708963", "South Dakota"},
+            {"105887760", "Tennessee"},
+            {"105835804", "Texas"},
+            {"105708957", "Utah"},
+            {"105891603", "Vermont"},
+            {"105852400", "Virginia"},
+            {"105708966", "Washington"},
+            {"105855459", "West Virginia"},
+            {"105708968", "Wisconsin"},
+            {"105708960", "Wyoming"}
+        };
+
         public static Dictionary<string, string> AreaNicknames = new Dictionary<string, string>
         {
             { "105841134", @"\bRRG\b" }, //Red River Gorge
