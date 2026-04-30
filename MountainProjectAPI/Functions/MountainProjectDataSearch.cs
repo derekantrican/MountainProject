@@ -701,28 +701,25 @@ namespace MountainProjectAPI
                 return null;
 
             //=============== CHOOSE THE BEST MATCH ===============
-            //First priority: items where the name matches the search query exactly CASE SENSITIVE
-            List<MPObject> filteredItems = allMatches.Where(p => Utilities.StringsEqual(searchQuery, p.Name, false)).ToList();
+            //First priority: items where the name matches the search query exactly (case-insensitive)
+            List<MPObject> filteredItems = allMatches.Where(p => Utilities.StringsEqual(searchQuery, p.Name)).ToList();
 
-            //Second priority: items where the name matches the search query exactly (but case-insensitive)
-            if (!filteredItems.Any())
-                filteredItems = allMatches.Where(p => Utilities.StringsEqual(searchQuery, p.Name)).ToList();
-
-            //Third priority: items where the name matches the FILTERED (no symbols or spaces, case insensitive) search query exactly
+            //Second priority: items where the name matches the FILTERED (no symbols or spaces, case insensitive) search query exactly
             if (!filteredItems.Any())
                 filteredItems = allMatches.Where(p => Utilities.StringsEqual(Utilities.FilterStringForMatch(searchQuery), p.NameForMatch)).ToList();
 
-            //[IN THE FUTURE]Fourth priority: items with a levenshtein distance less than 3
+            //[IN THE FUTURE]Third priority: items with a levenshtein distance less than 3
 
-            //Fifth priority: items where the name contains the search query CASE SENSITIVE
+            //Fourth priority: items where the name contains the search query as a whole-word phrase (case-insensitive).
+            //Word boundaries prevent eg "East Face" from matching "Northeast Face"
             if (!filteredItems.Any())
-                filteredItems = allMatches.Where(p => Utilities.StringContains(p.Name, searchQuery, false)).ToList();
+                filteredItems = allMatches.Where(p => ContainsAsWord(p.Name, searchQuery)).ToList();
 
-            //Sixth priority: items where the name contains the search query (case-insensitive)
+            //Fifth priority: items where the name contains the search query (case-insensitive)
             if (!filteredItems.Any())
                 filteredItems = allMatches.Where(p => Utilities.StringContains(p.Name, searchQuery)).ToList();
 
-            //Seventh priority: items where the name contains the FITLERED search query (case-insensitive)
+            //Sixth priority: items where the name contains the FITLERED search query (case-insensitive)
             if (!filteredItems.Any())
                 filteredItems = allMatches.Where(p => Utilities.StringContains(p.NameForMatch, Utilities.FilterStringForMatch(searchQuery))).ToList();
 
@@ -886,6 +883,16 @@ namespace MountainProjectAPI
             }
 
             return results;
+        }
+
+        // Returns true if text contains query as a whole-word phrase (delimited by word boundaries on both sides), case-insensitively
+        private static bool ContainsAsWord(string text, string query)
+        {
+            if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(query))
+                return false;
+
+            string pattern = $@"\b{Regex.Escape(query)}\b";
+            return Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase);
         }
 
         private static void WriteToConsole(string message)
