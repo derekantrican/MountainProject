@@ -476,6 +476,19 @@ namespace MountainProjectAPI
 
             List<string> result = new List<string>();
 
+            //Extract text in double quotes as possible route names (eg '"Cause of death" V6').
+            //This catches lowercase route names that the capitalization heuristic below would miss.
+            //Guard: require at least one capitalized word with length > 1, and limit to ≤ 5 words
+            //to avoid matching full sentences in quotes.
+            foreach (Match quoteMatch in Regex.Matches(postTitle, "[\"\u201C\u201D]([^\"\u201C\u201D]+)[\"\u201C\u201D]"))
+            {
+                string quoted = quoteMatch.Groups[1].Value.Trim();
+                List<string> words = Utilities.GetWords(quoted);
+                bool hasCapitalizedWord = words.Any(w => w.Length > 1 && char.IsUpper(w[0]));
+                if (words.Count >= 1 && words.Count <= 5 && hasCapitalizedWord)
+                    result.Add(quoted);
+            }
+
             postTitle = Regex.Replace(postTitle, @"\d+[\\/]\d+[\\/]\d+", ""); //Remove dates from post titles
 
             Regex routeGradeRegex = new Regex(@"((5\.)\d+[+-]?[a-dA-D]?([\/\\\-][a-dA-D])?)|([vV]\d+([\/\\\-]\d+)?)");
