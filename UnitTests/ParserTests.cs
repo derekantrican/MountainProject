@@ -199,7 +199,8 @@ namespace UnitTests
         [DataTestMethod]
         [DataRow("/route/111859673/side-dish", 1.8)] //Decimal
         [DataRow("/route/109063052/geflugelfrikadelle", 4)] //No decimal
-        public void TestRouteRatingParse(string url, double expectedRating)
+        [DataRow("/route/107131693/made-in-the-shade", 2.8)] //Added because it started failing recently (the element that contains the rating wasn't present in the HTML)
+		public void TestRouteRatingParse(string url, double expectedRating)
         {
             if (!Url.Contains(url, Utilities.MPBASEURL))
                 url = Url.BuildFullUrl(Utilities.MPBASEURL + url);
