@@ -539,6 +539,16 @@ namespace MountainProjectAPI
                     locationWordsRegex.Split(possibleRouteName).ToList().ForEach(p => result.Add(Utilities.TrimWords(p, connectingWords).Trim()));
             }
 
+            //Also add variants with leading connecting words stripped (eg "The Bachar Yerian" → "Bachar Yerian")
+            List<string> variants = new List<string>();
+            foreach (string name in result)
+            {
+                string trimmedStart = Utilities.TrimWordsStart(name, connectingWords);
+                if (trimmedStart != name && !string.IsNullOrWhiteSpace(trimmedStart))
+                    variants.Add(trimmedStart);
+            }
+            result.AddRange(variants);
+
             result = result.Distinct().ToList();
             result.RemoveAll(p => p.Length < 3); //Remove any short "names" (eg "My")
             result.RemoveAll(p => connectingWords.Contains(p.ToLower())); //Remove any "possible names" that are only a connecting word (eg "the")
