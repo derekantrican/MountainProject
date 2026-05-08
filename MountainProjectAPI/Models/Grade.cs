@@ -29,12 +29,14 @@ namespace MountainProjectAPI
             Ewbanks,
             UIAA,
             SouthAfrica,
-            Britsh,
+            British,
             Hueco,
             Fontainebleau,
             Ice,
             Aid,
-            Unlabled
+            Mixed,
+            Snow,
+            Unlabled // Todo: this should be "Safety"
         }
 
         public GradeSystem System { get; set; }
@@ -63,7 +65,7 @@ namespace MountainProjectAPI
                 {
                     case GradeSystem.Fontainebleau:
                         return "Font";
-                    case GradeSystem.Britsh:
+                    case GradeSystem.British:
                         return "UK";
                     case GradeSystem.SouthAfrica:
                         return "SA";

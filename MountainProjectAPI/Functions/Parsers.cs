@@ -149,7 +149,22 @@ namespace MountainProjectAPI
 
             //Get Area's routes
             IElement routesTable = doc.GetElementsByTagName("table").FirstOrDefault(p => p.Attributes["id"] != null && p.Attributes["id"].Value == "left-nav-route-table");
-            htmlRoutes = routesTable == null ? new List<IElement>() : routesTable.GetElementsByTagName("a").ToList();
+            if (routesTable == null)
+            {
+                htmlRoutes = new List<IElement>();
+            }
+            else
+            {
+                // Run the same functionality as the JavaScript function SortRoutes that runs when each MountainProject page loads
+                // (puts the routes in the order that they are on the wall)
+                var sortedRows = routesTable.GetElementsByTagName("tr").OrderBy(tr =>
+                {
+                    var attr = tr.GetAttribute("data-lr");
+                    return attr != null && int.TryParse(attr, out int val) ? val : int.MaxValue;
+                }).ToList();
+
+                htmlRoutes = sortedRows.Select(tr => tr.QuerySelector("a")).Where(a => a != null).ToList();
+            }
 
             //Get Area's areas
             IElement leftColumnDiv = doc.GetElementsByTagName("div").FirstOrDefault(p => p.Attributes["class"] != null && p.Attributes["class"].Value == "mp-sidebar");
@@ -446,7 +461,7 @@ namespace MountainProjectAPI
                         grades.Add(new Grade(GradeSystem.SouthAfrica, gradeValue, false));
                         break;
                     case "rateBritish":
-                        grades.Add(new Grade(GradeSystem.Britsh, gradeValue, false));
+                        grades.Add(new Grade(GradeSystem.British, gradeValue, false));
                         break;
                     case "rateFont":
                         grades.Add(new Grade(GradeSystem.Fontainebleau, gradeValue, false));
