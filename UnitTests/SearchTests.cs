@@ -47,7 +47,7 @@ namespace UnitTests
             { "Landjager", "/route/117251258/landjager" }, //Diacritical marks optional
             { "Alexisizer", "/route/106657518/alexisizer" }, //There is an "Alexisizer" area and an "Alexisizer" route. This is to make sure the route is picked
             { "Wood, HP40", "/route/106286494/the-wood" }, //Test for nickname "HP40"
-            { "Golden, RRG", "/route/108521478/golden-ticket" }, //Test for nickname "RRG"
+            { "Golden, RRG", "/route/109469913/golden-snow-cone" }, //Test for nickname "RRG"
         };
 
         [TestMethod]
@@ -82,9 +82,9 @@ namespace UnitTests
             { "Red River Gorge", "Kentucky" },
             { "Deception Crags", "Exit 38, Washington" },
             { "no-rang-na-rang", "Gwanaksan (Anyang/South Seoul), South Korea" }, //International
-            { "Sweet Dreams", "Leura, Australia"}, //Australia route (special case for Australia)
+            { "Sweet Dreams", "Sublime Point, Australia"}, //Australia route (special case for Australia)
             { "Grab Your Balls", "Breakneck, Pennsylvania" }, //https://github.com/derekantrican/MountainProject/issues/12
-            { "Sandy Cheeks", "Kistachie Boulder Longleaf Vista, Louisiana" }, //Parent is 1 less than state (ie Louisiana -> Kistachie Boulder Longleaf Vista -> Sandy Cheeks)
+            { "Dave's Juicy Single", "Kistachie Boulder Longleaf Vista, Louisiana" }, //Parent is 1 less than state (ie Louisiana -> Kistachie Boulder Longleaf Vista -> Dave's Juicy Single)
             { "Chúc sức khoẻ", "Hữu Lũng, Vietnam" } //Special characters
         };
 
