@@ -191,7 +191,7 @@ Unknown Route, El Eden, Bolivia [2500x1500]	null
 Blue Ridge Mountains as seen from the Appalachian Trail near Roan Mountain TN	null	
 Climbing Whymper ★★★ (18), Blue Mountains, Australia [OC] [998x960]	null	
 Yeah it was worth lugging a hammock up the Direct North Ridge of Mt Stuart. Setting up a bivy at the halfway notch.	https://www.mountainproject.com/route/106245725	
-Summit at Sunset — Grand Teton vía Lower Exum &gt; Wall Street Traverse &gt; Upper Exum Ridge 9/23/18 [1334 x 750] [OC]	https://www.mountainproject.com/route/105933562/upper-exum-ridge	
+Summit at Sunset — Grand Teton vía Lower Exum &gt; Wall Street Traverse &gt; Upper Exum Ridge 9/23/18 [1334 x 750] [OC]	https://www.mountainproject.com/route/105839153/lower-exum-ridge	
 Autumn in Ogden (Kitchen Pass) [Utah] [1456x5578]	https://www.mountainproject.com/route/106179065/kitchen-pass	
 On Top of "El Filo la Lete de Tiburon". Cochamó Chile [OC 2500x1875]	null	
 Ramen Raw (V7) - Squamish, BC [OC] [3882x5823]	https://www.mountainproject.com/route/112021075/ramen-raw	
@@ -465,7 +465,7 @@ Worldcup Routesetting - Meiringen 2019	null
 - UnderDog - Ochoa V6 &amp; La gruta V7 - Golden (more climbing from Chile)	null	
 Perfecto Mondo 9b+ by Stefano Ghisolfi	null	
 New Rigs at Viento	null	
-Grayson Highlands: Frontman, Mouth of Wilson, Horizon Line, and Flying Spaghetti Monster	https://www.mountainproject.com/route/106483053/horizon-line	
+Grayson Highlands: Frontman, Mouth of Wilson, Horizon Line, and Flying Spaghetti Monster	https://www.mountainproject.com/route/106564590/front-man	
 Panda send	null	
 The new ThunderCat Boulders, Whistler BC	null	
 Some Columbia Gorge choss-wrestling	null	
@@ -814,7 +814,7 @@ First 'alpine' trad climb. Chimney Route, 5.6, on Roche a Perdix in the Canadian
 A Glen classic shot on a camera full of chalk - Threesome (V6) established by Sonnie Trotter	https://www.mountainproject.com/route/114776175/threesome	
 Stitches (V5) - An athletic cave climb that leads into Bob's Balancing Balls (V8)	null	
 Jesse Dufton has completed the first blind lead of Scotland's Old Man of Hoy, E1 5b (5.10a) Trad, six pitches, as an onsight. A sighted friend give him beta via an ear bud as he climbed.	https://www.mountainproject.com/route/106621200/old-man-of-hoy	//MP has different grade for this route
-First post to this sub! The obligatory shot of Dreamcatcher 5.14d	https://www.mountainproject.com/route/106836708/dreamcatcher	//MP has different grade for this route
+First post to this sub! The obligatory shot of Dreamcatcher 5.14d	https://www.mountainproject.com/route/200875054/dreamcatcher
 Red river gorge, Kentucky. The rock there is awesome	null	
 Cuban Roll (v4) - Bishop, CA	https://www.mountainproject.com/route/106568885/cuban-roll	//MP has different grade for this route
 Big Mac Deal Wis Beer V8 - Niagara Glen, Ontario.	null	

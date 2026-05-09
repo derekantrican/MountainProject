@@ -584,7 +584,7 @@ namespace MountainProjectAPI
 
         public static List<string> GetWords(string input, bool removeEmpty = true)
         {
-            input = Regex.Replace(input, "['’]", "");
+            input = Regex.Replace(input, "['‘’´`]", "");
             List<string> words = Regex.Split(input, @"[^\p{L}0-9]").ToList();
 
             if (removeEmpty)
@@ -638,19 +638,26 @@ namespace MountainProjectAPI
             return result;
         }
 
-        public static int StringDifference(string s1, string s2, bool allowTransposedLetters = false)
+        /// <summary>
+        /// Calculates the edit distance between two strings. When maxDistance is provided,
+        /// computation stops early once the distance is guaranteed to exceed it (returns maxDistance + 1).
+        /// </summary>
+        /// <param name="s1">First string</param>
+        /// <param name="s2">Second string</param>
+        /// <param name="allowTransposedLetters">Use Damerau-Levenshtein (counts transpositions as 1 edit)</param>
+        /// <param name="maxDistance">Early cutoff threshold. Pass int.MaxValue to compute the full distance.</param>
+        public static int StringDifference(string s1, string s2, bool allowTransposedLetters = false, int maxDistance = int.MaxValue)
         {
             if (!allowTransposedLetters)
-                return Levenshtein(s1, s2);
+                return Levenshtein(s1, s2, maxDistance);
             else
-                return DamerauLevenshtein(s1, s2);
+                return DamerauLevenshtein(s1, s2, maxDistance);
         }
 
-        private static int Levenshtein(string s, string t)
+        private static int Levenshtein(string s, string t, int maxDistance)
         {
             int n = s.Length;
             int m = t.Length;
-            int[,] d = new int[n + 1, m + 1];
 
             if (n == 0)
                 return m;
@@ -658,57 +665,102 @@ namespace MountainProjectAPI
             if (m == 0)
                 return n;
 
-            for (int i = 0; i <= n; d[i, 0] = i++) { }
+            // If the length difference alone exceeds maxDistance, we can bail immediately
+            if (Math.Abs(n - m) > maxDistance)
+                return maxDistance + 1;
 
-            for (int j = 0; j <= m; d[0, j] = j++) { }
+            // Use two single-dimension arrays instead of a full matrix to save memory
+            int[] previousRow = new int[m + 1];
+            int[] currentRow = new int[m + 1];
+
+            for (int j = 0; j <= m; j++)
+                previousRow[j] = j;
 
             for (int i = 1; i <= n; i++)
             {
+                currentRow[0] = i;
+                int rowMin = currentRow[0];
+
                 for (int j = 1; j <= m; j++)
                 {
                     int cost = (t[j - 1] == s[i - 1]) ? 0 : 1;
-                    d[i, j] = Math.Min(Math.Min(d[i - 1, j] + 1, 
-                                                d[i, j - 1] + 1),
-                                                d[i - 1, j - 1] + cost);
+                    currentRow[j] = Math.Min(Math.Min(currentRow[j - 1] + 1,
+                                                      previousRow[j] + 1),
+                                                      previousRow[j - 1] + cost);
+                    rowMin = Math.Min(rowMin, currentRow[j]);
                 }
+
+                // Early cutoff: if every value in this row exceeds maxDistance,
+                // the final result will too — no need to continue
+                if (rowMin > maxDistance)
+                    return maxDistance + 1;
+
+                // Swap rows
+                int[] temp = previousRow;
+                previousRow = currentRow;
+                currentRow = temp;
             }
 
-            return d[n, m];
+            return previousRow[m];
         }
 
-        private static int DamerauLevenshtein(string s, string t)
+        private static int DamerauLevenshtein(string s, string t, int maxDistance)
         {
-            var bounds = new { Height = s.Length + 1, Width = t.Length + 1 };
+            int n = s.Length;
+            int m = t.Length;
 
-            int[,] matrix = new int[bounds.Height, bounds.Width];
+            if (n == 0)
+                return m;
 
-            for (int height = 0; height < bounds.Height; height++)
-                matrix[height, 0] = height;
+            if (m == 0)
+                return n;
 
-            for (int width = 0; width < bounds.Width; width++)
-                matrix[0, width] = width;
+            if (Math.Abs(n - m) > maxDistance)
+                return maxDistance + 1;
 
-            for (int height = 1; height < bounds.Height; height++)
+            // Damerau-Levenshtein needs to look back 2 rows for transpositions,
+            // so we keep 3 rows instead of 2
+            int[] twoRowsBack = new int[m + 1];
+            int[] previousRow = new int[m + 1];
+            int[] currentRow = new int[m + 1];
+
+            for (int j = 0; j <= m; j++)
+                previousRow[j] = j;
+
+            for (int i = 1; i <= n; i++)
             {
-                for (int width = 1; width < bounds.Width; width++)
+                currentRow[0] = i;
+                int rowMin = currentRow[0];
+
+                for (int j = 1; j <= m; j++)
                 {
-                    int cost = (s[height - 1] == t[width - 1]) ? 0 : 1;
-                    int insertion = matrix[height, width - 1] + 1;
-                    int deletion = matrix[height - 1, width] + 1;
-                    int substitution = matrix[height - 1, width - 1] + cost;
+                    int cost = (s[i - 1] == t[j - 1]) ? 0 : 1;
+                    int insertion = currentRow[j - 1] + 1;
+                    int deletion = previousRow[j] + 1;
+                    int substitution = previousRow[j - 1] + cost;
 
                     int distance = Math.Min(insertion, Math.Min(deletion, substitution));
 
-                    if (height > 1 && width > 1 && s[height - 1] == t[width - 2] && s[height - 2] == t[width - 1])
+                    if (i > 1 && j > 1 && s[i - 1] == t[j - 2] && s[i - 2] == t[j - 1])
                     {
-                        distance = Math.Min(distance, matrix[height - 2, width - 2] + cost);
+                        distance = Math.Min(distance, twoRowsBack[j - 2] + cost);
                     }
 
-                    matrix[height, width] = distance;
+                    currentRow[j] = distance;
+                    rowMin = Math.Min(rowMin, distance);
                 }
+
+                if (rowMin > maxDistance)
+                    return maxDistance + 1;
+
+                // Rotate rows
+                int[] temp = twoRowsBack;
+                twoRowsBack = previousRow;
+                previousRow = currentRow;
+                currentRow = temp;
             }
 
-            return matrix[bounds.Height - 1, bounds.Width - 1];
+            return previousRow[m];
         }
     }
 

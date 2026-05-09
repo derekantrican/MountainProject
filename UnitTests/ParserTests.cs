@@ -115,7 +115,7 @@ namespace UnitTests
         }
 
         [DataTestMethod]
-        [DataRow("/area/105841134/red-river-gorge", [new[] { "/route/105860741/roadside-attraction", "/route/105868000/rock-wars", "/route/106125070/a-brief-history-of-climb" }])] //Some popular routes
+        [DataRow("/area/105841134/red-river-gorge", [new[] { "/route/105868000/rock-wars", "/route/106125070/a-brief-history-of-climb", "/route/106081922/breakfast-burrito" }])] //Some popular routes
         [DataRow("/area/107605102/bankhead-forest-thompson-creek-trail", [new string[0]])] //No popular routes listed
         public void TestAreaPopularClimbsParse(string url, object[] expectedPopClimbs)
         {
@@ -138,7 +138,7 @@ namespace UnitTests
         [DataRow("/area/108276053/area-51-boulder-area", "Area 51 Boulder")] //Remove only end "Area" from title
         [DataRow("/area/106558306/drop-area-horseshoe-area", "Drop (Horseshoe)")] //Remove "Area" both inside and outside parenthesis
         [DataRow("/area/107373214/turtle-rock-area-corridors-area", "Turtle Rock/ Corridors")] //Remove "Area" both before and after slash
-        [DataRow("/route/107889066/redacted", "Bro's Before Holes")] //Parse redacted route name // Todo: would be nice to have another "redacted area name" example, since the one I chose has now been renamed
+        [DataRow("/route/107889066/redacted", "Bros Before Holes")] //Parse redacted route name // Todo: would be nice to have another "redacted area name" example, since the one I chose has now been renamed
         [DataRow("/route/109342285/lower-replica-2285", "Short Bus Orgy")] //Parse redacted route name (different redacted format)
 		public void TestNameParse(string url, string expectedName)
         {
@@ -180,7 +180,7 @@ namespace UnitTests
         [DataTestMethod]
         [DataRow("/route/111859673/side-dish", GradeSystem.YDS, "5.10c")]
         [DataRow("/route/109063052/geflugelfrikadelle", GradeSystem.YDS, "5.12b/c")] //Has a slash
-        [DataRow("/route/105890633/black-dike", GradeSystem.Ice, "WI4-5 M3")] //No YDS/Heuco present
+        [DataRow("/route/105890633/black-dike", GradeSystem.Ice, "WI4+ M3")] //No YDS/Heuco present
         [DataRow("/route/105931000/myan-problem", GradeSystem.Hueco, "V-easy")] //Not a usual grade format
         [DataRow("/route/106238998/price-glacier", GradeSystem.YDS, "Easy 5th")] //Not a usual grade format
         [DataRow("/route/108170851/new-dawn", GradeSystem.Aid, "A3")] //Includes "Aid rating"
@@ -199,7 +199,8 @@ namespace UnitTests
         [DataTestMethod]
         [DataRow("/route/111859673/side-dish", 1.8)] //Decimal
         [DataRow("/route/109063052/geflugelfrikadelle", 4)] //No decimal
-        public void TestRouteRatingParse(string url, double expectedRating)
+        [DataRow("/route/107131693/made-in-the-shade", 2.8)] //Added because it started failing recently (the element that contains the rating wasn't present in the HTML)
+		public void TestRouteRatingParse(string url, double expectedRating)
         {
             if (!Url.Contains(url, Utilities.MPBASEURL))
                 url = Url.BuildFullUrl(Utilities.MPBASEURL + url);
