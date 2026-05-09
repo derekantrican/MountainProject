@@ -914,7 +914,7 @@ namespace MountainProjectAPI
             if (string.IsNullOrEmpty(text) || string.IsNullOrEmpty(query))
                 return false;
 
-            string pattern = $@"(^|\s){Regex.Escape(query)}($|\s)";
+            string pattern = $@"(?<![-'\w]){Regex.Escape(query)}(?![-'\w])";
             return Regex.IsMatch(text, pattern, RegexOptions.IgnoreCase);
         }
 
