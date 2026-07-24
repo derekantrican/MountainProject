@@ -506,7 +506,7 @@ namespace MountainProjectDBBuilder
                 throw new AggregateException("Some areas failed to return new items", errors);
             }
 
-            SendReport($"MountainProjectDBBuilder database updated SUCCESSFULLY in {totalTimer.Elapsed} ({Math.Round(file.Length / 1024f / 1024f, 2)} MB)", $"{newlyAddedItemUrls.Count()} new items:\n\n{string.Join("\n", newlyAddedItemUrls)}");
+            SendReport($"MountainProjectDBBuilder database updated SUCCESSFULLY in {totalTimer.Elapsed} ({Math.Round(file.Length / 1024f / 1024f, 2)} MB)", $"{newlyAddedItemUrls.Count} new items:\n\n{string.Join("\n", newlyAddedItemUrls)}");
         }
 
         private static void ListAllIdPaths(Area area, Dictionary<string, List<List<string>>> dict, List<string> currentPathToParent)
