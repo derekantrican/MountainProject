@@ -21,6 +21,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Runtime.ExceptionServices;
 using System.Threading;
+using Url = MountainProjectAPI.Url;
 
 namespace MountainProjectDBBuilder
 {
